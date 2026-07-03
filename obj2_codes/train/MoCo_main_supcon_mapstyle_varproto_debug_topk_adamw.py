@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -44,14 +44,14 @@ from loss.prototype_directional_loss_mapstyle_varproto_topk import (
 from loss.proto_supcon_losses import SupLoss
 
 # ============================================================
-# 命令行参数
+# å‘½ä»¤è¡Œå‚æ•°
 # ============================================================
 
 parser = argparse.ArgumentParser(
     description="3D MoCo + SupCon + prototype contrastive + prototype directional loss on map-style dataset (variable prototypes per class)"
 )
 
-# ---------------- 数据与 I/O ----------------
+# ---------------- æ•°æ®ä¸Ž I/O ----------------
 parser.add_argument("--dataset_root", required=True, type=str,
                     help="map-style dataset root directory")
 parser.add_argument("--train_manifest_name", default="train_manifest.jsonl", type=str,
@@ -61,11 +61,13 @@ parser.add_argument("--label_map_json", default="label_map.json", type=str,
 parser.add_argument("--weight_save_path", default=r"./weight", type=str,
                     help="checkpoint output directory")
 
-# ---------------- 标签与 clip 设置 ----------------
+# ---------------- æ ‡ç­¾ä¸Ž clip è®¾ç½® ----------------
 parser.add_argument("--tier_mode", default="tier1", choices=["tier1", "tier2", "tier3"],
                     help="which tier id to use as the training label")
 parser.add_argument("--n_frames", default=16, type=int,
                     help="number of frames per clip")
+parser.add_argument("--rgb_camera_id", default="001484412812", type=str,
+                    help="RGB camera id to use when manifest has camera-specific fields, e.g. 001484412812")
 
 parser.add_argument(
     "--rgb_mean",
@@ -92,10 +94,10 @@ parser.add_argument(
 )
 
 # ---------------- RGB augmentation params ----------------
-# 这些参数会传给 utils_.mapstype_dataloader_with_index.PackedMultiModalConfig。
-# dataloader 内部的 TemporallyConsistentSpatialAugmentation 会对同一个 clip 的所有帧
-# 使用时间一致的空间增强。若 --no-rgb_apply_spatial_aug，则会关闭 flip / jitter /
-# grayscale / blur 等随机增强，但仍会保留 RandomResizedCrop。
+# è¿™äº›å‚æ•°ä¼šä¼ ç»™ utils_.mapstype_dataloader_with_index.PackedMultiModalConfigã€‚
+# dataloader å†…éƒ¨çš„ TemporallyConsistentSpatialAugmentation ä¼šå¯¹åŒä¸€ä¸ª clip çš„æ‰€æœ‰å¸§
+# ä½¿ç”¨æ—¶é—´ä¸€è‡´çš„ç©ºé—´å¢žå¼ºã€‚è‹¥ --no-rgb_apply_spatial_augï¼Œåˆ™ä¼šå…³é—­ flip / jitter /
+# grayscale / blur ç­‰éšæœºå¢žå¼ºï¼Œä½†ä»ä¼šä¿ç•™ RandomResizedCropã€‚
 parser.add_argument("--rgb_out_hw", nargs=2, type=int, default=[224, 224],
                     metavar=("H", "W"),
                     help="RGB output spatial size after augmentation / validation transform")
@@ -131,7 +133,7 @@ parser.add_argument("--rgb_blur_sigma", nargs=2, type=float, default=[0.1, 1.0],
                     metavar=("MIN", "MAX"),
                     help="RGB GaussianBlur sigma range")
 
-# ---------------- 训练 DataLoader ----------------
+# ---------------- è®­ç»ƒ DataLoader ----------------
 parser.add_argument("--batch_size", default=16, type=int,
                     help="training batch size per GPU/process")
 parser.add_argument("--num_workers", default=6, type=int,
@@ -143,7 +145,7 @@ parser.add_argument("--pin_memory", action="store_true",
 parser.add_argument("--verify_paths_on_init", action="store_true",
                     help="verify sample paths when constructing the training dataset")
 
-# ---------------- 模型参数 ----------------
+# ---------------- æ¨¡åž‹å‚æ•° ----------------
 parser.add_argument("--model_depth", default=18, type=int,
                     help="3D ResNet depth")
 parser.add_argument("--proj_dim", default=128, type=int,
@@ -155,7 +157,7 @@ parser.add_argument("--temperature", default=0.07, type=float,
 parser.add_argument("--mlp", action="store_true",
                     help="use MLP projection head")
 
-# ---------------- 对比损失 参数 ----------------
+# ---------------- å¯¹æ¯”æŸå¤± å‚æ•° ----------------
 parser.add_argument("--contrastive_loss", default="suploss", choices=["kcl", "suploss"],
                     help="which supervised contrastive branch to use: 'kcl' or 'suploss'")
 parser.add_argument("--num_positive", default=6, type=int,
@@ -163,7 +165,7 @@ parser.add_argument("--num_positive", default=6, type=int,
 parser.add_argument("--exclude_invalid_queue", action="store_true",
                     help="exclude queue entries whose labels are invalid")
 
-# ---------------- Ablation 模式 ----------------
+# ---------------- Ablation æ¨¡å¼ ----------------
 parser.add_argument(
     "--ablation_mode",
     default="contrastive_proto_rel",
@@ -182,7 +184,7 @@ parser.add_argument(
     ),
 )
 
-# ---------------- Prototype 刷新参数 ----------------
+# ---------------- Prototype åˆ·æ–°å‚æ•° ----------------
 parser.add_argument("--warmup_epochs", default=50, type=int,
                     help="number of epochs trained before the first prototype refresh")
 parser.add_argument("--recluster_interval", default=5, type=int,
@@ -208,7 +210,7 @@ parser.add_argument("--enable_prototype_temperature_scaling", action="store_true
 parser.add_argument("--proto_temperature_eps", default=1e-6, type=float,
                     help="small epsilon used when estimating prototype temperature scaling")
 
-# KMeans 超参数
+# KMeans è¶…å‚æ•°
 parser.add_argument("--proto_kmeans_random_state", default=42, type=int,
                     help="random_state for per-class KMeans")
 parser.add_argument("--proto_kmeans_n_init", default=10, type=int,
@@ -216,7 +218,7 @@ parser.add_argument("--proto_kmeans_n_init", default=10, type=int,
 parser.add_argument("--proto_kmeans_max_iter", default=300, type=int,
                     help="max_iter for per-class KMeans")
 
-# refresh 专用 DataLoader 参数
+# refresh ä¸“ç”¨ DataLoader å‚æ•°
 parser.add_argument("--proto_refresh_batch_size", default=16, type=int,
                     help="batch size used during prototype refresh")
 parser.add_argument("--proto_refresh_num_workers", default=6, type=int,
@@ -228,7 +230,7 @@ parser.add_argument("--proto_refresh_pin_memory", action=argparse.BooleanOptiona
 parser.add_argument("--proto_refresh_verify_paths_on_init", action=argparse.BooleanOptionalAction, default=None,
                     help="verify_paths_on_init used during prototype refresh; default: inherit training verify_paths_on_init")
 
-# ---------------- Prototype directional loss 参数 ----------------
+# ---------------- Prototype directional loss å‚æ•° ----------------
 parser.add_argument("--lambda_rel", default=0.5, type=float,
                     help="weight of prototype directional loss")
 parser.add_argument("--proto_ema_momentum", default=0.99, type=float,
@@ -250,7 +252,7 @@ parser.add_argument("--rel_topk_diff_classes", default=0, type=int,
                         "cosine distance; 0 means use all different classes"
                     ))
 
-# ---------------- 分阶段损失调度参数 ----------------
+# ---------------- åˆ†é˜¶æ®µæŸå¤±è°ƒåº¦å‚æ•° ----------------
 parser.add_argument("--enable_loss_stage_schedule", action="store_true",
                     help=(
                         "enable staged training: contrastive-only before proto_loss_start_epoch, "
@@ -266,7 +268,7 @@ parser.add_argument("--rel_loss_end_epoch", default=250, type=int,
 parser.add_argument("--rel_lambda_schedule", default="cosine", choices=["constant", "cosine"],
                     help="lambda_rel schedule used during the relative-loss stage when staged scheduling is enabled")
 
-# ---------------- 训练超参数 ----------------
+# ---------------- è®­ç»ƒè¶…å‚æ•° ----------------
 parser.add_argument("--epochs", default=200, type=int,
                     help="number of training epochs")
 parser.add_argument("--start_epoch", default=0, type=int,
@@ -291,7 +293,7 @@ parser.add_argument("--adamw_eps", default=1e-8, type=float,
 parser.add_argument("--adamw_amsgrad", action=argparse.BooleanOptionalAction, default=False,
                     help="whether to enable AMSGrad in AdamW; used only when --optimizer adamw")
 
-# ---------------- 运行控制 ----------------
+# ---------------- è¿è¡ŒæŽ§åˆ¶ ----------------
 parser.add_argument("--no_ddp", action="store_true",
                     help="disable DDP and run in single-process mode")
 parser.add_argument('--seed', type=int, default=None,
@@ -305,7 +307,7 @@ parser.add_argument("--use_syncbn", action=argparse.BooleanOptionalAction, defau
 parser.add_argument("--find_unused_parameters", action=argparse.BooleanOptionalAction, default=False,
                     help="argument passed into DistributedDataParallel")
 
-# ---------------- Debug 开关 ----------------
+# ---------------- Debug å¼€å…³ ----------------
 parser.add_argument("--debug_mode", action="store_true",
                     help="enable debug logging during training")
 parser.add_argument("--debug_log_interval", default=20, type=int,
@@ -341,17 +343,17 @@ args = parser.parse_args()
 
 def set_random_seed(seed: int | None, deterministic: bool = True):
     """
-    设置随机种子。
+    è®¾ç½®éšæœºç§å­ã€‚
 
-    参数
+    å‚æ•°
     ----
     seed : int | None
-        - int: 固定随机种子
-        - None: 不固定随机种子
+        - int: å›ºå®šéšæœºç§å­
+        - None: ä¸å›ºå®šéšæœºç§å­
     deterministic : bool
-        仅当 seed 不是 None 时生效：
-        True  -> 使用确定性模式
-        False -> 使用非确定性模式
+        ä»…å½“ seed ä¸æ˜¯ None æ—¶ç”Ÿæ•ˆï¼š
+        True  -> ä½¿ç”¨ç¡®å®šæ€§æ¨¡å¼
+        False -> ä½¿ç”¨éžç¡®å®šæ€§æ¨¡å¼
     """
     if seed is None:
         log("[Info] No random seed is set. Training will be non-deterministic.")
@@ -373,7 +375,7 @@ def set_random_seed(seed: int | None, deterministic: bool = True):
 
 
 # ============================================================
-# 基础工具
+# åŸºç¡€å·¥å…·
 # ============================================================
 
 GLOBAL_LOG_PATH: Optional[str] = None
@@ -382,9 +384,9 @@ GLOBAL_LOG_TO_FILE: bool = False
 
 def log(msg: str) -> None:
     """
-    统一日志函数：
-    1) 始终打印到控制台
-    2) 若已启用文件日志，则同时追加写入 train_log.txt
+    ç»Ÿä¸€æ—¥å¿—å‡½æ•°ï¼š
+    1) å§‹ç»ˆæ‰“å°åˆ°æŽ§åˆ¶å°
+    2) è‹¥å·²å¯ç”¨æ–‡ä»¶æ—¥å¿—ï¼Œåˆ™åŒæ—¶è¿½åŠ å†™å…¥ train_log.txt
     """
     global GLOBAL_LOG_PATH, GLOBAL_LOG_TO_FILE
 
@@ -398,7 +400,7 @@ def log(msg: str) -> None:
 
 
 def save_args(args, save_dir: str) -> None:
-    """将命令行参数保存为 JSON，便于复现实验。"""
+    """å°†å‘½ä»¤è¡Œå‚æ•°ä¿å­˜ä¸º JSONï¼Œä¾¿äºŽå¤çŽ°å®žéªŒã€‚"""
     os.makedirs(save_dir, exist_ok=True)
     args_dict = vars(args).copy()
     args_dict["_timestamp"] = datetime.now().isoformat()
@@ -411,7 +413,7 @@ def save_args(args, save_dir: str) -> None:
 
 
 def init_distributed(backend: str = "nccl") -> Tuple[int, int, int]:
-    """初始化 DDP，并返回 (rank, world_size, local_rank)。"""
+    """åˆå§‹åŒ– DDPï¼Œå¹¶è¿”å›ž (rank, world_size, local_rank)ã€‚"""
     rank = int(os.environ["RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -422,7 +424,7 @@ def init_distributed(backend: str = "nccl") -> Tuple[int, int, int]:
 
 
 def init_single_process() -> Tuple[int, int, int]:
-    """单进程模式初始化。"""
+    """å•è¿›ç¨‹æ¨¡å¼åˆå§‹åŒ–ã€‚"""
     rank, world_size, local_rank = 0, 1, 0
     if torch.cuda.is_available():
         torch.cuda.set_device(local_rank)
@@ -436,7 +438,7 @@ def is_main_process(rank: int) -> bool:
 
 
 def _cleanup_ddp() -> None:
-    """清理 DDP 进程组。"""
+    """æ¸…ç† DDP è¿›ç¨‹ç»„ã€‚"""
     if dist.is_available() and dist.is_initialized():
         try:
             dist.destroy_process_group()
@@ -446,7 +448,7 @@ def _cleanup_ddp() -> None:
 
 
 def _install_signal_handlers() -> None:
-    """注册信号处理函数，便于作业中断时尽量优雅退出。"""
+    """æ³¨å†Œä¿¡å·å¤„ç†å‡½æ•°ï¼Œä¾¿äºŽä½œä¸šä¸­æ–­æ—¶å°½é‡ä¼˜é›…é€€å‡ºã€‚"""
     def _handler(signum, frame):
         _cleanup_ddp()
         raise SystemExit(0)
@@ -457,9 +459,9 @@ def _install_signal_handlers() -> None:
 
 def adjust_learning_rate(optimizer, epoch: int, args) -> None:
     """
-    调整学习率。
+    è°ƒæ•´å­¦ä¹ çŽ‡ã€‚
 
-    支持两种模式：
+    æ”¯æŒä¸¤ç§æ¨¡å¼ï¼š
     1) cosine schedule
     2) step schedule
     """
@@ -541,7 +543,7 @@ def format_optimizer_config(args) -> str:
 
 
 def _resolve_label_map_path(args) -> str:
-    """解析 label_map.json 的绝对路径。"""
+    """è§£æž label_map.json çš„ç»å¯¹è·¯å¾„ã€‚"""
     path = Path(args.label_map_json)
     if path.is_absolute():
         return str(path)
@@ -551,11 +553,11 @@ def _resolve_label_map_path(args) -> str:
 
 def _resolve_rgb_mean_std(args) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
     """
-    解析 RGB normalization 参数。
+    è§£æž RGB normalization å‚æ•°ã€‚
 
-    注意：
-    - spatial_augmentation.py 里会先执行 ToDtype(torch.float32, scale=True)
-    - 因此这里的 mean/std 必须对应 [0,1] 范围，而不是 [0,255] 范围
+    æ³¨æ„ï¼š
+    - spatial_augmentation.py é‡Œä¼šå…ˆæ‰§è¡Œ ToDtype(torch.float32, scale=True)
+    - å› æ­¤è¿™é‡Œçš„ mean/std å¿…é¡»å¯¹åº” [0,1] èŒƒå›´ï¼Œè€Œä¸æ˜¯ [0,255] èŒƒå›´
     """
     rgb_mean = tuple(float(x) for x in args.rgb_mean)
     rgb_std = tuple(float(x) for x in args.rgb_std)
@@ -575,9 +577,9 @@ def _resolve_rgb_mean_std(args) -> Tuple[Tuple[float, float, float], Tuple[float
 
 def _resolve_pair_arg(args, name: str, cast_type=float) -> Tuple[Any, Any]:
     """
-    解析 argparse 中使用 nargs=2 的 RGB 参数，并转为 tuple。
+    è§£æž argparse ä¸­ä½¿ç”¨ nargs=2 çš„ RGB å‚æ•°ï¼Œå¹¶è½¬ä¸º tupleã€‚
 
-    例如：
+    ä¾‹å¦‚ï¼š
       --rgb_out_hw 224 224 -> (224, 224)
       --rrc_scale 0.6 1.0 -> (0.6, 1.0)
     """
@@ -589,9 +591,9 @@ def _resolve_pair_arg(args, name: str, cast_type=float) -> Tuple[Any, Any]:
 
 def _resolve_rgb_aug_args(args) -> Dict[str, Any]:
     """
-    将 RGB dataloader 中已有的 augmentation 接口从 argparse 整理为 dict。
-    训练脚本只负责解析和下传；实际增强逻辑仍由 dataloader 中的
-    TemporallyConsistentSpatialAugmentation 实现。
+    å°† RGB dataloader ä¸­å·²æœ‰çš„ augmentation æŽ¥å£ä»Ž argparse æ•´ç†ä¸º dictã€‚
+    è®­ç»ƒè„šæœ¬åªè´Ÿè´£è§£æžå’Œä¸‹ä¼ ï¼›å®žé™…å¢žå¼ºé€»è¾‘ä»ç”± dataloader ä¸­çš„
+    TemporallyConsistentSpatialAugmentation å®žçŽ°ã€‚
     """
     rgb_out_hw = _resolve_pair_arg(args, "rgb_out_hw", int)
     rrc_scale = _resolve_pair_arg(args, "rrc_scale", float)
@@ -652,13 +654,13 @@ def parse_num_prototypes_per_class(
     default_num: int,
 ) -> List[int]:
     """
-    将命令行传入的 per-class prototype 配置解析成长度为 num_classes 的 list[int]。
+    å°†å‘½ä»¤è¡Œä¼ å…¥çš„ per-class prototype é…ç½®è§£æžæˆé•¿åº¦ä¸º num_classes çš„ list[int]ã€‚
 
-    例子：
+    ä¾‹å­ï¼š
         spec = "2,2,3,1"
         -> [2, 2, 3, 1]
 
-    若 spec is None，则所有类别都使用 default_num。
+    è‹¥ spec is Noneï¼Œåˆ™æ‰€æœ‰ç±»åˆ«éƒ½ä½¿ç”¨ default_numã€‚
     """
     if spec is None:
         return [int(default_num)] * int(num_classes)
@@ -677,33 +679,33 @@ def parse_num_prototypes_per_class(
 
 def resolve_ablation_flags(ablation_mode: str) -> Dict[str, bool]:
     """
-    将高层 ablation_mode 解析为底层控制开关。
+    å°†é«˜å±‚ ablation_mode è§£æžä¸ºåº•å±‚æŽ§åˆ¶å¼€å…³ã€‚
 
-    返回三个布尔量：
+    è¿”å›žä¸‰ä¸ªå¸ƒå°”é‡ï¼š
     1) use_proto_state:
-       是否需要整套 prototype 基础设施，包括：
+       æ˜¯å¦éœ€è¦æ•´å¥— prototype åŸºç¡€è®¾æ–½ï¼ŒåŒ…æ‹¬ï¼š
        - prototype refresh
        - proto_state broadcast
-       - batch 内构造 proto_ids
-       - step 后的 prototype EMA update
+       - batch å†…æž„é€  proto_ids
+       - step åŽçš„ prototype EMA update
 
     2) use_proto_loss:
-       是否计算并加入 prototype contrastive loss
+       æ˜¯å¦è®¡ç®—å¹¶åŠ å…¥ prototype contrastive loss
 
     3) use_rel_loss:
-       是否计算并加入 prototype directional / relative loss
+       æ˜¯å¦è®¡ç®—å¹¶åŠ å…¥ prototype directional / relative loss
 
-    说明：
+    è¯´æ˜Žï¼š
     - contrastive_only:
-        只训练主对比损失，不启用任何 prototype 相关状态和损失
+        åªè®­ç»ƒä¸»å¯¹æ¯”æŸå¤±ï¼Œä¸å¯ç”¨ä»»ä½• prototype ç›¸å…³çŠ¶æ€å’ŒæŸå¤±
     - contrastive_proto:
-        主对比损失 + prototype contrastive loss
+        ä¸»å¯¹æ¯”æŸå¤± + prototype contrastive loss
     - contrastive_rel:
-        主对比损失 + prototype directional loss
-        注意：虽然不使用 loss_proto，但仍然需要 prototype bank，
-        因为 directional loss 本身依赖 prototype state
+        ä¸»å¯¹æ¯”æŸå¤± + prototype directional loss
+        æ³¨æ„ï¼šè™½ç„¶ä¸ä½¿ç”¨ loss_protoï¼Œä½†ä»ç„¶éœ€è¦ prototype bankï¼Œ
+        å› ä¸º directional loss æœ¬èº«ä¾èµ– prototype state
     - contrastive_proto_rel:
-        主对比损失 + prototype contrastive loss + prototype directional loss
+        ä¸»å¯¹æ¯”æŸå¤± + prototype contrastive loss + prototype directional loss
     """
     mapping = {
         "contrastive_only": {
@@ -798,10 +800,10 @@ def resolve_epoch_loss_flags(
 
     in_proto_stage = epoch >= int(args.proto_loss_start_epoch)
 
-    # 重要修正：rel_loss_end_epoch 只是 lambda_rel ramp 到最大值的终点，
-    # 不应该作为关闭 rel loss 的终点。
-    # 因此 rel loss 从 rel_loss_start_epoch 开始后会一直保持启用；
-    # _cosine_ramp_value(...) 会在 current_epoch >= rel_loss_end_epoch 时返回 final_value。
+    # é‡è¦ä¿®æ­£ï¼šrel_loss_end_epoch åªæ˜¯ lambda_rel ramp åˆ°æœ€å¤§å€¼çš„ç»ˆç‚¹ï¼Œ
+    # ä¸åº”è¯¥ä½œä¸ºå…³é—­ rel loss çš„ç»ˆç‚¹ã€‚
+    # å› æ­¤ rel loss ä»Ž rel_loss_start_epoch å¼€å§‹åŽä¼šä¸€ç›´ä¿æŒå¯ç”¨ï¼›
+    # _cosine_ramp_value(...) ä¼šåœ¨ current_epoch >= rel_loss_end_epoch æ—¶è¿”å›ž final_valueã€‚
     in_rel_stage = epoch >= int(args.rel_loss_start_epoch)
 
     use_proto_state_eff = bool(base_use_proto_state and in_proto_stage)
@@ -840,7 +842,7 @@ def prepare_model(
     num_positive: int,
     exclude_invalid_queue: bool,
 ) -> nn.Module:
-    """构建 MoCo3D 模型。"""
+    """æž„å»º MoCo3D æ¨¡åž‹ã€‚"""
     model = MoCo3D(
         partial(ResNet3D.generate_model, model_depth=depth),
         dim=proj_dim,
@@ -856,18 +858,18 @@ def prepare_model(
 
 def prepare_trainloader(args, use_ddp: bool, rank: int, world_size: int):
     """
-    构建训练阶段使用的 map-style DataLoader。
+    æž„å»ºè®­ç»ƒé˜¶æ®µä½¿ç”¨çš„ map-style DataLoaderã€‚
 
-    训练阶段与 refresh 阶段的主要区别：
+    è®­ç»ƒé˜¶æ®µä¸Ž refresh é˜¶æ®µçš„ä¸»è¦åŒºåˆ«ï¼š
     ------------------------------------
     1) rgb_two_views=True
-       因为 MoCo 训练需要 query / key 两个视角。
+       å› ä¸º MoCo è®­ç»ƒéœ€è¦ query / key ä¸¤ä¸ªè§†è§’ã€‚
 
     2) is_train=True
-       训练时使用随机增强。
+       è®­ç»ƒæ—¶ä½¿ç”¨éšæœºå¢žå¼ºã€‚
 
-    3) DDP 模式下使用 DistributedSampler
-       并且每个 epoch 需要 set_epoch(epoch)。
+    3) DDP æ¨¡å¼ä¸‹ä½¿ç”¨ DistributedSampler
+       å¹¶ä¸”æ¯ä¸ª epoch éœ€è¦ set_epoch(epoch)ã€‚
     """
     label_map_path = _resolve_label_map_path(args)
     label_map = load_label_map_json(label_map_path)
@@ -878,6 +880,7 @@ def prepare_trainloader(args, use_ddp: bool, rank: int, world_size: int):
     cfg = PackedMultiModalConfig(
         n_frames=args.n_frames,
         rgb_two_views=True,
+        rgb_camera_id=args.rgb_camera_id,
         use_modalities=("rgb",),
         missing_policy="skip",
         load_labels=True,
@@ -924,14 +927,14 @@ def prepare_trainloader(args, use_ddp: bool, rank: int, world_size: int):
 
 def extract_two_views_and_labels(batch: dict, tier_mode: str):
     """
-    从训练 loader 的 batch 中提取：
-        - 两个 RGB 视角
+    ä»Žè®­ç»ƒ loader çš„ batch ä¸­æå–ï¼š
+        - ä¸¤ä¸ª RGB è§†è§’
         - labels
         - global indices
 
-    预期输入：
+    é¢„æœŸè¾“å…¥ï¼š
         batch["rgb"]       -> (view1, view2)
-        batch["tier_ids"]  -> dict 或 Tensor
+        batch["tier_ids"]  -> dict æˆ– Tensor
         batch["global_index"] / batch["idx"] / batch["sample_id"]
     """
     rgb = batch["rgb"]
@@ -967,7 +970,7 @@ def build_proto_refresh_config(
     num_classes: int,
 ) -> PrototypeRefreshConfig:
     """
-    根据命令行参数构建 PrototypeRefreshConfig。
+    æ ¹æ®å‘½ä»¤è¡Œå‚æ•°æž„å»º PrototypeRefreshConfigã€‚
     """
     refresh_batch_size = args.proto_refresh_batch_size
     if refresh_batch_size is None:
@@ -1012,6 +1015,7 @@ def build_proto_refresh_config(
         verify_paths_on_init=refresh_verify_paths,
         rgb_mean=rgb_mean,
         rgb_std=rgb_std,
+        rgb_camera_id=args.rgb_camera_id,
         device=device,
         require_main_process_only=True,
         enable_prototype_temperature_scaling=args.enable_prototype_temperature_scaling,
@@ -1021,7 +1025,7 @@ def build_proto_refresh_config(
 
 
 # ============================================================
-# Debug 配置与工具
+# Debug é…ç½®ä¸Žå·¥å…·
 # ============================================================
 
 @dataclass
@@ -1067,19 +1071,19 @@ def build_debug_config(args) -> DebugConfig:
 
 
 def _append_jsonl(path: str, payload: Dict[str, Any]) -> None:
-    """将调试信息按 JSONL 形式追加写入，方便后续离线分析。"""
+    """å°†è°ƒè¯•ä¿¡æ¯æŒ‰ JSONL å½¢å¼è¿½åŠ å†™å…¥ï¼Œæ–¹ä¾¿åŽç»­ç¦»çº¿åˆ†æžã€‚"""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 def _get_current_lrs(optimizer) -> List[float]:
-    """返回所有 param_group 当前学习率。"""
+    """è¿”å›žæ‰€æœ‰ param_group å½“å‰å­¦ä¹ çŽ‡ã€‚"""
     return [float(pg["lr"]) for pg in optimizer.param_groups]
 
 
 def _unwrap_model(model: nn.Module) -> nn.Module:
-    """去掉 DDP 外壳，便于读取模块名和参数名。"""
+    """åŽ»æŽ‰ DDP å¤–å£³ï¼Œä¾¿äºŽè¯»å–æ¨¡å—åå’Œå‚æ•°åã€‚"""
     return model.module if hasattr(model, "module") else model
 
 
@@ -1089,11 +1093,11 @@ def _resolve_tracked_param_names(
     fallback_last_n: int,
 ) -> List[str]:
     """
-    根据名字子串筛选想重点观察的参数。
+    æ ¹æ®åå­—å­ä¸²ç­›é€‰æƒ³é‡ç‚¹è§‚å¯Ÿçš„å‚æ•°ã€‚
 
-    典型用途：
-    - 看分类头是否在更新
-    - 看 backbone 最后几层是否在更新
+    å…¸åž‹ç”¨é€”ï¼š
+    - çœ‹åˆ†ç±»å¤´æ˜¯å¦åœ¨æ›´æ–°
+    - çœ‹ backbone æœ€åŽå‡ å±‚æ˜¯å¦åœ¨æ›´æ–°
     """
     all_trainable = [name for name, p in model.named_parameters() if p.requires_grad]
 
@@ -1114,8 +1118,8 @@ def _resolve_tracked_param_names(
 
 def _snapshot_selected_params(model: nn.Module, selected_names: List[str]) -> Dict[str, torch.Tensor]:
     """
-    保存若干关键参数的当前值，用于 optimizer.step() 后计算更新幅度。
-    为降低显存占用，这里保存到 CPU。
+    ä¿å­˜è‹¥å¹²å…³é”®å‚æ•°çš„å½“å‰å€¼ï¼Œç”¨äºŽ optimizer.step() åŽè®¡ç®—æ›´æ–°å¹…åº¦ã€‚
+    ä¸ºé™ä½Žæ˜¾å­˜å ç”¨ï¼Œè¿™é‡Œä¿å­˜åˆ° CPUã€‚
     """
     name_set = set(selected_names)
     snap: Dict[str, torch.Tensor] = {}
@@ -1127,13 +1131,13 @@ def _snapshot_selected_params(model: nn.Module, selected_names: List[str]) -> Di
 
 def _compute_param_update_stats(model: nn.Module, before_snapshot: Dict[str, torch.Tensor]) -> List[Dict[str, float]]:
     """
-    计算被跟踪参数在一次 step 前后的更新幅度：
+    è®¡ç®—è¢«è·Ÿè¸ªå‚æ•°åœ¨ä¸€æ¬¡ step å‰åŽçš„æ›´æ–°å¹…åº¦ï¼š
     - absolute_update_norm
     - relative_update_norm = ||delta|| / (||param_before|| + eps)
 
-    这样可以直接判断：
-    - 参数到底有没有更新
-    - 更新是否小到几乎可以忽略
+    è¿™æ ·å¯ä»¥ç›´æŽ¥åˆ¤æ–­ï¼š
+    - å‚æ•°åˆ°åº•æœ‰æ²¡æœ‰æ›´æ–°
+    - æ›´æ–°æ˜¯å¦å°åˆ°å‡ ä¹Žå¯ä»¥å¿½ç•¥
     """
     out = []
     if not before_snapshot:
@@ -1163,14 +1167,14 @@ def _compute_grad_stats(
     tracked_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
-    统计梯度信息。
+    ç»Ÿè®¡æ¢¯åº¦ä¿¡æ¯ã€‚
 
-    输出包括：
+    è¾“å‡ºåŒ…æ‹¬ï¼š
     - total_grad_norm
-    - none_grad 参数个数
-    - near_zero_grad 参数个数
-    - 最大梯度范数的 top-k 参数
-    - 被重点跟踪参数的梯度范数
+    - none_grad å‚æ•°ä¸ªæ•°
+    - near_zero_grad å‚æ•°ä¸ªæ•°
+    - æœ€å¤§æ¢¯åº¦èŒƒæ•°çš„ top-k å‚æ•°
+    - è¢«é‡ç‚¹è·Ÿè¸ªå‚æ•°çš„æ¢¯åº¦èŒƒæ•°
     """
     total_sq = 0.0
     none_grad_count = 0
@@ -1212,12 +1216,12 @@ def _compute_grad_stats(
 
 def _compute_batch_label_stats(labels: torch.Tensor) -> Dict[str, Any]:
     """
-    统计当前 batch 的标签信息。
+    ç»Ÿè®¡å½“å‰ batch çš„æ ‡ç­¾ä¿¡æ¯ã€‚
 
-    输出包括：
-    1) batch 中有哪些类别
-    2) 每个类别各有多少样本
-    3) 仍然保留一些对 SupCon / KCL 有帮助的统计量
+    è¾“å‡ºåŒ…æ‹¬ï¼š
+    1) batch ä¸­æœ‰å“ªäº›ç±»åˆ«
+    2) æ¯ä¸ªç±»åˆ«å„æœ‰å¤šå°‘æ ·æœ¬
+    3) ä»ç„¶ä¿ç•™ä¸€äº›å¯¹ SupCon / KCL æœ‰å¸®åŠ©çš„ç»Ÿè®¡é‡
     """
     labels_cpu = labels.detach().cpu()
     uniq, counts = torch.unique(labels_cpu, return_counts=True)
@@ -1225,24 +1229,24 @@ def _compute_batch_label_stats(labels: torch.Tensor) -> Dict[str, Any]:
     batch_size = int(labels_cpu.numel())
     counts_float = counts.float()
 
-    # 若某类在 batch 中出现 n 次，
-    # 则该类中的每个样本都有 n-1 个“同类其他样本”
+    # è‹¥æŸç±»åœ¨ batch ä¸­å‡ºçŽ° n æ¬¡ï¼Œ
+    # åˆ™è¯¥ç±»ä¸­çš„æ¯ä¸ªæ ·æœ¬éƒ½æœ‰ n-1 ä¸ªâ€œåŒç±»å…¶ä»–æ ·æœ¬â€
     avg_same_class_others = float(
         (counts_float * (counts_float - 1)).sum().item() / max(1, batch_size)
     )
     anchors_without_same_class = int(counts[counts == 1].sum().item())
     num_unique_classes = int(uniq.numel())
 
-    # 明确记录：batch 中有哪些类别
+    # æ˜Žç¡®è®°å½•ï¼šbatch ä¸­æœ‰å“ªäº›ç±»åˆ«
     present_labels = [int(x.item()) for x in uniq]
 
-    # 明确记录：每个类别有多少样本
+    # æ˜Žç¡®è®°å½•ï¼šæ¯ä¸ªç±»åˆ«æœ‰å¤šå°‘æ ·æœ¬
     label_count_pairs = [
         {"label": int(u.item()), "count": int(c.item())}
         for u, c in zip(uniq, counts)
     ]
 
-    # 也保留一个按数量降序排列的版本，便于快速查看
+    # ä¹Ÿä¿ç•™ä¸€ä¸ªæŒ‰æ•°é‡é™åºæŽ’åˆ—çš„ç‰ˆæœ¬ï¼Œä¾¿äºŽå¿«é€ŸæŸ¥çœ‹
     label_count_pairs_sorted = sorted(
         label_count_pairs,
         key=lambda x: x["count"],
@@ -1262,11 +1266,11 @@ def _compute_batch_label_stats(labels: torch.Tensor) -> Dict[str, Any]:
 
 def _compute_feature_stats(q: torch.Tensor) -> Dict[str, Any]:
     """
-    统计 query 特征 q 的基本分布。
+    ç»Ÿè®¡ query ç‰¹å¾ q çš„åŸºæœ¬åˆ†å¸ƒã€‚
 
-    可用于观察：
-    - 是否数值范围异常
-    - 是否可能出现特征塌缩
+    å¯ç”¨äºŽè§‚å¯Ÿï¼š
+    - æ˜¯å¦æ•°å€¼èŒƒå›´å¼‚å¸¸
+    - æ˜¯å¦å¯èƒ½å‡ºçŽ°ç‰¹å¾å¡Œç¼©
     """
     q_det = q.detach().float()
     row_norm = q_det.norm(dim=1)
@@ -1286,7 +1290,7 @@ def _compute_feature_stats(q: torch.Tensor) -> Dict[str, Any]:
 
 
 def _count_nonfinite(x: torch.Tensor) -> Dict[str, int]:
-    """统计一个张量中 NaN / +Inf / -Inf 的数量。"""
+    """ç»Ÿè®¡ä¸€ä¸ªå¼ é‡ä¸­ NaN / +Inf / -Inf çš„æ•°é‡ã€‚"""
     x_det = x.detach()
     return {
         "num_nan": int(torch.isnan(x_det).sum().item()),
@@ -1304,7 +1308,7 @@ def _check_nonfinite_payload(
     proto_state: Optional[dict],
 ) -> Dict[str, Any]:
     """
-    检查关键张量里是否有 NaN / Inf。
+    æ£€æŸ¥å…³é”®å¼ é‡é‡Œæ˜¯å¦æœ‰ NaN / Infã€‚
     """
     payload = {
         "loss": _count_nonfinite(loss),
@@ -1335,7 +1339,7 @@ def _compute_proto_batch_stats(
     proto_state: Optional[dict],
 ) -> Dict[str, Any]:
     """
-    统计当前 batch 的 prototype 分配情况。
+    ç»Ÿè®¡å½“å‰ batch çš„ prototype åˆ†é…æƒ…å†µã€‚
     """
     out: Dict[str, Any] = {}
 
@@ -1394,7 +1398,7 @@ def _compute_proto_batch_stats(
 
 def _summarize_proto_refresh_debug(proto_state: dict) -> str:
     """
-    在 prototype refresh 完成后输出更细一点的统计信息。
+    åœ¨ prototype refresh å®ŒæˆåŽè¾“å‡ºæ›´ç»†ä¸€ç‚¹çš„ç»Ÿè®¡ä¿¡æ¯ã€‚
     """
     parts = []
 
@@ -1430,11 +1434,11 @@ def _summarize_proto_refresh_debug(proto_state: dict) -> str:
 
 
 # ============================================================
-# 统计器与 checkpoint
+# ç»Ÿè®¡å™¨ä¸Ž checkpoint
 # ============================================================
 
 class AverageMeter:
-    """维护一个标量的当前值、累计和以及平均值。"""
+    """ç»´æŠ¤ä¸€ä¸ªæ ‡é‡çš„å½“å‰å€¼ã€ç´¯è®¡å’Œä»¥åŠå¹³å‡å€¼ã€‚"""
     def __init__(self, name: str, fmt: str = ":.3f"):
         self.name = name
         self.fmt = fmt
@@ -1455,12 +1459,12 @@ class AverageMeter:
 
 
 def save_checkpoint(state: dict, filename: str) -> None:
-    """保存 checkpoint。"""
+    """ä¿å­˜ checkpointã€‚"""
     torch.save(state, filename)
 
 
 # ============================================================
-# 单个 epoch 的训练
+# å•ä¸ª epoch çš„è®­ç»ƒ
 # ============================================================
 
 def train_one_epoch(
@@ -1496,33 +1500,33 @@ def train_one_epoch(
     sup_criterion: Optional[nn.Module],
 ) -> None:
     """
-    训练时包含一个主对比损失，以及最多两个 prototype 辅助损失：
+    è®­ç»ƒæ—¶åŒ…å«ä¸€ä¸ªä¸»å¯¹æ¯”æŸå¤±ï¼Œä»¥åŠæœ€å¤šä¸¤ä¸ª prototype è¾…åŠ©æŸå¤±ï¼š
     ----------------------------------------------------------
-    1) 主对比损失：
-    - kcl，或
+    1) ä¸»å¯¹æ¯”æŸå¤±ï¼š
+    - kclï¼Œæˆ–
     - suploss
-    由 contrastive_loss_mode 控制
+    ç”± contrastive_loss_mode æŽ§åˆ¶
 
     2) prototype contrastive loss
-    由 use_proto_loss 控制
+    ç”± use_proto_loss æŽ§åˆ¶
 
     3) prototype directional / relative loss
-    由 use_rel_loss 控制
+    ç”± use_rel_loss æŽ§åˆ¶
 
-    另外，prototype 相关状态（refresh / proto_ids / EMA update）
-    由 use_proto_state 控制。
+    å¦å¤–ï¼Œprototype ç›¸å…³çŠ¶æ€ï¼ˆrefresh / proto_ids / EMA updateï¼‰
+    ç”± use_proto_state æŽ§åˆ¶ã€‚
 
-    注意：
-    - contrastive_only 模式下，use_proto_state=False，此时整个 prototype 分支都关闭
-    - contrastive_rel 模式下，虽然不使用 loss_proto，但仍然需要 prototype state，
-    因为 relative loss 依赖 prototype bank 和 proto_ids
+    æ³¨æ„ï¼š
+    - contrastive_only æ¨¡å¼ä¸‹ï¼Œuse_proto_state=Falseï¼Œæ­¤æ—¶æ•´ä¸ª prototype åˆ†æ”¯éƒ½å…³é—­
+    - contrastive_rel æ¨¡å¼ä¸‹ï¼Œè™½ç„¶ä¸ä½¿ç”¨ loss_protoï¼Œä½†ä»ç„¶éœ€è¦ prototype stateï¼Œ
+    å› ä¸º relative loss ä¾èµ– prototype bank å’Œ proto_ids
 
-    这一版额外加入了一套 debug 能力，用来诊断：
-    - 梯度是否存在
-    - 参数是否真的更新
-    - 当前 batch 的监督对比信号强不强
-    - prototype 分支是否有效
-    - 是否出现 NaN / Inf
+    è¿™ä¸€ç‰ˆé¢å¤–åŠ å…¥äº†ä¸€å¥— debug èƒ½åŠ›ï¼Œç”¨æ¥è¯Šæ–­ï¼š
+    - æ¢¯åº¦æ˜¯å¦å­˜åœ¨
+    - å‚æ•°æ˜¯å¦çœŸçš„æ›´æ–°
+    - å½“å‰ batch çš„ç›‘ç£å¯¹æ¯”ä¿¡å·å¼ºä¸å¼º
+    - prototype åˆ†æ”¯æ˜¯å¦æœ‰æ•ˆ
+    - æ˜¯å¦å‡ºçŽ° NaN / Inf
     """
     losses = AverageMeter("loss")
     losses_supcon = AverageMeter("loss_supcon")
@@ -1555,14 +1559,14 @@ def train_one_epoch(
         labels = labels.to(device, non_blocking=True).long()
         global_index = global_index.to(device, non_blocking=True).long()
 
-        # map-style loader 输出为 [B, T, 3, H, W]
-        # 3D 卷积网络通常需要 [B, 3, T, H, W]
+        # map-style loader è¾“å‡ºä¸º [B, T, 3, H, W]
+        # 3D å·ç§¯ç½‘ç»œé€šå¸¸éœ€è¦ [B, 3, T, H, W]
         view1 = view1.permute(0, 2, 1, 3, 4).contiguous()
         view2 = view2.permute(0, 2, 1, 3, 4).contiguous()
 
         optimizer.zero_grad(set_to_none=True)
 
-        # 如果要观察参数是否真的更新，这里先对被跟踪参数做快照
+        # å¦‚æžœè¦è§‚å¯Ÿå‚æ•°æ˜¯å¦çœŸçš„æ›´æ–°ï¼Œè¿™é‡Œå…ˆå¯¹è¢«è·Ÿè¸ªå‚æ•°åšå¿«ç…§
         param_snapshot_before = None
         if debug_this_iter and debug_cfg.param_update_stats:
             param_snapshot_before = _snapshot_selected_params(model, tracked_param_names)
@@ -1582,20 +1586,20 @@ def train_one_epoch(
                 raise ValueError(f"Unsupported contrastive_loss_mode: {contrastive_loss_mode}")
             
             # ------------------------------------------------------------
-            # 根据 ablation 配置决定是否启用 prototype 相关分支
+            # æ ¹æ® ablation é…ç½®å†³å®šæ˜¯å¦å¯ç”¨ prototype ç›¸å…³åˆ†æ”¯
             #
             # use_proto_state:
-            #   是否需要 prototype bank / proto_ids / EMA update 这一整套状态
+            #   æ˜¯å¦éœ€è¦ prototype bank / proto_ids / EMA update è¿™ä¸€æ•´å¥—çŠ¶æ€
             #
             # use_proto_loss:
-            #   是否计算 prototype contrastive loss
+            #   æ˜¯å¦è®¡ç®— prototype contrastive loss
             #
             # use_rel_loss:
-            #   是否计算 prototype directional / relative loss
+            #   æ˜¯å¦è®¡ç®— prototype directional / relative loss
             #
-            # 注意：
-            #   contrastive_rel 模式下 use_proto_loss=False，但 use_proto_state=True，
-            #   因为 relative loss 仍然依赖 prototype bank
+            # æ³¨æ„ï¼š
+            #   contrastive_rel æ¨¡å¼ä¸‹ use_proto_loss=Falseï¼Œä½† use_proto_state=Trueï¼Œ
+            #   å› ä¸º relative loss ä»ç„¶ä¾èµ– prototype bank
             # ------------------------------------------------------------
             if (not use_proto_state) or (proto_state is None):
                 loss_proto = torch.zeros((), device=device, dtype=q.dtype)
@@ -1610,9 +1614,9 @@ def train_one_epoch(
                 valid_sample_mask_bank = proto_state.get("valid_sample_mask", None)
 
                 # ------------------------------------------------------------
-                # 安全构造 proto_ids：
-                # 1) 若 global_index 超出 sample_to_proto 范围，则设为 -1
-                # 2) 若 valid_sample_mask 显示该样本当前无效，则设为 -1
+                # å®‰å…¨æž„é€  proto_idsï¼š
+                # 1) è‹¥ global_index è¶…å‡º sample_to_proto èŒƒå›´ï¼Œåˆ™è®¾ä¸º -1
+                # 2) è‹¥ valid_sample_mask æ˜¾ç¤ºè¯¥æ ·æœ¬å½“å‰æ— æ•ˆï¼Œåˆ™è®¾ä¸º -1
                 # ------------------------------------------------------------
                 proto_ids = torch.full_like(global_index, fill_value=-1)
                 in_range_mask = (global_index >= 0) & (global_index < sample_to_proto.numel())
@@ -1631,7 +1635,7 @@ def train_one_epoch(
 
                     proto_ids[in_range_mask] = selected_proto
 
-                # 默认先置零，再按 ablation 开关决定是否真正计算
+                # é»˜è®¤å…ˆç½®é›¶ï¼Œå†æŒ‰ ablation å¼€å…³å†³å®šæ˜¯å¦çœŸæ­£è®¡ç®—
                 loss_proto = torch.zeros((), device=device, dtype=q.dtype)
                 loss_rel = torch.zeros((), device=device, dtype=q.dtype)
 
@@ -1672,9 +1676,9 @@ def train_one_epoch(
                     )
 
                 # ------------------------------------------------------------
-                # 最终总损失：
-                # 主损失始终存在；
-                # proto / rel 是否加入，由 ablation 开关决定
+                # æœ€ç»ˆæ€»æŸå¤±ï¼š
+                # ä¸»æŸå¤±å§‹ç»ˆå­˜åœ¨ï¼›
+                # proto / rel æ˜¯å¦åŠ å…¥ï¼Œç”± ablation å¼€å…³å†³å®š
                 # ------------------------------------------------------------
                 loss = loss_supcon
                 if use_proto_loss:
@@ -1683,7 +1687,7 @@ def train_one_epoch(
                     loss = loss + lambda_rel * loss_rel
 
         # -----------------------------
-        # 非有限值检查：在 backward 前做
+        # éžæœ‰é™å€¼æ£€æŸ¥ï¼šåœ¨ backward å‰åš
         # -----------------------------
         nonfinite_payload = None
         if debug_cfg.enabled and debug_cfg.nonfinite_check:
@@ -1702,7 +1706,7 @@ def train_one_epoch(
 
         scaler.scale(loss).backward()
 
-        # AMP 下若要看真实梯度范数，先 unscale 再统计
+        # AMP ä¸‹è‹¥è¦çœ‹çœŸå®žæ¢¯åº¦èŒƒæ•°ï¼Œå…ˆ unscale å†ç»Ÿè®¡
         if use_amp:
             scaler.unscale_(optimizer)
 
@@ -1725,9 +1729,9 @@ def train_one_epoch(
             )
 
         # ------------------------------------------------------------
-        # 只有在启用 prototype state 时，才进行真实 prototype bank 的 EMA 更新
-        # contrastive_only 模式下，这一步必须彻底关闭
-        # contrastive_rel 模式下，这一步仍然需要保留，因为 rel loss 依赖动态 prototype bank
+        # åªæœ‰åœ¨å¯ç”¨ prototype state æ—¶ï¼Œæ‰è¿›è¡ŒçœŸå®ž prototype bank çš„ EMA æ›´æ–°
+        # contrastive_only æ¨¡å¼ä¸‹ï¼Œè¿™ä¸€æ­¥å¿…é¡»å½»åº•å…³é—­
+        # contrastive_rel æ¨¡å¼ä¸‹ï¼Œè¿™ä¸€æ­¥ä»ç„¶éœ€è¦ä¿ç•™ï¼Œå› ä¸º rel loss ä¾èµ–åŠ¨æ€ prototype bank
         # ------------------------------------------------------------
         if use_proto_state and (proto_state is not None) and (proto_ids is not None):
             ema_update_prototype_bank_(
@@ -1746,7 +1750,7 @@ def train_one_epoch(
         losses_rel.update(loss_rel.item(), n=bs)
 
         # -----------------------------
-        # 常规训练日志
+        # å¸¸è§„è®­ç»ƒæ—¥å¿—
         # -----------------------------
         if is_main_process(rank) and ((step_idx % print_freq) == 0):
             log(
@@ -1762,7 +1766,7 @@ def train_one_epoch(
             )
 
         # -----------------------------
-        # Debug 日志
+        # Debug æ—¥å¿—
         # -----------------------------
         if debug_this_iter and is_main_process(rank):
             debug_payload: Dict[str, Any] = {
@@ -1782,15 +1786,15 @@ def train_one_epoch(
                 "running_avg_rel": float(losses_rel.average),
             }
 
-            # 1) batch 标签统计
+            # 1) batch æ ‡ç­¾ç»Ÿè®¡
             if debug_cfg.batch_label_stats:
                 debug_payload["batch_label_stats"] = _compute_batch_label_stats(labels)
 
-            # 2) q 特征统计
+            # 2) q ç‰¹å¾ç»Ÿè®¡
             if debug_cfg.feature_stats:
                 debug_payload["feature_stats"] = _compute_feature_stats(q)
 
-            # 3) prototype 分配统计
+            # 3) prototype åˆ†é…ç»Ÿè®¡
             if debug_cfg.proto_stats:
                 sample_to_proto = proto_state["sample_to_proto"] if proto_state is not None else None
                 valid_sample_mask_bank = proto_state.get("valid_sample_mask", None) if proto_state is not None else None
@@ -1802,19 +1806,19 @@ def train_one_epoch(
                     proto_state=proto_state,
                 )
 
-            # 4) 梯度统计
+            # 4) æ¢¯åº¦ç»Ÿè®¡
             if grad_payload is not None:
                 debug_payload["grad_stats"] = grad_payload
 
-            # 5) 参数更新统计
+            # 5) å‚æ•°æ›´æ–°ç»Ÿè®¡
             if param_update_payload is not None:
                 debug_payload["param_update_stats"] = param_update_payload
 
-            # 6) 非有限值统计
+            # 6) éžæœ‰é™å€¼ç»Ÿè®¡
             if nonfinite_payload is not None:
                 debug_payload["nonfinite_check"] = nonfinite_payload
 
-            # 简明打印版
+            # ç®€æ˜Žæ‰“å°ç‰ˆ
             log(f"[Debug][Epoch {epoch + 1:03d} Iter {step_idx}] lr={debug_payload['lr_list']}")
             log(
                 f"[Debug][LossScale] total={debug_payload['loss']:.4f}, "
@@ -1875,21 +1879,21 @@ def train_one_epoch(
 
 
 # ============================================================
-# 主 worker
+# ä¸» worker
 # ============================================================
 
 def worker(args) -> None:
     """
-    主训练入口。
+    ä¸»è®­ç»ƒå…¥å£ã€‚
 
-    整体流程：
+    æ•´ä½“æµç¨‹ï¼š
     ----------
-    1) 初始化单进程或 DDP
-    2) 构建模型、优化器、训练 loader
-    3) 解析类别数，并构造 per-class prototype 配置
-    4) 按 epoch 决定是否刷新 prototypes
-    5) 执行训练
-    6) 按设定间隔保存 checkpoint
+    1) åˆå§‹åŒ–å•è¿›ç¨‹æˆ– DDP
+    2) æž„å»ºæ¨¡åž‹ã€ä¼˜åŒ–å™¨ã€è®­ç»ƒ loader
+    3) è§£æžç±»åˆ«æ•°ï¼Œå¹¶æž„é€  per-class prototype é…ç½®
+    4) æŒ‰ epoch å†³å®šæ˜¯å¦åˆ·æ–° prototypes
+    5) æ‰§è¡Œè®­ç»ƒ
+    6) æŒ‰è®¾å®šé—´éš”ä¿å­˜ checkpoint
     """
     global GLOBAL_LOG_PATH, GLOBAL_LOG_TO_FILE
 
@@ -2053,10 +2057,10 @@ def worker(args) -> None:
                 )
 
             # ------------------------------------------------------------
-            # 是否需要进行 prototype refresh
+            # æ˜¯å¦éœ€è¦è¿›è¡Œ prototype refresh
             #
-            # 只有在当前 epoch 需要 prototype state 时，才允许 refresh。
-            # staged schedule 下，这可以保证前若干 epoch 是真正的 SupLoss-only。
+            # åªæœ‰åœ¨å½“å‰ epoch éœ€è¦ prototype state æ—¶ï¼Œæ‰å…è®¸ refreshã€‚
+            # staged schedule ä¸‹ï¼Œè¿™å¯ä»¥ä¿è¯å‰è‹¥å¹² epoch æ˜¯çœŸæ­£çš„ SupLoss-onlyã€‚
             # ------------------------------------------------------------
             need_refresh = False
             if use_proto_state_epoch:
@@ -2082,8 +2086,8 @@ def worker(args) -> None:
 
                 proto_state = broadcast_proto_state(proto_state, device=device, rank=rank)
             elif not use_proto_state_epoch:
-                # 明确保证当前 epoch 不使用 prototype state 时，不保留任何 prototype 状态。
-                # 对 staged schedule 来说，这保证前 50 个 epoch 不做 prototype refresh / EMA update。
+                # æ˜Žç¡®ä¿è¯å½“å‰ epoch ä¸ä½¿ç”¨ prototype state æ—¶ï¼Œä¸ä¿ç•™ä»»ä½• prototype çŠ¶æ€ã€‚
+                # å¯¹ staged schedule æ¥è¯´ï¼Œè¿™ä¿è¯å‰ 50 ä¸ª epoch ä¸åš prototype refresh / EMA updateã€‚
                 proto_state = None
 
             train_one_epoch(

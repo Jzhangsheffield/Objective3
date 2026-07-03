@@ -1,25 +1,25 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
 mapstyle_loader_rgb_depth.py
 
-适用于你新打包的 map-style RGB/Depth 数据集。
+é€‚ç”¨äºŽä½ æ–°æ‰“åŒ…çš„ map-style RGB/Depth æ•°æ®é›†ã€‚
 
-数据集结构（示例）：
+æ•°æ®é›†ç»“æž„ï¼ˆç¤ºä¾‹ï¼‰ï¼š
 Dataset/
-├── Train/
-│   ├── sample_0001/
-│   │   ├── rgb.pt
-│   │   ├── depth.pt
-│   │   └── label.txt
-│   ├── sample_0002/
-│   └── ...
-├── Train_manifest.jsonl
-├── sample_mapping.json
-└── dataset_meta.json
+â”œâ”€â”€ Train/
+â”‚   â”œâ”€â”€ sample_0001/
+â”‚   â”‚   â”œâ”€â”€ rgb.pt
+â”‚   â”‚   â”œâ”€â”€ depth.pt
+â”‚   â”‚   â””â”€â”€ label.txt
+â”‚   â”œâ”€â”€ sample_0002/
+â”‚   â””â”€â”€ ...
+â”œâ”€â”€ Train_manifest.jsonl
+â”œâ”€â”€ sample_mapping.json
+â””â”€â”€ dataset_meta.json
 
-manifest 每行示例：
+manifest æ¯è¡Œç¤ºä¾‹ï¼š
 {
   "sample_name": "sample_0001",
   "original_key": "N/cap_red_pen/run_11_clip_000030_left_elbow",
@@ -36,29 +36,29 @@ manifest 每行示例：
   "label_txt": "Train/sample_0001/label.txt"
 }
 
-本 loader 目标：
-1) 尽量保持你旧 WebDataset loader 的输出风格：
+æœ¬ loader ç›®æ ‡ï¼š
+1) å°½é‡ä¿æŒä½ æ—§ WebDataset loader çš„è¾“å‡ºé£Žæ ¼ï¼š
    - key
    - tier_actions
    - tier_ids
    - rgb / depth
-2) 支持：
-   - 只用 RGB
-   - 只用 Depth
+2) æ”¯æŒï¼š
+   - åªç”¨ RGB
+   - åªç”¨ Depth
    - RGB + Depth
 3) RGB:
-   - 支持单视角或 two-view
-   - 继续复用你现有的 spatial_augmentation.py
+   - æ”¯æŒå•è§†è§’æˆ– two-view
+   - ç»§ç»­å¤ç”¨ä½ çŽ°æœ‰çš„ spatial_augmentation.py
 4) Depth:
-   - 读取打包好的 depth.pt
-   - 默认做确定性 NEAREST resize 到固定尺寸，保证 batch 可 stack
-5) 使用 manifest 作为唯一索引来源，不再扫描目录
+   - è¯»å–æ‰“åŒ…å¥½çš„ depth.pt
+   - é»˜è®¤åšç¡®å®šæ€§ NEAREST resize åˆ°å›ºå®šå°ºå¯¸ï¼Œä¿è¯ batch å¯ stack
+5) ä½¿ç”¨ manifest ä½œä¸ºå”¯ä¸€ç´¢å¼•æ¥æºï¼Œä¸å†æ‰«æç›®å½•
 
-注意：
-- RGB 打包后通常为 uint8 [T,3,256,256]
-- Depth 打包后通常为 int32 [T,1,H,W]
-- 如果你的 spatial_augmentation.py 内部已经 ToDtype+Normalize，
-  那训练脚本里不要再对 RGB 重复 Normalize。
+æ³¨æ„ï¼š
+- RGB æ‰“åŒ…åŽé€šå¸¸ä¸º uint8 [T,3,256,256]
+- Depth æ‰“åŒ…åŽé€šå¸¸ä¸º int32 [T,1,H,W]
+- å¦‚æžœä½ çš„ spatial_augmentation.py å†…éƒ¨å·²ç» ToDtype+Normalizeï¼Œ
+  é‚£è®­ç»ƒè„šæœ¬é‡Œä¸è¦å†å¯¹ RGB é‡å¤ Normalizeã€‚
 """
 
 from __future__ import annotations
@@ -77,29 +77,33 @@ from torch.utils.data._utils.collate import default_collate
 from torchvision.transforms.v2 import functional as Fv2
 from torchvision.transforms import InterpolationMode
 
-# 你现有的空间增强文件
+# ä½ çŽ°æœ‰çš„ç©ºé—´å¢žå¼ºæ–‡ä»¶
 from aug.spatial_augmentation import TemporallyConsistentSpatialAugmentation, ValidationAugmentation
 
-# 新拆出来的时间增强文件
+# æ–°æ‹†å‡ºæ¥çš„æ—¶é—´å¢žå¼ºæ–‡ä»¶
 from aug.temporal_augmentation_adaptive import sample_indices_strict, sample_two_views_indices
 
 
 # ============================================================
-# 1) 配置
+# 1) é…ç½®
 # ============================================================
 
 @dataclass
 class PackedMultiModalConfig:
-    # -------- 时间采样 --------
+    # -------- æ—¶é—´é‡‡æ · --------
     n_frames: int = 16
 
-    # RGB 是否 two-view（对比学习）
+    # RGB æ˜¯å¦ two-viewï¼ˆå¯¹æ¯”å­¦ä¹ ï¼‰
     rgb_two_views: bool = False
 
-    # 启用哪些模态
+    # Camera-specific RGB key to use when manifest has fields such as "001484412812_rgb".
+    # record["rgb"] is still preferred when present; this is the fallback camera field.
+    rgb_camera_id: Optional[str] = "001484412812"
+
+    # å¯ç”¨å“ªäº›æ¨¡æ€
     use_modalities: Tuple[str, ...] = ("rgb", "depth")
 
-    # 缺失策略
+    # ç¼ºå¤±ç­–ç•¥
     missing_policy: str = "skip"  # or "pad"
 
     # -------- labels / tier --------
@@ -112,17 +116,17 @@ class PackedMultiModalConfig:
     # -------- train/val --------
     is_train: bool = True
 
-    # -------- RGB 空间增强参数 --------
+    # -------- RGB ç©ºé—´å¢žå¼ºå‚æ•° --------
     rgb_out_hw: Tuple[int, int] = (224, 224)
 
     # RandomResizedCrop
     rrc_scale: Tuple[float, float] = (0.6, 1.0)
     rrc_ratio: Tuple[float, float] = (0.75, 1.3333333333)
 
-    # 是否启用训练阶段随机 spatial augmentation
-    # 注意：这里不新增无随机增强 transform。
-    # 如果设为 False，则在 build_packed_mapstyle_dataset 中把各增强概率置 0，
-    # 但仍然使用 TemporallyConsistentSpatialAugmentation。
+    # æ˜¯å¦å¯ç”¨è®­ç»ƒé˜¶æ®µéšæœº spatial augmentation
+    # æ³¨æ„ï¼šè¿™é‡Œä¸æ–°å¢žæ— éšæœºå¢žå¼º transformã€‚
+    # å¦‚æžœè®¾ä¸º Falseï¼Œåˆ™åœ¨ build_packed_mapstyle_dataset ä¸­æŠŠå„å¢žå¼ºæ¦‚çŽ‡ç½® 0ï¼Œ
+    # ä½†ä»ç„¶ä½¿ç”¨ TemporallyConsistentSpatialAugmentationã€‚
     rgb_apply_spatial_aug: bool = True
 
     # Flip
@@ -144,31 +148,31 @@ class PackedMultiModalConfig:
     rgb_blur_kernel: int = 7
     rgb_blur_sigma: Tuple[float, float] = (0.1, 1.0)
 
-    # RGB normalize 参数（用于可视化反归一化）
+    # RGB normalize å‚æ•°ï¼ˆç”¨äºŽå¯è§†åŒ–åå½’ä¸€åŒ–ï¼‰
     rgb_mean: Tuple[float, float, float] = (0.356, 0.363, 0.367)
     rgb_std: Tuple[float, float, float] = (0.288, 0.271, 0.270)
 
-    # -------- Depth 输出尺寸 --------
+    # -------- Depth è¾“å‡ºå°ºå¯¸ --------
     depth_out_hw: Tuple[int, int] = (224, 224)
 
-    # pad 默认尺寸
+    # pad é»˜è®¤å°ºå¯¸
     default_rgb_hw: Tuple[int, int] = (256, 256)
     default_depth_hw: Tuple[int, int] = (224, 224)
 
     # Depth pad dtype
     default_depth_dtype: str = "int32"
 
-    # 由 build_loader 在运行时挂进去
+    # ç”± build_loader åœ¨è¿è¡Œæ—¶æŒ‚è¿›åŽ»
     rgb_transform: Optional[Any] = field(default=None, repr=False, compare=False)
 
 
 # ============================================================
-# 2) label_map 加载与 tier 映射
+# 2) label_map åŠ è½½ä¸Ž tier æ˜ å°„
 # ============================================================
 
 def load_label_map_json(path: Union[str, Path]) -> Dict[str, Dict[str, int]]:
     """
-    读取 label_map.json：
+    è¯»å– label_map.jsonï¼š
     {
       "tier1": {"cap": 0, ...},
       "tier2": {"cap_pen": 0, ...},
@@ -190,10 +194,10 @@ def load_label_map_json(path: Union[str, Path]) -> Dict[str, Dict[str, int]]:
 
 def build_label_map_from_manifest(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
     """
-    如果没有提供外部 label_map.json，就从 manifest 动态构造。
-    注意：
-    - 这种做法适合单 split 调试
-    - 正式 train/val/test 最好还是用统一 label_map.json
+    å¦‚æžœæ²¡æœ‰æä¾›å¤–éƒ¨ label_map.jsonï¼Œå°±ä»Ž manifest åŠ¨æ€æž„é€ ã€‚
+    æ³¨æ„ï¼š
+    - è¿™ç§åšæ³•é€‚åˆå• split è°ƒè¯•
+    - æ­£å¼ train/val/test æœ€å¥½è¿˜æ˜¯ç”¨ç»Ÿä¸€ label_map.json
     """
     out: Dict[str, Dict[str, int]] = {}
     for tier in ("tier1", "tier2", "tier3"):
@@ -235,7 +239,7 @@ def map_tier_actions_to_ids(
 
 
 # ============================================================
-# 3) 工具函数
+# 3) å·¥å…·å‡½æ•°
 # ============================================================
 
 def _normalize_modalities(use_modalities: Tuple[str, ...]) -> Tuple[str, ...]:
@@ -251,15 +255,15 @@ def _normalize_modalities(use_modalities: Tuple[str, ...]) -> Tuple[str, ...]:
 
 def _resize_depth_video_keep_dtype(video_tchw: torch.Tensor, out_hw: Tuple[int, int]) -> torch.Tensor:
     """
-    Depth resize：
-    - 输入：[T,1,H,W]，dtype 可能 int32/uint16/uint8
-    - 输出：[T,1,outH,outW]，dtype 尽量保持
+    Depth resizeï¼š
+    - è¾“å…¥ï¼š[T,1,H,W]ï¼Œdtype å¯èƒ½ int32/uint16/uint8
+    - è¾“å‡ºï¼š[T,1,outH,outW]ï¼Œdtype å°½é‡ä¿æŒ
 
-    做法：
-      1) 转 float32
+    åšæ³•ï¼š
+      1) è½¬ float32
       2) NEAREST resize
       3) round
-      4) cast 回原 dtype
+      4) cast å›žåŽŸ dtype
     """
     assert video_tchw.ndim == 4 and video_tchw.shape[1] == 1
     orig_dtype = video_tchw.dtype
@@ -289,7 +293,7 @@ def _resize_depth_video_keep_dtype(video_tchw: torch.Tensor, out_hw: Tuple[int, 
 
 def _make_zero_rgb(cfg: PackedMultiModalConfig) -> torch.Tensor:
     """
-    pad 模式下 RGB 零视频：
+    pad æ¨¡å¼ä¸‹ RGB é›¶è§†é¢‘ï¼š
     uint8 [T,3,H,W]
     """
     H, W = cfg.default_rgb_hw
@@ -298,7 +302,7 @@ def _make_zero_rgb(cfg: PackedMultiModalConfig) -> torch.Tensor:
 
 def _make_zero_depth(cfg: PackedMultiModalConfig) -> torch.Tensor:
     """
-    pad 模式下 Depth 零视频：[T,1,H,W]
+    pad æ¨¡å¼ä¸‹ Depth é›¶è§†é¢‘ï¼š[T,1,H,W]
     """
     H, W = cfg.default_depth_hw
     dtype_str = str(cfg.default_depth_dtype).lower()
@@ -331,9 +335,9 @@ def _load_manifest(manifest_path: Path) -> List[Dict[str, Any]]:
 
 class PackedRGBDepthMapDataset(Dataset):
     """
-    基于 manifest 的 map-style Dataset。
+    åŸºäºŽ manifest çš„ map-style Datasetã€‚
 
-    输出结构（尽量贴近旧 loader）：
+    è¾“å‡ºç»“æž„ï¼ˆå°½é‡è´´è¿‘æ—§ loaderï¼‰ï¼š
     {
       "key": str,
       "sample_name": str,
@@ -341,7 +345,7 @@ class PackedRGBDepthMapDataset(Dataset):
       "tier_ids": {...},
       "lighting": str,
       "pos": str,
-      "rgb": Tensor[T,3,H,W] 或 (view1, view2),
+      "rgb": Tensor[T,3,H,W] æˆ– (view1, view2),
       "depth": Tensor[T,1,H,W]
     }
     """
@@ -367,7 +371,7 @@ class PackedRGBDepthMapDataset(Dataset):
         self.records = _load_manifest(self.manifest_path)
 
         if label_map is None:
-            # 先尝试 cfg.label_map_path
+            # å…ˆå°è¯• cfg.label_map_path
             if self.cfg.label_map_path is not None:
                 label_map_path = Path(self.cfg.label_map_path)
                 if not label_map_path.is_absolute():
@@ -387,18 +391,32 @@ class PackedRGBDepthMapDataset(Dataset):
         if len(self.records) == 0:
             raise RuntimeError("No valid records found after manifest/path filtering.")
 
+    def _resolve_rgb_rel_from_record(self, rec: Dict[str, Any]) -> Optional[str]:
+        """
+        Resolve the RGB tensor path for one manifest record.
+
+        Priority:
+        1) generic record["rgb"] for older/single-camera manifests;
+        2) camera-specific record[f"{rgb_camera_id}_rgb"] for multi-camera Stage-2 manifests.
+        """
+        rgb_rel = rec.get("rgb", None)
+        if rgb_rel is not None:
+            return rgb_rel
+
+        camera_id = getattr(self.cfg, "rgb_camera_id", None)
+        if camera_id:
+            return rec.get(f"{camera_id}_rgb", None)
+
+        return None
     def _filter_valid_records(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        初始化阶段过滤掉路径缺失的样本，尽量贴近旧 loader 的 skip 行为。
+        åˆå§‹åŒ–é˜¶æ®µè¿‡æ»¤æŽ‰è·¯å¾„ç¼ºå¤±çš„æ ·æœ¬ï¼Œå°½é‡è´´è¿‘æ—§ loader çš„ skip è¡Œä¸ºã€‚
         """
         valid = []
         for rec in records:
             ok = True
             if "rgb" in self.cfg.use_modalities:
-                # 临时兼容 stage2 的脚本
-                rgb_rel = rec.get("rgb", None)
-                if rgb_rel is None:
-                    rgb_rel = rec.get("001484412812_rgb", None)
+                rgb_rel = self._resolve_rgb_rel_from_record(rec)
                 if rgb_rel is None or not (self.dataset_root / rgb_rel).is_file():
                     ok = False
             if "depth" in self.cfg.use_modalities:
@@ -413,10 +431,7 @@ class PackedRGBDepthMapDataset(Dataset):
         return len(self.records)
 
     def _load_rgb(self, rec: Dict[str, Any]) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        # 临时兼容 stage2 的脚本
-        rgb_rel = rec.get("rgb", None)
-        if rgb_rel is None:
-                    rgb_rel = rec.get("001484412812_rgb", None)
+        rgb_rel = self._resolve_rgb_rel_from_record(rec)
         if rgb_rel is None:
             if self.cfg.missing_policy == "skip":
                 raise FileNotFoundError(f"Record missing rgb path: {rec.get('sample_name', 'unknown')}")
@@ -432,7 +447,7 @@ class PackedRGBDepthMapDataset(Dataset):
         else:
             video = obj
 
-        # 期望 [T,3,H,W]
+        # æœŸæœ› [T,3,H,W]
         if not torch.is_tensor(video) or video.ndim != 4 or video.shape[1] != 3:
             raise ValueError(f"Invalid rgb tensor shape: {type(video)} / {getattr(video, 'shape', None)}")
 
@@ -473,7 +488,7 @@ class PackedRGBDepthMapDataset(Dataset):
         else:
             video = obj
 
-        # 期望 [T,1,H,W]，极少数也可能是 [T,C,H,W]
+        # æœŸæœ› [T,1,H,W]ï¼Œæžå°‘æ•°ä¹Ÿå¯èƒ½æ˜¯ [T,C,H,W]
         if not torch.is_tensor(video) or video.ndim != 4:
             raise ValueError(f"Invalid depth tensor shape: {type(video)} / {getattr(video, 'shape', None)}")
 
@@ -482,11 +497,11 @@ class PackedRGBDepthMapDataset(Dataset):
         idxs = sample_indices_strict(T, self.cfg.n_frames)
         v = video[idxs]
 
-        # 若意外出现多通道 depth，这里只要维度是 [T,C,H,W] 仍然支持
+        # è‹¥æ„å¤–å‡ºçŽ°å¤šé€šé“ depthï¼Œè¿™é‡Œåªè¦ç»´åº¦æ˜¯ [T,C,H,W] ä»ç„¶æ”¯æŒ
         if v.shape[1] == 1:
             v = _resize_depth_video_keep_dtype(v, out_hw=self.cfg.depth_out_hw)
         else:
-            # 多通道情况：逐通道 NEAREST resize
+            # å¤šé€šé“æƒ…å†µï¼šé€é€šé“ NEAREST resize
             outs = []
             for c in range(v.shape[1]):
                 vc = _resize_depth_video_keep_dtype(v[:, c:c+1], out_hw=self.cfg.depth_out_hw)
@@ -498,9 +513,9 @@ class PackedRGBDepthMapDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         rec = self.records[idx]
 
-        # 这里显式返回 map-style dataset 的连续全局索引 idx。
-        # 后续 prototype 构建、prototype contrastive loss、在线 EMA 更新
-        # 都依赖这个稳定索引来执行 sample_to_proto[global_index]。
+        # è¿™é‡Œæ˜¾å¼è¿”å›ž map-style dataset çš„è¿žç»­å…¨å±€ç´¢å¼• idxã€‚
+        # åŽç»­ prototype æž„å»ºã€prototype contrastive lossã€åœ¨çº¿ EMA æ›´æ–°
+        # éƒ½ä¾èµ–è¿™ä¸ªç¨³å®šç´¢å¼•æ¥æ‰§è¡Œ sample_to_proto[global_index]ã€‚
         out: Dict[str, Any] = {
             "key": rec.get("original_key", ""),
             "sample_name": rec.get("sample_name", ""),
@@ -536,9 +551,9 @@ class PackedRGBDepthMapDataset(Dataset):
 
 def packed_multimodal_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    自定义 collate：
-    - 保留 rgb two-view 为 (view1_batch, view2_batch)
-    - 其余字段尽量按默认规则 stack / list
+    è‡ªå®šä¹‰ collateï¼š
+    - ä¿ç•™ rgb two-view ä¸º (view1_batch, view2_batch)
+    - å…¶ä½™å­—æ®µå°½é‡æŒ‰é»˜è®¤è§„åˆ™ stack / list
     """
     if len(batch) == 0:
         raise RuntimeError("Empty batch in collate.")
@@ -549,20 +564,20 @@ def packed_multimodal_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
     for k in keys:
         vals = [b[k] for b in batch]
 
-        # RGB two-view：vals 是 [(v1,v2), (v1,v2), ...]
+        # RGB two-viewï¼švals æ˜¯ [(v1,v2), (v1,v2), ...]
         if k == "rgb" and isinstance(vals[0], (tuple, list)) and len(vals[0]) == 2:
             v1 = default_collate([x[0] for x in vals])
             v2 = default_collate([x[1] for x in vals])
             out[k] = (v1, v2)
             continue
 
-        # 普通 dict（例如 tier_actions / tier_ids）
+        # æ™®é€š dictï¼ˆä¾‹å¦‚ tier_actions / tier_idsï¼‰
         if isinstance(vals[0], dict):
             out[k] = {}
             subkeys = vals[0].keys()
             for sk in subkeys:
                 subv = [x[sk] for x in vals]
-                # 数值可 stack，字符串保留 list
+                # æ•°å€¼å¯ stackï¼Œå­—ç¬¦ä¸²ä¿ç•™ list
                 if torch.is_tensor(subv[0]):
                     out[k][sk] = default_collate(subv)
                 elif isinstance(subv[0], (int, float, bool)):
@@ -576,18 +591,18 @@ def packed_multimodal_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
             out[k] = default_collate(vals)
             continue
 
-        # 字符串等 -> list
+        # å­—ç¬¦ä¸²ç­‰ -> list
         out[k] = list(vals)
 
     return out
 
 
 # ============================================================
-# 6) 构建 DataLoader
+# 6) æž„å»º DataLoader
 # ============================================================
 
 # ============================================================
-# 6) 构建 Dataset / DataLoader
+# 6) æž„å»º Dataset / DataLoader
 # ============================================================
 
 def build_packed_mapstyle_dataset(
@@ -598,23 +613,23 @@ def build_packed_mapstyle_dataset(
     verify_paths_on_init: bool = True,
 ) -> PackedRGBDepthMapDataset:
     """
-    只负责构建 map-style Dataset。
+    åªè´Ÿè´£æž„å»º map-style Datasetã€‚
 
-    职责：
-    1) 规范化 use_modalities
-    2) 根据 train/val 挂载 RGB transform
-    3) 返回 PackedRGBDepthMapDataset
+    èŒè´£ï¼š
+    1) è§„èŒƒåŒ– use_modalities
+    2) æ ¹æ® train/val æŒ‚è½½ RGB transform
+    3) è¿”å›ž PackedRGBDepthMapDataset
 
-    这样拆开后，外部如果需要：
-    - 先创建 dataset
-    - 再创建 DistributedSampler
-    - 再包装成 DataLoader
-    会更自然，也不会重复构造 dataset。
+    è¿™æ ·æ‹†å¼€åŽï¼Œå¤–éƒ¨å¦‚æžœéœ€è¦ï¼š
+    - å…ˆåˆ›å»º dataset
+    - å†åˆ›å»º DistributedSampler
+    - å†åŒ…è£…æˆ DataLoader
+    ä¼šæ›´è‡ªç„¶ï¼Œä¹Ÿä¸ä¼šé‡å¤æž„é€  datasetã€‚
     """
     use_modalities = _normalize_modalities(cfg.use_modalities)
     cfg.use_modalities = use_modalities
 
-    # 只在启用 RGB 时配置 RGB transform
+    # åªåœ¨å¯ç”¨ RGB æ—¶é…ç½® RGB transform
     if cfg.is_train:
         if cfg.rgb_apply_spatial_aug:
             hflip_p = cfg.rgb_hflip_p
@@ -623,9 +638,9 @@ def build_packed_mapstyle_dataset(
             gray_p = cfg.rgb_gray_p
             blur_p = cfg.rgb_blur_p
         else:
-            # 不新增无随机增强 transform。
-            # 仍然使用 TemporallyConsistentSpatialAugmentation，
-            # 但把除 RandomResizedCrop 外的随机增强概率全部设为 0。
+            # ä¸æ–°å¢žæ— éšæœºå¢žå¼º transformã€‚
+            # ä»ç„¶ä½¿ç”¨ TemporallyConsistentSpatialAugmentationï¼Œ
+            # ä½†æŠŠé™¤ RandomResizedCrop å¤–çš„éšæœºå¢žå¼ºæ¦‚çŽ‡å…¨éƒ¨è®¾ä¸º 0ã€‚
             hflip_p = 0.0
             vflip_p = 0.0
             jitter_p = 0.0
@@ -683,11 +698,11 @@ def build_packed_mapstyle_loader_from_dataset(
     pin_memory: bool = False,
 ) -> DataLoader:
     """
-    只负责把已经构建好的 dataset 包装成 DataLoader。
+    åªè´Ÿè´£æŠŠå·²ç»æž„å»ºå¥½çš„ dataset åŒ…è£…æˆ DataLoaderã€‚
 
-    说明：
-    - 若 sampler 不为 None（例如 DistributedSampler），则必须关闭 shuffle
-    - collate_fn 固定使用 packed_multimodal_collate
+    è¯´æ˜Žï¼š
+    - è‹¥ sampler ä¸ä¸º Noneï¼ˆä¾‹å¦‚ DistributedSamplerï¼‰ï¼Œåˆ™å¿…é¡»å…³é—­ shuffle
+    - collate_fn å›ºå®šä½¿ç”¨ packed_multimodal_collate
     """
     loader_kwargs = dict(
         dataset=dataset,
@@ -723,14 +738,14 @@ def build_packed_mapstyle_loader(
     pin_memory: bool = False,
 ) -> DataLoader:
     """
-    兼容旧接口的薄封装。
+    å…¼å®¹æ—§æŽ¥å£çš„è–„å°è£…ã€‚
 
-    内部流程：
+    å†…éƒ¨æµç¨‹ï¼š
       build_packed_mapstyle_dataset(...)
       -> build_packed_mapstyle_loader_from_dataset(...)
 
-    这样旧代码基本不用改；
-    新代码如果想更清晰，也可以直接分别调用上面两个函数。
+    è¿™æ ·æ—§ä»£ç åŸºæœ¬ä¸ç”¨æ”¹ï¼›
+    æ–°ä»£ç å¦‚æžœæƒ³æ›´æ¸…æ™°ï¼Œä¹Ÿå¯ä»¥ç›´æŽ¥åˆ†åˆ«è°ƒç”¨ä¸Šé¢ä¸¤ä¸ªå‡½æ•°ã€‚
     """
     ds = build_packed_mapstyle_dataset(
         dataset_root=dataset_root,
@@ -754,7 +769,7 @@ def build_packed_mapstyle_loader(
 
 
 # ============================================================
-# 8) 构建 weighted sampler
+# 8) æž„å»º weighted sampler
 # ============================================================
 from collections import Counter
 from typing import Optional, Dict, Any, Tuple
@@ -771,46 +786,46 @@ def build_weighted_sampler_for_packed_dataset(
     verbose: bool = True,
 ) -> Tuple[WeightedRandomSampler, Dict[str, Any]]:
     """
-    为 PackedRGBDepthMapDataset 构建 WeightedRandomSampler。
+    ä¸º PackedRGBDepthMapDataset æž„å»º WeightedRandomSamplerã€‚
 
-    参数
+    å‚æ•°
     ----
     dataset : PackedRGBDepthMapDataset
-        已经构建好的 map-style 数据集对象。
-        本函数不会读取 rgb/depth 文件，只会利用 dataset.records 中的标签信息。
+        å·²ç»æž„å»ºå¥½çš„ map-style æ•°æ®é›†å¯¹è±¡ã€‚
+        æœ¬å‡½æ•°ä¸ä¼šè¯»å– rgb/depth æ–‡ä»¶ï¼Œåªä¼šåˆ©ç”¨ dataset.records ä¸­çš„æ ‡ç­¾ä¿¡æ¯ã€‚
 
     tier_for_sampling : str or None
-        指定按哪一层标签做重采样，可选:
+        æŒ‡å®šæŒ‰å“ªä¸€å±‚æ ‡ç­¾åšé‡é‡‡æ ·ï¼Œå¯é€‰:
             - "tier1"
             - "tier2"
             - "tier3"
-        若为 None：
-            - 如果 dataset.cfg.tier_mode 是 "tier1"/"tier2"/"tier3"，则自动使用它
-            - 如果 dataset.cfg.tier_mode == "all"，默认使用 "tier3"
+        è‹¥ä¸º Noneï¼š
+            - å¦‚æžœ dataset.cfg.tier_mode æ˜¯ "tier1"/"tier2"/"tier3"ï¼Œåˆ™è‡ªåŠ¨ä½¿ç”¨å®ƒ
+            - å¦‚æžœ dataset.cfg.tier_mode == "all"ï¼Œé»˜è®¤ä½¿ç”¨ "tier3"
 
     mode : str
-        类别权重构造方式：
+        ç±»åˆ«æƒé‡æž„é€ æ–¹å¼ï¼š
             - "inv"      : weight = 1 / count
             - "sqrt_inv" : weight = 1 / sqrt(count)
-        一般推荐先用 "sqrt_inv"，更稳，不容易过度重采样少数类。
+        ä¸€èˆ¬æŽ¨èå…ˆç”¨ "sqrt_inv"ï¼Œæ›´ç¨³ï¼Œä¸å®¹æ˜“è¿‡åº¦é‡é‡‡æ ·å°‘æ•°ç±»ã€‚
 
     replacement : bool
-        是否有放回采样。类别不平衡场景下通常应设为 True。
+        æ˜¯å¦æœ‰æ”¾å›žé‡‡æ ·ã€‚ç±»åˆ«ä¸å¹³è¡¡åœºæ™¯ä¸‹é€šå¸¸åº”è®¾ä¸º Trueã€‚
 
     num_samples : int or None
-        一个 epoch 抽取多少个样本。
-        若为 None，则默认等于 len(dataset)。
+        ä¸€ä¸ª epoch æŠ½å–å¤šå°‘ä¸ªæ ·æœ¬ã€‚
+        è‹¥ä¸º Noneï¼Œåˆ™é»˜è®¤ç­‰äºŽ len(dataset)ã€‚
 
     verbose : bool
-        是否打印一些统计信息。
+        æ˜¯å¦æ‰“å°ä¸€äº›ç»Ÿè®¡ä¿¡æ¯ã€‚
 
-    返回
+    è¿”å›ž
     ----
     sampler : WeightedRandomSampler
-        可直接传给 DataLoader(..., sampler=sampler, shuffle=False)
+        å¯ç›´æŽ¥ä¼ ç»™ DataLoader(..., sampler=sampler, shuffle=False)
 
     info : dict
-        调试信息，包括：
+        è°ƒè¯•ä¿¡æ¯ï¼ŒåŒ…æ‹¬ï¼š
             - tier_for_sampling
             - labels
             - class_counts
@@ -828,13 +843,13 @@ def build_weighted_sampler_for_packed_dataset(
         raise TypeError("dataset must have attribute 'cfg'.")
 
     # --------------------------------------------------------
-    # 1) 自动决定按哪个 tier 做采样
+    # 1) è‡ªåŠ¨å†³å®šæŒ‰å“ªä¸ª tier åšé‡‡æ ·
     # --------------------------------------------------------
     if tier_for_sampling is None:
         if dataset.cfg.tier_mode in ("tier1", "tier2", "tier3"):
             tier_for_sampling = dataset.cfg.tier_mode
         else:
-            # tier_mode == "all" 时，默认按最细粒度 tier3 采样
+            # tier_mode == "all" æ—¶ï¼Œé»˜è®¤æŒ‰æœ€ç»†ç²’åº¦ tier3 é‡‡æ ·
             tier_for_sampling = "tier3"
 
     if tier_for_sampling not in ("tier1", "tier2", "tier3"):
@@ -849,8 +864,8 @@ def build_weighted_sampler_for_packed_dataset(
     tier_label_map = dataset.label_map[tier_for_sampling]
 
     # --------------------------------------------------------
-    # 2) 从 manifest records 中提取每个样本的整数标签
-    #    注意：这里完全不走 __getitem__，避免真的加载视频文件
+    # 2) ä»Ž manifest records ä¸­æå–æ¯ä¸ªæ ·æœ¬çš„æ•´æ•°æ ‡ç­¾
+    #    æ³¨æ„ï¼šè¿™é‡Œå®Œå…¨ä¸èµ° __getitem__ï¼Œé¿å…çœŸçš„åŠ è½½è§†é¢‘æ–‡ä»¶
     # --------------------------------------------------------
     labels = []
     bad_indices = []
@@ -880,8 +895,8 @@ def build_weighted_sampler_for_packed_dataset(
     labels = torch.as_tensor(labels, dtype=torch.long)
 
     # --------------------------------------------------------
-    # 3) 统计当前 dataset 内各类别样本数
-    #    这里按“当前 split 中实际存在的样本”统计，而不是外部写死统计表
+    # 3) ç»Ÿè®¡å½“å‰ dataset å†…å„ç±»åˆ«æ ·æœ¬æ•°
+    #    è¿™é‡ŒæŒ‰â€œå½“å‰ split ä¸­å®žé™…å­˜åœ¨çš„æ ·æœ¬â€ç»Ÿè®¡ï¼Œè€Œä¸æ˜¯å¤–éƒ¨å†™æ­»ç»Ÿè®¡è¡¨
     # --------------------------------------------------------
     counter = Counter(labels.tolist())
 
@@ -895,7 +910,7 @@ def build_weighted_sampler_for_packed_dataset(
         class_counts_tensor[cls_id] = int(cnt)
 
     # --------------------------------------------------------
-    # 4) 构造类别权重
+    # 4) æž„é€ ç±»åˆ«æƒé‡
     # --------------------------------------------------------
     class_weights = torch.zeros_like(class_counts_tensor, dtype=torch.double)
 
@@ -913,13 +928,13 @@ def build_weighted_sampler_for_packed_dataset(
         class_weights[cls_id] = w
 
     # --------------------------------------------------------
-    # 5) 映射为每个样本的权重
+    # 5) æ˜ å°„ä¸ºæ¯ä¸ªæ ·æœ¬çš„æƒé‡
     # --------------------------------------------------------
     sample_weights = class_weights[labels]   # [N]
     sample_weights = sample_weights.to(torch.double)
 
     # --------------------------------------------------------
-    # 6) num_samples 默认等于数据集长度
+    # 6) num_samples é»˜è®¤ç­‰äºŽæ•°æ®é›†é•¿åº¦
     # --------------------------------------------------------
     if num_samples is None:
         num_samples = len(dataset)
@@ -951,7 +966,7 @@ def build_weighted_sampler_for_packed_dataset(
 
 
 #  ============================================================
-# 9) 可视化工具（调试增强是否生效）
+# 9) å¯è§†åŒ–å·¥å…·ï¼ˆè°ƒè¯•å¢žå¼ºæ˜¯å¦ç”Ÿæ•ˆï¼‰
 # ============================================================
 def _tensor_to_rgb_vis(
     frame_chw: torch.Tensor,
@@ -959,11 +974,11 @@ def _tensor_to_rgb_vis(
     std: Tuple[float, float, float],
 ) -> Any:
     """
-    把单帧 RGB Tensor[C,H,W] 转成可 imshow 的 numpy 数组 [H,W,C]。
+    æŠŠå•å¸§ RGB Tensor[C,H,W] è½¬æˆå¯ imshow çš„ numpy æ•°ç»„ [H,W,C]ã€‚
 
-    支持两种情况：
-    1) uint8 [0,255]：直接显示
-    2) float 且已 Normalize：按给定 mean/std 反归一化后显示
+    æ”¯æŒä¸¤ç§æƒ…å†µï¼š
+    1) uint8 [0,255]ï¼šç›´æŽ¥æ˜¾ç¤º
+    2) float ä¸”å·² Normalizeï¼šæŒ‰ç»™å®š mean/std åå½’ä¸€åŒ–åŽæ˜¾ç¤º
     """
     x = frame_chw.detach().cpu()
 
@@ -979,10 +994,10 @@ def _tensor_to_rgb_vis(
     mean_t = torch.tensor(mean, dtype=torch.float32).view(3, 1, 1)
     std_t = torch.tensor(std, dtype=torch.float32).view(3, 1, 1)
 
-    # 反归一化：x = x * std + mean
+    # åå½’ä¸€åŒ–ï¼šx = x * std + mean
     x = x * std_t + mean_t
 
-    # clip 到合法显示范围
+    # clip åˆ°åˆæ³•æ˜¾ç¤ºèŒƒå›´
     x = torch.clamp(x, 0.0, 1.0)
 
     # [C,H,W] -> [H,W,C]
@@ -993,18 +1008,18 @@ def _tensor_to_rgb_vis(
 
 def _tensor_to_depth_vis(frame_chw: torch.Tensor) -> Any:
     """
-    把单帧 Depth Tensor[1,H,W] 或 [C,H,W] 转成可 imshow 的 2D numpy。
+    æŠŠå•å¸§ Depth Tensor[1,H,W] æˆ– [C,H,W] è½¬æˆå¯ imshow çš„ 2D numpyã€‚
 
-    做法：
-    - 若多通道，只取第一个通道
-    - 用 min-max 拉伸到 0~1
+    åšæ³•ï¼š
+    - è‹¥å¤šé€šé“ï¼Œåªå–ç¬¬ä¸€ä¸ªé€šé“
+    - ç”¨ min-max æ‹‰ä¼¸åˆ° 0~1
     """
     x = frame_chw.detach().cpu()
 
     if x.ndim != 3:
         raise ValueError(f"Expected depth frame [C,H,W], got {tuple(x.shape)}")
 
-    # 只显示第一个通道
+    # åªæ˜¾ç¤ºç¬¬ä¸€ä¸ªé€šé“
     x = x[0].to(torch.float32)
 
     x_min = float(x.min())
@@ -1158,19 +1173,19 @@ def visualize_batch_sample(
 
 def main():
     """
-    你可以自行修改路径进行简单自测。
+    ä½ å¯ä»¥è‡ªè¡Œä¿®æ”¹è·¯å¾„è¿›è¡Œç®€å•è‡ªæµ‹ã€‚
     """
     dataset_root = r"C:\Junxi_data_for_training_speedup\mapstyle_dataset"
 
     cfg = PackedMultiModalConfig(
         n_frames=16,
-        use_modalities=("rgb", "depth"),   # 可以改成 ("rgb",) 或 ("depth",)
+        use_modalities=("rgb", "depth"),   # å¯ä»¥æ”¹æˆ ("rgb",) æˆ– ("depth",)
         missing_policy="skip",
         tier_mode="all",
         is_train=True,
         rgb_out_hw=(224, 224),
         depth_out_hw=(224, 224),
-        rgb_two_views=True,   # two-view 时更容易观察增强是否不同
+        rgb_two_views=True,   # two-view æ—¶æ›´å®¹æ˜“è§‚å¯Ÿå¢žå¼ºæ˜¯å¦ä¸åŒ
         label_map_path=r"C:\Junxi_data_for_training_speedup\mapstyle_dataset\label_map.json",
     )
 
@@ -1207,21 +1222,22 @@ def main():
             print("  depth:", tuple(batch["depth"].shape), batch["depth"].dtype)
 
         # ====================================================
-        # 可视化：看第 0 个样本的若干帧
+        # å¯è§†åŒ–ï¼šçœ‹ç¬¬ 0 ä¸ªæ ·æœ¬çš„è‹¥å¹²å¸§
         # ====================================================
         visualize_batch_sample(
             cfg=cfg,
             batch=batch,
-            sample_idx=0,      # 查看 batch 中第一个样本
-            max_frames=16,      # 最多显示 4 帧
-            save_path=None,    # 改成路径字符串可直接保存
+            sample_idx=0,      # æŸ¥çœ‹ batch ä¸­ç¬¬ä¸€ä¸ªæ ·æœ¬
+            max_frames=16,      # æœ€å¤šæ˜¾ç¤º 4 å¸§
+            save_path=None,    # æ”¹æˆè·¯å¾„å­—ç¬¦ä¸²å¯ç›´æŽ¥ä¿å­˜
             # save_path="debug_aug_sample.png"
         )
 
-        # 只看一个 batch 就退出，避免一直弹窗
+        # åªçœ‹ä¸€ä¸ª batch å°±é€€å‡ºï¼Œé¿å…ä¸€ç›´å¼¹çª—
         break
 
 
 
 if __name__ == "__main__":
     main()
+

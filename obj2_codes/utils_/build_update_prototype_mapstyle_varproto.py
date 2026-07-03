@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from __future__ import annotations
@@ -24,56 +24,56 @@ from .mapstype_dataloader_with_index import (
 @dataclass
 class PrototypeRefreshConfig:
     """
-    控制 prototype 刷新过程的配置。
+    æŽ§åˆ¶ prototype åˆ·æ–°è¿‡ç¨‹çš„é…ç½®ã€‚
 
-    这个版本对应“每个类别的 prototype 数量可以不同”的场景。
-    与固定 prototype 版本相比，最大的差异是：
+    è¿™ä¸ªç‰ˆæœ¬å¯¹åº”â€œæ¯ä¸ªç±»åˆ«çš„ prototype æ•°é‡å¯ä»¥ä¸åŒâ€çš„åœºæ™¯ã€‚
+    ä¸Žå›ºå®š prototype ç‰ˆæœ¬ç›¸æ¯”ï¼Œæœ€å¤§çš„å·®å¼‚æ˜¯ï¼š
 
-        - 不再使用单个 num_prototypes
-        - 而是使用 num_prototypes_per_class / default_num_prototypes
+        - ä¸å†ä½¿ç”¨å•ä¸ª num_prototypes
+        - è€Œæ˜¯ä½¿ç”¨ num_prototypes_per_class / default_num_prototypes
 
-    参数：
+    å‚æ•°ï¼š
     ------
     tier_mode:
-        使用哪个 tier 的标签做类别 id，例如 tier1 / tier2 / tier3。
+        ä½¿ç”¨å“ªä¸ª tier çš„æ ‡ç­¾åšç±»åˆ« idï¼Œä¾‹å¦‚ tier1 / tier2 / tier3ã€‚
 
     num_prototypes_per_class:
-        每个类别希望生成多少个 prototype。
-        长度应等于 num_classes。
-        若为 None，则所有类别都使用 default_num_prototypes。
+        æ¯ä¸ªç±»åˆ«å¸Œæœ›ç”Ÿæˆå¤šå°‘ä¸ª prototypeã€‚
+        é•¿åº¦åº”ç­‰äºŽ num_classesã€‚
+        è‹¥ä¸º Noneï¼Œåˆ™æ‰€æœ‰ç±»åˆ«éƒ½ä½¿ç”¨ default_num_prototypesã€‚
 
     default_num_prototypes:
-        当 num_prototypes_per_class 为 None 时，所有类别统一使用的默认值。
+        å½“ num_prototypes_per_class ä¸º None æ—¶ï¼Œæ‰€æœ‰ç±»åˆ«ç»Ÿä¸€ä½¿ç”¨çš„é»˜è®¤å€¼ã€‚
 
     random_state / n_init / max_iter:
-        sklearn KMeans 的超参数。
+        sklearn KMeans çš„è¶…å‚æ•°ã€‚
 
     batch_size / num_workers:
-        refresh 阶段专用 DataLoader 的 batch_size / num_workers。
+        refresh é˜¶æ®µä¸“ç”¨ DataLoader çš„ batch_size / num_workersã€‚
 
     pin_memory / prefetch_factor:
-        refresh 阶段专用 DataLoader 设置。
+        refresh é˜¶æ®µä¸“ç”¨ DataLoader è®¾ç½®ã€‚
 
     verify_paths_on_init:
-        构建 refresh 数据集时是否在初始化阶段检查路径有效性。
-        这个值最好与训练集构建保持一致，避免因为过滤规则不同而导致 global_index 对不上。
+        æž„å»º refresh æ•°æ®é›†æ—¶æ˜¯å¦åœ¨åˆå§‹åŒ–é˜¶æ®µæ£€æŸ¥è·¯å¾„æœ‰æ•ˆæ€§ã€‚
+        è¿™ä¸ªå€¼æœ€å¥½ä¸Žè®­ç»ƒé›†æž„å»ºä¿æŒä¸€è‡´ï¼Œé¿å…å› ä¸ºè¿‡æ»¤è§„åˆ™ä¸åŒè€Œå¯¼è‡´ global_index å¯¹ä¸ä¸Šã€‚
 
     device:
-        refresh 阶段所使用的设备。
+        refresh é˜¶æ®µæ‰€ä½¿ç”¨çš„è®¾å¤‡ã€‚
 
     require_main_process_only:
-        若为 True，则只允许主进程执行 refresh。
-        这是当前最稳妥、最直接的使用方式。
+        è‹¥ä¸º Trueï¼Œåˆ™åªå…è®¸ä¸»è¿›ç¨‹æ‰§è¡Œ refreshã€‚
+        è¿™æ˜¯å½“å‰æœ€ç¨³å¦¥ã€æœ€ç›´æŽ¥çš„ä½¿ç”¨æ–¹å¼ã€‚
 
     enable_prototype_temperature_scaling:
-        是否为每个 prototype 估计一个相对温度缩放系数。
+        æ˜¯å¦ä¸ºæ¯ä¸ª prototype ä¼°è®¡ä¸€ä¸ªç›¸å¯¹æ¸©åº¦ç¼©æ”¾ç³»æ•°ã€‚
 
     proto_base_temperature:
-        prototype 对比损失的全局温度。若启用 prototype 温度缩放，
-        这里会作为 density 归一化的目标温度。
+        prototype å¯¹æ¯”æŸå¤±çš„å…¨å±€æ¸©åº¦ã€‚è‹¥å¯ç”¨ prototype æ¸©åº¦ç¼©æ”¾ï¼Œ
+        è¿™é‡Œä¼šä½œä¸º density å½’ä¸€åŒ–çš„ç›®æ ‡æ¸©åº¦ã€‚
 
     proto_temperature_eps:
-        数值稳定项。
+        æ•°å€¼ç¨³å®šé¡¹ã€‚
     """
     tier_mode: str = "tier1"
     num_prototypes_per_class: Optional[List[int]] = None
@@ -91,6 +91,7 @@ class PrototypeRefreshConfig:
 
     rgb_mean: Tuple[float, float, float] = (0.356, 0.363, 0.367)
     rgb_std: Tuple[float, float, float] = (0.288, 0.271, 0.270)
+    rgb_camera_id: Optional[str] = "001484412812"
 
     device: Optional[torch.device] = None
     require_main_process_only: bool = True
@@ -101,11 +102,11 @@ class PrototypeRefreshConfig:
 
 
 # ============================================================
-# 基础工具
+# åŸºç¡€å·¥å…·
 # ============================================================
 
 def is_main_process() -> bool:
-    """判断当前进程是否为主进程。单进程模式下始终返回 True。"""
+    """åˆ¤æ–­å½“å‰è¿›ç¨‹æ˜¯å¦ä¸ºä¸»è¿›ç¨‹ã€‚å•è¿›ç¨‹æ¨¡å¼ä¸‹å§‹ç»ˆè¿”å›ž Trueã€‚"""
     if (not dist.is_available()) or (not dist.is_initialized()):
         return True
     return dist.get_rank() == 0
@@ -114,11 +115,11 @@ def is_main_process() -> bool:
 
 def _resolve_label_map_path(args) -> Path:
     """
-    解析 label_map.json 的绝对路径。
+    è§£æž label_map.json çš„ç»å¯¹è·¯å¾„ã€‚
 
-    支持两种写法：
-    1) 直接传绝对路径
-    2) 传相对于 dataset_root 的相对路径
+    æ”¯æŒä¸¤ç§å†™æ³•ï¼š
+    1) ç›´æŽ¥ä¼ ç»å¯¹è·¯å¾„
+    2) ä¼ ç›¸å¯¹äºŽ dataset_root çš„ç›¸å¯¹è·¯å¾„
     """
     path = Path(args.label_map_json)
     if path.is_absolute():
@@ -128,7 +129,7 @@ def _resolve_label_map_path(args) -> Path:
 
 
 def _unwrap_model(model: torch.nn.Module) -> torch.nn.Module:
-    """若模型被 DDP 包裹，则返回 model.module；否则原样返回。"""
+    """è‹¥æ¨¡åž‹è¢« DDP åŒ…è£¹ï¼Œåˆ™è¿”å›ž model.moduleï¼›å¦åˆ™åŽŸæ ·è¿”å›žã€‚"""
     return model.module if hasattr(model, "module") else model
 
 
@@ -138,26 +139,26 @@ def _extract_single_view_and_labels_and_indices(
     tier_mode: str,
 ):
     """
-    从 refresh 阶段的 batch 中提取：
-        - 单个 RGB view
+    ä»Ž refresh é˜¶æ®µçš„ batch ä¸­æå–ï¼š
+        - å•ä¸ª RGB view
         - labels
         - global indices
 
-    预期输入：
+    é¢„æœŸè¾“å…¥ï¼š
         batch["rgb"]       -> Tensor[B, T, 3, H, W]
-        batch["tier_ids"]  -> dict 或 Tensor
+        batch["tier_ids"]  -> dict æˆ– Tensor
         batch["global_index"] / batch["idx"] / batch["sample_id"] -> LongTensor[B]
 
-    返回：
+    è¿”å›žï¼š
     ------
     rgb:
-        单视角 RGB clip，形状 [B, T, 3, H, W]。
+        å•è§†è§’ RGB clipï¼Œå½¢çŠ¶ [B, T, 3, H, W]ã€‚
 
     labels:
-        当前 tier 的标签，形状 [B]。
+        å½“å‰ tier çš„æ ‡ç­¾ï¼Œå½¢çŠ¶ [B]ã€‚
 
     indices:
-        样本在整个 map-style 数据集中的 global index，形状 [B]。
+        æ ·æœ¬åœ¨æ•´ä¸ª map-style æ•°æ®é›†ä¸­çš„ global indexï¼Œå½¢çŠ¶ [B]ã€‚
     """
     rgb = batch["rgb"]
     if isinstance(rgb, dict):
@@ -188,7 +189,7 @@ def _extract_single_view_and_labels_and_indices(
 
 
 # ============================================================
-# 构建 refresh 阶段专用 loader
+# æž„å»º refresh é˜¶æ®µä¸“ç”¨ loader
 # ============================================================
 
 def build_feature_extraction_loader(
@@ -196,18 +197,18 @@ def build_feature_extraction_loader(
     cfg: PrototypeRefreshConfig,
 ) -> torch.utils.data.DataLoader:
     """
-    构建 refresh 阶段专用的 map-style DataLoader。
+    æž„å»º refresh é˜¶æ®µä¸“ç”¨çš„ map-style DataLoaderã€‚
 
-    与训练阶段 loader 的关键区别：
+    ä¸Žè®­ç»ƒé˜¶æ®µ loader çš„å…³é”®åŒºåˆ«ï¼š
     --------------------------------
     1) rgb_two_views=False
-       refresh 只需要单个 clip，不需要 MoCo 的双视角输出。
+       refresh åªéœ€è¦å•ä¸ª clipï¼Œä¸éœ€è¦ MoCo çš„åŒè§†è§’è¾“å‡ºã€‚
 
     2) is_train=False
-       refresh 使用确定性的验证式变换，避免随机增强干扰聚类结果。
+       refresh ä½¿ç”¨ç¡®å®šæ€§çš„éªŒè¯å¼å˜æ¢ï¼Œé¿å…éšæœºå¢žå¼ºå¹²æ‰°èšç±»ç»“æžœã€‚
 
     3) shuffle=False, drop_last=False
-       refresh 必须扫完整个训练集，并保持 global_index 对齐。
+       refresh å¿…é¡»æ‰«å®Œæ•´ä¸ªè®­ç»ƒé›†ï¼Œå¹¶ä¿æŒ global_index å¯¹é½ã€‚
     """
     label_map_path = _resolve_label_map_path(args)
     label_map = load_label_map_json(label_map_path)
@@ -215,6 +216,7 @@ def build_feature_extraction_loader(
     cfg_loader = PackedMultiModalConfig(
         n_frames=args.n_frames,
         rgb_two_views=False,
+        rgb_camera_id=cfg.rgb_camera_id,
         use_modalities=("rgb",),
         missing_policy="skip",
         load_labels=True,
@@ -247,7 +249,7 @@ def build_feature_extraction_loader(
 
 
 # ============================================================
-# 全量提特征
+# å…¨é‡æç‰¹å¾
 # ============================================================
 
 @torch.no_grad()
@@ -259,9 +261,9 @@ def extract_features_momentum(
     main_process_only: bool = True,
 ) -> Dict[str, torch.Tensor]:
     """
-    使用 MoCo 的 momentum encoder（encoder_k）对整个 loader 提取特征。
+    ä½¿ç”¨ MoCo çš„ momentum encoderï¼ˆencoder_kï¼‰å¯¹æ•´ä¸ª loader æå–ç‰¹å¾ã€‚
 
-    返回：
+    è¿”å›žï¼š
     ------
     {
         "indices": LongTensor[N],
@@ -269,11 +271,11 @@ def extract_features_momentum(
         "feats":   FloatTensor[N, D],
     }
 
-    说明：
+    è¯´æ˜Žï¼š
     ------
-    1) 这里提取的是 encoder_k 的输出。
-    2) 特征会在返回前做 L2 normalize。
-    3) 当前实现默认推荐只在主进程执行这个过程。
+    1) è¿™é‡Œæå–çš„æ˜¯ encoder_k çš„è¾“å‡ºã€‚
+    2) ç‰¹å¾ä¼šåœ¨è¿”å›žå‰åš L2 normalizeã€‚
+    3) å½“å‰å®žçŽ°é»˜è®¤æŽ¨èåªåœ¨ä¸»è¿›ç¨‹æ‰§è¡Œè¿™ä¸ªè¿‡ç¨‹ã€‚
     """
     if main_process_only and (not is_main_process()):
         return {}
@@ -296,8 +298,8 @@ def extract_features_momentum(
         labels = labels.to(device, non_blocking=True).long()
         indices = indices.to(device, non_blocking=True).long()
 
-        # map-style loader 输出为 [B, T, 3, H, W]
-        # 3D 卷积网络通常需要 [B, 3, T, H, W]
+        # map-style loader è¾“å‡ºä¸º [B, T, 3, H, W]
+        # 3D å·ç§¯ç½‘ç»œé€šå¸¸éœ€è¦ [B, 3, T, H, W]
         rgb = rgb.permute(0, 2, 1, 3, 4).contiguous()
 
         feats = model_u.encoder_k(rgb)
@@ -325,7 +327,7 @@ def extract_features_momentum(
 
 
 # ============================================================
-# 按类别分组
+# æŒ‰ç±»åˆ«åˆ†ç»„
 # ============================================================
 
 def group_features_by_class(
@@ -334,9 +336,9 @@ def group_features_by_class(
     feats: torch.Tensor,
 ) -> Dict[int, Dict[str, torch.Tensor]]:
     """
-    将全量样本按 class_id 分组，便于后续“每类单独做 KMeans”。
+    å°†å…¨é‡æ ·æœ¬æŒ‰ class_id åˆ†ç»„ï¼Œä¾¿äºŽåŽç»­â€œæ¯ç±»å•ç‹¬åš KMeansâ€ã€‚
 
-    返回格式：
+    è¿”å›žæ ¼å¼ï¼š
     ----------
     grouped[class_id] = {
         "indices": LongTensor[n_c],
@@ -367,22 +369,22 @@ def group_features_by_class(
 
 
 # ============================================================
-# KMeans 与 prototype 温度估计
+# KMeans ä¸Ž prototype æ¸©åº¦ä¼°è®¡
 # ============================================================
 
 def _pad_1d_to_fixed_k(values: np.ndarray, target_k: int) -> np.ndarray:
     """
-    将一维数组补齐到固定长度 target_k。
+    å°†ä¸€ç»´æ•°ç»„è¡¥é½åˆ°å›ºå®šé•¿åº¦ target_kã€‚
 
-    在 varproto 版本中，prototype_bank 的空间形状仍然采用 [C, M_max, D]，
-    其中 M_max = max(num_prototypes_per_class)。
+    åœ¨ varproto ç‰ˆæœ¬ä¸­ï¼Œprototype_bank çš„ç©ºé—´å½¢çŠ¶ä»ç„¶é‡‡ç”¨ [C, M_max, D]ï¼Œ
+    å…¶ä¸­ M_max = max(num_prototypes_per_class)ã€‚
 
-    因此，对于某个类别，若它实际只使用 k_eff 个 prototype，
-    那么它的相对温度数组也需要补齐到 M_max，才能与 bank 对齐。
+    å› æ­¤ï¼Œå¯¹äºŽæŸä¸ªç±»åˆ«ï¼Œè‹¥å®ƒå®žé™…åªä½¿ç”¨ k_eff ä¸ª prototypeï¼Œ
+    é‚£ä¹ˆå®ƒçš„ç›¸å¯¹æ¸©åº¦æ•°ç»„ä¹Ÿéœ€è¦è¡¥é½åˆ° M_maxï¼Œæ‰èƒ½ä¸Ž bank å¯¹é½ã€‚
 
-    补齐策略：
-        - 若已有值，则重复最后一个值
-        - 若本身为空，则调用方不应走到这里
+    è¡¥é½ç­–ç•¥ï¼š
+        - è‹¥å·²æœ‰å€¼ï¼Œåˆ™é‡å¤æœ€åŽä¸€ä¸ªå€¼
+        - è‹¥æœ¬èº«ä¸ºç©ºï¼Œåˆ™è°ƒç”¨æ–¹ä¸åº”èµ°åˆ°è¿™é‡Œ
     """
     k_eff = values.shape[0]
     if k_eff == target_k:
@@ -409,31 +411,31 @@ def _compute_proto_relative_temperatures(
     log_count_bias: float = 10.0,
 ) -> torch.Tensor:
     """
-    为当前类别中的每个 prototype 计算相对温度缩放系数。
+    ä¸ºå½“å‰ç±»åˆ«ä¸­çš„æ¯ä¸ª prototype è®¡ç®—ç›¸å¯¹æ¸©åº¦ç¼©æ”¾ç³»æ•°ã€‚
 
-    这里采用与 PCL density 逻辑兼容的方式：
-        1) 先估计每个簇的 density
-        2) 对 density 做分位裁剪
-        3) 将 density 的均值缩放到 base_temperature
-        4) 再转换成“相对倍率”返回
+    è¿™é‡Œé‡‡ç”¨ä¸Ž PCL density é€»è¾‘å…¼å®¹çš„æ–¹å¼ï¼š
+        1) å…ˆä¼°è®¡æ¯ä¸ªç°‡çš„ density
+        2) å¯¹ density åšåˆ†ä½è£å‰ª
+        3) å°† density çš„å‡å€¼ç¼©æ”¾åˆ° base_temperature
+        4) å†è½¬æ¢æˆâ€œç›¸å¯¹å€çŽ‡â€è¿”å›ž
 
-    返回值含义：
+    è¿”å›žå€¼å«ä¹‰ï¼š
     ------------
-    返回的是 rel_temp，而不是最终温度本身。
+    è¿”å›žçš„æ˜¯ rel_tempï¼Œè€Œä¸æ˜¯æœ€ç»ˆæ¸©åº¦æœ¬èº«ã€‚
 
-    若训练时在 prototype loss 中使用：
+    è‹¥è®­ç»ƒæ—¶åœ¨ prototype loss ä¸­ä½¿ç”¨ï¼š
         tau_eff = temperature * rel_temp
 
-    并且传入的 temperature == base_temperature，
-    那么 tau_eff 就等于这里估计出来的 density 温度。
+    å¹¶ä¸”ä¼ å…¥çš„ temperature == base_temperatureï¼Œ
+    é‚£ä¹ˆ tau_eff å°±ç­‰äºŽè¿™é‡Œä¼°è®¡å‡ºæ¥çš„ density æ¸©åº¦ã€‚
 
-    若不启用 scaling，则直接返回全 1。
+    è‹¥ä¸å¯ç”¨ scalingï¼Œåˆ™ç›´æŽ¥è¿”å›žå…¨ 1ã€‚
 
-    注意：
+    æ³¨æ„ï¼š
     ------
-    这里的 target_k 不是全局的 M_max，
-    而是“该类别真正有效的 prototype 个数 k_eff”。
-    之后再由调用方将结果写入前 k_eff 个槽位。
+    è¿™é‡Œçš„ target_k ä¸æ˜¯å…¨å±€çš„ M_maxï¼Œ
+    è€Œæ˜¯â€œè¯¥ç±»åˆ«çœŸæ­£æœ‰æ•ˆçš„ prototype ä¸ªæ•° k_effâ€ã€‚
+    ä¹‹åŽå†ç”±è°ƒç”¨æ–¹å°†ç»“æžœå†™å…¥å‰ k_eff ä¸ªæ§½ä½ã€‚
     """
     if not enable_scaling:
         return torch.ones((target_k,), dtype=torch.float32)
@@ -507,40 +509,40 @@ def run_per_class_kmeans(
     proto_temperature_eps: float = 1e-6,
 ) -> Dict[str, Any]:
     """
-    对每个类别单独执行 KMeans，并构建训练阶段所需的 prototype state。
+    å¯¹æ¯ä¸ªç±»åˆ«å•ç‹¬æ‰§è¡Œ KMeansï¼Œå¹¶æž„å»ºè®­ç»ƒé˜¶æ®µæ‰€éœ€çš„ prototype stateã€‚
 
-    这个 varproto 版本的核心设计是：
+    è¿™ä¸ª varproto ç‰ˆæœ¬çš„æ ¸å¿ƒè®¾è®¡æ˜¯ï¼š
     --------------------------------
-    1) 对外仍然返回一个致密张量 prototype_bank，形状固定为 [C, M_max, D]
-       其中 M_max = max(num_prototypes_per_class)
+    1) å¯¹å¤–ä»ç„¶è¿”å›žä¸€ä¸ªè‡´å¯†å¼ é‡ prototype_bankï¼Œå½¢çŠ¶å›ºå®šä¸º [C, M_max, D]
+       å…¶ä¸­ M_max = max(num_prototypes_per_class)
 
-    2) 但每个类别真正有效的 prototype 个数由 class_num_prototypes[cls] 指定
-       只有 bank[cls, :class_num_prototypes[cls]] 才是有效槽位
+    2) ä½†æ¯ä¸ªç±»åˆ«çœŸæ­£æœ‰æ•ˆçš„ prototype ä¸ªæ•°ç”± class_num_prototypes[cls] æŒ‡å®š
+       åªæœ‰ bank[cls, :class_num_prototypes[cls]] æ‰æ˜¯æœ‰æ•ˆæ§½ä½
 
-    3) 所有下游模块（prototype loss / directional loss / EMA update）
-       都应该使用 class_num_prototypes 来过滤 padded 槽位
+    3) æ‰€æœ‰ä¸‹æ¸¸æ¨¡å—ï¼ˆprototype loss / directional loss / EMA updateï¼‰
+       éƒ½åº”è¯¥ä½¿ç”¨ class_num_prototypes æ¥è¿‡æ»¤ padded æ§½ä½
 
-    返回的核心字段：
+    è¿”å›žçš„æ ¸å¿ƒå­—æ®µï¼š
     ------------------
     prototype_bank:
-        [C, M_max, D]，致密存储的 prototype bank。
+        [C, M_max, D]ï¼Œè‡´å¯†å­˜å‚¨çš„ prototype bankã€‚
 
     proto_rel_temperature_bank:
-        [C, M_max]，每个 prototype 对应的相对温度倍率。
-        对于 padded 槽位，默认保持为 1。
+        [C, M_max]ï¼Œæ¯ä¸ª prototype å¯¹åº”çš„ç›¸å¯¹æ¸©åº¦å€çŽ‡ã€‚
+        å¯¹äºŽ padded æ§½ä½ï¼Œé»˜è®¤ä¿æŒä¸º 1ã€‚
 
     class_num_prototypes:
-        [C]，记录每个类别当前真正有效的 prototype 数量。
+        [C]ï¼Œè®°å½•æ¯ä¸ªç±»åˆ«å½“å‰çœŸæ­£æœ‰æ•ˆçš„ prototype æ•°é‡ã€‚
 
     sample_to_proto:
-        [N_slot]，记录每个 global_index 属于该类别内部的哪个 prototype。
-        注意这里存的是“类内 prototype id”，范围是 [0, class_num_prototypes[cls)-1]。
+        [N_slot]ï¼Œè®°å½•æ¯ä¸ª global_index å±žäºŽè¯¥ç±»åˆ«å†…éƒ¨çš„å“ªä¸ª prototypeã€‚
+        æ³¨æ„è¿™é‡Œå­˜çš„æ˜¯â€œç±»å†… prototype idâ€ï¼ŒèŒƒå›´æ˜¯ [0, class_num_prototypes[cls)-1]ã€‚
 
     sample_to_class:
-        [N_slot]，记录每个 global_index 的类别 id。
+        [N_slot]ï¼Œè®°å½•æ¯ä¸ª global_index çš„ç±»åˆ« idã€‚
 
     valid_sample_mask:
-        [N_slot]，标记哪些 global_index 在 refresh 数据集中实际有效。
+        [N_slot]ï¼Œæ ‡è®°å“ªäº› global_index åœ¨ refresh æ•°æ®é›†ä¸­å®žé™…æœ‰æ•ˆã€‚
     """
     if len(num_prototypes_per_class) != num_classes:
         raise ValueError(
@@ -607,7 +609,7 @@ def run_per_class_kmeans(
             }
             continue
 
-        # 某一类的有效 prototype 个数不能超过该类样本数。
+        # æŸä¸€ç±»çš„æœ‰æ•ˆ prototype ä¸ªæ•°ä¸èƒ½è¶…è¿‡è¯¥ç±»æ ·æœ¬æ•°ã€‚
         k_eff = min(int(requested_k), n_c)
         class_num_prototypes[cls] = int(k_eff)
 
@@ -659,8 +661,8 @@ def run_per_class_kmeans(
             "rel_temperatures": [float(x) for x in rel_temp_eff.tolist()],
         }
 
-    # 只对真正有效的槽位做 normalize。
-    # padded 槽位保持为 0，不参与训练。
+    # åªå¯¹çœŸæ­£æœ‰æ•ˆçš„æ§½ä½åš normalizeã€‚
+    # padded æ§½ä½ä¿æŒä¸º 0ï¼Œä¸å‚ä¸Žè®­ç»ƒã€‚
     for cls in range(num_classes):
         k_eff = int(class_num_prototypes[cls].item())
         if k_eff > 0:
@@ -680,7 +682,7 @@ def run_per_class_kmeans(
 
 
 # ============================================================
-# 高层接口：刷新 prototypes
+# é«˜å±‚æŽ¥å£ï¼šåˆ·æ–° prototypes
 # ============================================================
 
 def refresh_prototypes(
@@ -689,17 +691,17 @@ def refresh_prototypes(
     cfg: PrototypeRefreshConfig,
 ) -> Dict[str, Any]:
     """
-    刷新 prototype 的高层入口。
+    åˆ·æ–° prototype çš„é«˜å±‚å…¥å£ã€‚
 
-    流程：
+    æµç¨‹ï¼š
     ------
-    1) 构建 refresh 专用 loader
-    2) 用 momentum encoder 对整个训练集提特征
-    3) 按 class_id 分组
-    4) 对每个类别单独做 KMeans
-    5) 返回训练阶段真正需要的 prototype state
+    1) æž„å»º refresh ä¸“ç”¨ loader
+    2) ç”¨ momentum encoder å¯¹æ•´ä¸ªè®­ç»ƒé›†æç‰¹å¾
+    3) æŒ‰ class_id åˆ†ç»„
+    4) å¯¹æ¯ä¸ªç±»åˆ«å•ç‹¬åš KMeans
+    5) è¿”å›žè®­ç»ƒé˜¶æ®µçœŸæ­£éœ€è¦çš„ prototype state
 
-    返回字段：
+    è¿”å›žå­—æ®µï¼š
     ----------
     prototype_bank:
         [C, M_max, D]
@@ -715,14 +717,14 @@ def refresh_prototypes(
 
     sample_to_class:
         [N_slot]
-        这是按你的要求保留的输出字段。
-        它在当前训练主循环中不是必须的，但对调试和后续检查很有帮助。
+        è¿™æ˜¯æŒ‰ä½ çš„è¦æ±‚ä¿ç•™çš„è¾“å‡ºå­—æ®µã€‚
+        å®ƒåœ¨å½“å‰è®­ç»ƒä¸»å¾ªçŽ¯ä¸­ä¸æ˜¯å¿…é¡»çš„ï¼Œä½†å¯¹è°ƒè¯•å’ŒåŽç»­æ£€æŸ¥å¾ˆæœ‰å¸®åŠ©ã€‚
 
     valid_sample_mask:
         [N_slot]
 
     counts_per_class / cluster_meta:
-        便于打印和调试
+        ä¾¿äºŽæ‰“å°å’Œè°ƒè¯•
     """
     if cfg.require_main_process_only and (not is_main_process()):
         return {}
@@ -801,12 +803,12 @@ def refresh_prototypes(
 
 
 # ============================================================
-# 辅助打印与广播
+# è¾…åŠ©æ‰“å°ä¸Žå¹¿æ’­
 # ============================================================
 
 def summarize_proto_state(proto_state: Dict[str, Any]) -> str:
     """
-    将 prototype state 格式化成一行简洁字符串，便于日志打印。
+    å°† prototype state æ ¼å¼åŒ–æˆä¸€è¡Œç®€æ´å­—ç¬¦ä¸²ï¼Œä¾¿äºŽæ—¥å¿—æ‰“å°ã€‚
     """
     if not proto_state:
         return "[prototype_refresh] empty state"
@@ -837,9 +839,9 @@ def broadcast_proto_state(
     rank: int,
 ) -> Optional[dict]:
     """
-    将训练阶段真正需要的 prototype 状态广播到所有 rank。
+    å°†è®­ç»ƒé˜¶æ®µçœŸæ­£éœ€è¦çš„ prototype çŠ¶æ€å¹¿æ’­åˆ°æ‰€æœ‰ rankã€‚
 
-    广播字段：
+    å¹¿æ’­å­—æ®µï¼š
     ----------
     - prototype_bank
     - proto_rel_temperature_bank
@@ -848,13 +850,13 @@ def broadcast_proto_state(
     - valid_sample_mask
     - enable_prototype_temperature_scaling
 
-    另外，为了保留调试便利性，本实现也会把 sample_to_class 一并带上。
-    训练本身并不依赖 sample_to_class，但保留它不会影响主流程。
+    å¦å¤–ï¼Œä¸ºäº†ä¿ç•™è°ƒè¯•ä¾¿åˆ©æ€§ï¼Œæœ¬å®žçŽ°ä¹Ÿä¼šæŠŠ sample_to_class ä¸€å¹¶å¸¦ä¸Šã€‚
+    è®­ç»ƒæœ¬èº«å¹¶ä¸ä¾èµ– sample_to_classï¼Œä½†ä¿ç•™å®ƒä¸ä¼šå½±å“ä¸»æµç¨‹ã€‚
 
-    说明：
+    è¯´æ˜Žï¼š
     ------
-    1) 单进程模式下，只做 device 搬运。
-    2) 多进程模式下，要求 rank 0 的 proto_state 非空，其余 rank 可传 None。
+    1) å•è¿›ç¨‹æ¨¡å¼ä¸‹ï¼Œåªåš device æ¬è¿ã€‚
+    2) å¤šè¿›ç¨‹æ¨¡å¼ä¸‹ï¼Œè¦æ±‚ rank 0 çš„ proto_state éžç©ºï¼Œå…¶ä½™ rank å¯ä¼  Noneã€‚
     """
     if proto_state is None:
         return None
@@ -892,3 +894,5 @@ def broadcast_proto_state(
     out["sample_to_class"] = out["sample_to_class"].to(device, non_blocking=True).long()
     out["valid_sample_mask"] = out["valid_sample_mask"].to(device, non_blocking=True).bool()
     return out
+
+
