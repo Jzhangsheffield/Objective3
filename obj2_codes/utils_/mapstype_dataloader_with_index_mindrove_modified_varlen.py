@@ -1,41 +1,41 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
 mapstype_dataloader_with_index_mindrove.py
 
-在原有 map-style RGB / Depth dataloader 基础上，新增对 MindRove EMG / IMU 数据的读取、
-重采样与样本级增强支持。
+åœ¨åŽŸæœ‰ map-style RGB / Depth dataloader åŸºç¡€ä¸Šï¼Œæ–°å¢žå¯¹ MindRove EMG / IMU æ•°æ®çš„è¯»å–ã€
+é‡é‡‡æ ·ä¸Žæ ·æœ¬çº§å¢žå¼ºæ”¯æŒã€‚
 
-本文件的设计目标
+æœ¬æ–‡ä»¶çš„è®¾è®¡ç›®æ ‡
 ================
-1) 保持 RGB / Depth 的现有读取、采样、增强、输出逻辑不变
-2) 新增 MindRove 模态，支持：
-   - 仅输出 EMG / 仅输出 IMU / 同时输出 EMG+IMU
-   - 仅输出左手 / 仅输出右手 / 同时输出左右手
-   - 可选：将左右手同类信号在通道维拼接后输出
-   - 支持 EMG / IMU 使用不同的重采样目标长度
-   - 每一种 signal 内部统一重采样到固定长度，以便同一 key 可以 batch stack
-   - 可选 single-view / two-view
-3) MindRove 的 two-view 逻辑与 RGB 不同：
-   - 不是从原始长序列中裁两个时间片段
-   - 而是先对完整序列按 signal 各自的目标长度重采样
-   - 再对同一个完整片段独立应用两次增强，得到两个 view
-4) MindRove 增强已接入独立的 tensor-native 模块：
+1) ä¿æŒ RGB / Depth çš„çŽ°æœ‰è¯»å–ã€é‡‡æ ·ã€å¢žå¼ºã€è¾“å‡ºé€»è¾‘ä¸å˜
+2) æ–°å¢ž MindRove æ¨¡æ€ï¼Œæ”¯æŒï¼š
+   - ä»…è¾“å‡º EMG / ä»…è¾“å‡º IMU / åŒæ—¶è¾“å‡º EMG+IMU
+   - ä»…è¾“å‡ºå·¦æ‰‹ / ä»…è¾“å‡ºå³æ‰‹ / åŒæ—¶è¾“å‡ºå·¦å³æ‰‹
+   - å¯é€‰ï¼šå°†å·¦å³æ‰‹åŒç±»ä¿¡å·åœ¨é€šé“ç»´æ‹¼æŽ¥åŽè¾“å‡º
+   - æ”¯æŒ EMG / IMU ä½¿ç”¨ä¸åŒçš„é‡é‡‡æ ·ç›®æ ‡é•¿åº¦
+   - æ¯ä¸€ç§ signal å†…éƒ¨ç»Ÿä¸€é‡é‡‡æ ·åˆ°å›ºå®šé•¿åº¦ï¼Œä»¥ä¾¿åŒä¸€ key å¯ä»¥ batch stack
+   - å¯é€‰ single-view / two-view
+3) MindRove çš„ two-view é€»è¾‘ä¸Ž RGB ä¸åŒï¼š
+   - ä¸æ˜¯ä»ŽåŽŸå§‹é•¿åºåˆ—ä¸­è£ä¸¤ä¸ªæ—¶é—´ç‰‡æ®µ
+   - è€Œæ˜¯å…ˆå¯¹å®Œæ•´åºåˆ—æŒ‰ signal å„è‡ªçš„ç›®æ ‡é•¿åº¦é‡é‡‡æ ·
+   - å†å¯¹åŒä¸€ä¸ªå®Œæ•´ç‰‡æ®µç‹¬ç«‹åº”ç”¨ä¸¤æ¬¡å¢žå¼ºï¼Œå¾—åˆ°ä¸¤ä¸ª view
+4) MindRove å¢žå¼ºå·²æŽ¥å…¥ç‹¬ç«‹çš„ tensor-native æ¨¡å—ï¼š
    - aug.mindrove_augmentation_tensor.apply_mindrove_augmentation
-   - 输入为 Dict[str, Tensor[C,L]]
-   - 输出为同结构 Dict[str, Tensor[C,L]]
-5) 非训练模式（cfg.is_train=False）下：
-   - MindRove 只进行读取与重采样
-   - 自动关闭 MindRove 增强
-   - 若仍开启 mindrove_two_views，则会返回两份相同的重采样结果；
-     通常 validation / test 建议同时设置 mindrove_two_views=False
+   - è¾“å…¥ä¸º Dict[str, Tensor[C,L]]
+   - è¾“å‡ºä¸ºåŒç»“æž„ Dict[str, Tensor[C,L]]
+5) éžè®­ç»ƒæ¨¡å¼ï¼ˆcfg.is_train=Falseï¼‰ä¸‹ï¼š
+   - MindRove åªè¿›è¡Œè¯»å–ä¸Žé‡é‡‡æ ·
+   - è‡ªåŠ¨å…³é—­ MindRove å¢žå¼º
+   - è‹¥ä»å¼€å¯ mindrove_two_viewsï¼Œåˆ™ä¼šè¿”å›žä¸¤ä»½ç›¸åŒçš„é‡é‡‡æ ·ç»“æžœï¼›
+     é€šå¸¸ validation / test å»ºè®®åŒæ—¶è®¾ç½® mindrove_two_views=False
 
-MindRove 输出约定
+MindRove è¾“å‡ºçº¦å®š
 =================
-MindRove 输出统一采用 channel-first，便于直接送入 Conv1d：
+MindRove è¾“å‡ºç»Ÿä¸€é‡‡ç”¨ channel-firstï¼Œä¾¿äºŽç›´æŽ¥é€å…¥ Conv1dï¼š
 
-- 单视图:
+- å•è§†å›¾:
     out["mindrove"] = {
         "left_emg":  Tensor[C,L_emg],
         "left_imu":  Tensor[C,L_imu],
@@ -44,47 +44,47 @@ MindRove 输出统一采用 channel-first，便于直接送入 Conv1d：
         ...
     }
 
-  注意：不同 key 的最后一维长度可以不同，例如 EMG 为 L_emg，IMU 为 L_imu。
-  collate_fn 会按 dict key 分别 stack，因此同一个 key 在 batch 内长度一致即可。
+  æ³¨æ„ï¼šä¸åŒ key çš„æœ€åŽä¸€ç»´é•¿åº¦å¯ä»¥ä¸åŒï¼Œä¾‹å¦‚ EMG ä¸º L_emgï¼ŒIMU ä¸º L_imuã€‚
+  collate_fn ä¼šæŒ‰ dict key åˆ†åˆ« stackï¼Œå› æ­¤åŒä¸€ä¸ª key åœ¨ batch å†…é•¿åº¦ä¸€è‡´å³å¯ã€‚
 
-- 双视图:
+- åŒè§†å›¾:
     out["mindrove"] = (
         {"left_emg": Tensor[C,L], ...},   # view1
         {"left_emg": Tensor[C,L], ...},   # view2
     )
 
-若开启 mindrove_merge_hands=True，则会把左右手同类信号在通道维拼接：
+è‹¥å¼€å¯ mindrove_merge_hands=Trueï¼Œåˆ™ä¼šæŠŠå·¦å³æ‰‹åŒç±»ä¿¡å·åœ¨é€šé“ç»´æ‹¼æŽ¥ï¼š
 - EMG: [8,L_emg] + [8,L_emg] -> [16,L_emg]
 - IMU: [6,L_imu] + [6,L_imu] -> [12,L_imu]
 
-例如：
+ä¾‹å¦‚ï¼š
     out["mindrove"] = {
         "emg": Tensor[16,L],
         "imu": Tensor[12,L],
     }
 
-MindRove 流程
+MindRove æµç¨‹
 =============
-对每个样本中的 MindRove 数据，处理顺序为：
+å¯¹æ¯ä¸ªæ ·æœ¬ä¸­çš„ MindRove æ•°æ®ï¼Œå¤„ç†é¡ºåºä¸ºï¼š
 
-1) 从 mindrove.pt 读取所请求的 hand / signal
-2) 将每条原始流从 [L,C] 按 signal 各自目标长度重采样，并转成 [C,L_signal]
-3) 若 cfg.mindrove_apply_normalization=True：
-   按左右手 + 模态各自提供的 per-channel mean/std 做标准化
-4) 若 cfg.is_train=True 且 cfg.mindrove_apply_augmentation=True：
-   调用独立增强模块进行样本级增强
-5) 若 cfg.mindrove_two_views=True：
-   对同一个“已重采样且已标准化”的片段独立增强两次，得到两个 view
-6) 若 cfg.mindrove_merge_hands=True：
-   在标准化 / 增强之后按 signal 合并左右手
+1) ä»Ž mindrove.pt è¯»å–æ‰€è¯·æ±‚çš„ hand / signal
+2) å°†æ¯æ¡åŽŸå§‹æµä»Ž [L,C] æŒ‰ signal å„è‡ªç›®æ ‡é•¿åº¦é‡é‡‡æ ·ï¼Œå¹¶è½¬æˆ [C,L_signal]
+3) è‹¥ cfg.mindrove_apply_normalization=Trueï¼š
+   æŒ‰å·¦å³æ‰‹ + æ¨¡æ€å„è‡ªæä¾›çš„ per-channel mean/std åšæ ‡å‡†åŒ–
+4) è‹¥ cfg.is_train=True ä¸” cfg.mindrove_apply_augmentation=Trueï¼š
+   è°ƒç”¨ç‹¬ç«‹å¢žå¼ºæ¨¡å—è¿›è¡Œæ ·æœ¬çº§å¢žå¼º
+5) è‹¥ cfg.mindrove_two_views=Trueï¼š
+   å¯¹åŒä¸€ä¸ªâ€œå·²é‡é‡‡æ ·ä¸”å·²æ ‡å‡†åŒ–â€çš„ç‰‡æ®µç‹¬ç«‹å¢žå¼ºä¸¤æ¬¡ï¼Œå¾—åˆ°ä¸¤ä¸ª view
+6) è‹¥ cfg.mindrove_merge_hands=Trueï¼š
+   åœ¨æ ‡å‡†åŒ– / å¢žå¼ºä¹‹åŽæŒ‰ signal åˆå¹¶å·¦å³æ‰‹
 
-注意
+æ³¨æ„
 ====
-1) 当前实现严格检查输入格式，不做模糊兜底
-2) 若启用 mindrove_merge_hands=True，则必须同时请求左右手
-3) 若 missing_policy="skip"，缺失手或缺失文件会直接报错
-4) 若 missing_policy="pad"，会用全零序列补齐缺失 MindRove 分支
-5) validation / test 模式建议：
+1) å½“å‰å®žçŽ°ä¸¥æ ¼æ£€æŸ¥è¾“å…¥æ ¼å¼ï¼Œä¸åšæ¨¡ç³Šå…œåº•
+2) è‹¥å¯ç”¨ mindrove_merge_hands=Trueï¼Œåˆ™å¿…é¡»åŒæ—¶è¯·æ±‚å·¦å³æ‰‹
+3) è‹¥ missing_policy="skip"ï¼Œç¼ºå¤±æ‰‹æˆ–ç¼ºå¤±æ–‡ä»¶ä¼šç›´æŽ¥æŠ¥é”™
+4) è‹¥ missing_policy="pad"ï¼Œä¼šç”¨å…¨é›¶åºåˆ—è¡¥é½ç¼ºå¤± MindRove åˆ†æ”¯
+5) validation / test æ¨¡å¼å»ºè®®ï¼š
    - is_train=False
    - mindrove_two_views=False
 """
@@ -106,30 +106,34 @@ from torchvision.transforms.v2 import functional as Fv2
 import random
 import numpy as np
 
-# 你现有的空间增强文件（RGB）
+# ä½ çŽ°æœ‰çš„ç©ºé—´å¢žå¼ºæ–‡ä»¶ï¼ˆRGBï¼‰
 from aug.spatial_augmentation import TemporallyConsistentSpatialAugmentation, ValidationAugmentation
-# 你现有的时间采样文件（RGB / Depth）
+# ä½ çŽ°æœ‰çš„æ—¶é—´é‡‡æ ·æ–‡ä»¶ï¼ˆRGB / Depthï¼‰
 from aug.temporal_augmentation_adaptive import sample_indices_strict, sample_two_views_indices
-# mindrove 增强文件
+# mindrove å¢žå¼ºæ–‡ä»¶
 from aug.mindrove_augmentation_tensor_varlen import apply_mindrove_augmentation as MindRoveAugmentation
 
 
 # ============================================================
-# 1) 配置
+# 1) é…ç½®
 # ============================================================
 
 @dataclass
 class PackedMultiModalConfig:
-    # ---------------- RGB / Depth 时间采样 ----------------
+    # ---------------- RGB / Depth æ—¶é—´é‡‡æ · ----------------
     n_frames: int = 16
 
-    # RGB 是否 two-view（对比学习）
+    # RGB æ˜¯å¦ two-viewï¼ˆå¯¹æ¯”å­¦ä¹ ï¼‰
     rgb_two_views: bool = False
 
-    # 启用哪些模态，可选：rgb / depth / mindrove
+
+    # Camera-specific RGB key to use when manifest has fields such as "001484412812_rgb".
+    # record["rgb"] is still preferred when present; this is the fallback camera field.
+    rgb_camera_id: Optional[str] = "001484412812"
+    # å¯ç”¨å“ªäº›æ¨¡æ€ï¼Œå¯é€‰ï¼šrgb / depth / mindrove
     use_modalities: Tuple[str, ...] = ("rgb", "depth")
 
-    # 缺失策略：skip / pad
+    # ç¼ºå¤±ç­–ç•¥ï¼šskip / pad
     missing_policy: str = "skip"
 
     # ---------------- labels / tier ----------------
@@ -142,17 +146,17 @@ class PackedMultiModalConfig:
     # ---------------- train / val ----------------
     is_train: bool = True
 
-    # -------- RGB 空间增强参数 --------
+    # -------- RGB ç©ºé—´å¢žå¼ºå‚æ•° --------
     rgb_out_hw: Tuple[int, int] = (224, 224)
 
     # RandomResizedCrop
     rrc_scale: Tuple[float, float] = (0.6, 1.0)
     rrc_ratio: Tuple[float, float] = (0.75, 1.3333333333)
 
-    # 是否启用训练阶段随机 spatial augmentation
-    # 注意：这里不新增无随机增强 transform。
-    # 如果设为 False，则在 build_packed_mapstyle_dataset 中把各增强概率置 0，
-    # 但仍然使用 TemporallyConsistentSpatialAugmentation。
+    # æ˜¯å¦å¯ç”¨è®­ç»ƒé˜¶æ®µéšæœº spatial augmentation
+    # æ³¨æ„ï¼šè¿™é‡Œä¸æ–°å¢žæ— éšæœºå¢žå¼º transformã€‚
+    # å¦‚æžœè®¾ä¸º Falseï¼Œåˆ™åœ¨ build_packed_mapstyle_dataset ä¸­æŠŠå„å¢žå¼ºæ¦‚çŽ‡ç½® 0ï¼Œ
+    # ä½†ä»ç„¶ä½¿ç”¨ TemporallyConsistentSpatialAugmentationã€‚
     rgb_apply_spatial_aug: bool = True
 
     # Flip
@@ -174,69 +178,69 @@ class PackedMultiModalConfig:
     rgb_blur_kernel: int = 7
     rgb_blur_sigma: Tuple[float, float] = (0.1, 1.0)
 
-    # RGB normalize 参数（用于可视化反归一化）
+    # RGB normalize å‚æ•°ï¼ˆç”¨äºŽå¯è§†åŒ–åå½’ä¸€åŒ–ï¼‰
     rgb_mean: Tuple[float, float, float] = (0.356, 0.363, 0.367)
     rgb_std: Tuple[float, float, float] = (0.288, 0.271, 0.270)
 
-    # ---------------- Depth 输出尺寸 ----------------
+    # ---------------- Depth è¾“å‡ºå°ºå¯¸ ----------------
     depth_out_hw: Tuple[int, int] = (224, 224)
 
-    # ---------------- 默认 pad 尺寸 ----------------
+    # ---------------- é»˜è®¤ pad å°ºå¯¸ ----------------
     default_rgb_hw: Tuple[int, int] = (256, 256)
     default_depth_hw: Tuple[int, int] = (224, 224)
 
     # Depth pad dtype
     default_depth_dtype: str = "int32"
     
-    # 由 build_packed_mapstyle_dataset(...) 在运行时挂进去
+    # ç”± build_packed_mapstyle_dataset(...) åœ¨è¿è¡Œæ—¶æŒ‚è¿›åŽ»
     rgb_transform: Optional[Any] = field(default=None, repr=False, compare=False)
 
-    # ---------------- MindRove 参数 ----------------
-    # 是否输出两个增强视角
+    # ---------------- MindRove å‚æ•° ----------------
+    # æ˜¯å¦è¾“å‡ºä¸¤ä¸ªå¢žå¼ºè§†è§’
     mindrove_two_views: bool = False
 
-    # MindRove 默认目标长度（与 RGB 的 n_frames 含义不同，不复用）。
-    # 兼容旧配置：如果不单独设置 mindrove_emg_target_len / mindrove_imu_target_len，
-    # EMG 和 IMU 都会使用这个长度。
+    # MindRove é»˜è®¤ç›®æ ‡é•¿åº¦ï¼ˆä¸Ž RGB çš„ n_frames å«ä¹‰ä¸åŒï¼Œä¸å¤ç”¨ï¼‰ã€‚
+    # å…¼å®¹æ—§é…ç½®ï¼šå¦‚æžœä¸å•ç‹¬è®¾ç½® mindrove_emg_target_len / mindrove_imu_target_lenï¼Œ
+    # EMG å’Œ IMU éƒ½ä¼šä½¿ç”¨è¿™ä¸ªé•¿åº¦ã€‚
     mindrove_target_len: int = 256
 
-    # 可选：按 signal 单独指定目标长度。
-    # 典型场景：
+    # å¯é€‰ï¼šæŒ‰ signal å•ç‹¬æŒ‡å®šç›®æ ‡é•¿åº¦ã€‚
+    # å…¸åž‹åœºæ™¯ï¼š
     #   mindrove_emg_target_len = 512
     #   mindrove_imu_target_len = 256
-    # 如果为 None，则回退到 mindrove_target_len。
+    # å¦‚æžœä¸º Noneï¼Œåˆ™å›žé€€åˆ° mindrove_target_lenã€‚
     #
-    # 注意：
-    # - 同一种 signal 内部，left/right 必须使用相同长度，才能在通道维合并。
-    # - 不同 signal 之间允许长度不同，例如 emg: [C,512], imu: [C,256]。
+    # æ³¨æ„ï¼š
+    # - åŒä¸€ç§ signal å†…éƒ¨ï¼Œleft/right å¿…é¡»ä½¿ç”¨ç›¸åŒé•¿åº¦ï¼Œæ‰èƒ½åœ¨é€šé“ç»´åˆå¹¶ã€‚
+    # - ä¸åŒ signal ä¹‹é—´å…è®¸é•¿åº¦ä¸åŒï¼Œä¾‹å¦‚ emg: [C,512], imu: [C,256]ã€‚
     mindrove_emg_target_len: Optional[int] = None
     mindrove_imu_target_len: Optional[int] = None
 
-    # 请求哪只手，可选：left / right
+    # è¯·æ±‚å“ªåªæ‰‹ï¼Œå¯é€‰ï¼šleft / right
     mindrove_hands: Tuple[str, ...] = ("left", "right")
 
-    # 请求哪种信号，可选：emg / imu
+    # è¯·æ±‚å“ªç§ä¿¡å·ï¼Œå¯é€‰ï¼šemg / imu
     mindrove_signals: Tuple[str, ...] = ("emg", "imu")
 
-    # 是否把左右手同类信号合并输出
+    # æ˜¯å¦æŠŠå·¦å³æ‰‹åŒç±»ä¿¡å·åˆå¹¶è¾“å‡º
     mindrove_merge_hands: bool = False
 
-    # 是否启用 MindRove 增强占位逻辑
-    # 目前占位逻辑为 identity，不改数值；后续你可直接替换对应函数
+    # æ˜¯å¦å¯ç”¨ MindRove å¢žå¼ºå ä½é€»è¾‘
+    # ç›®å‰å ä½é€»è¾‘ä¸º identityï¼Œä¸æ”¹æ•°å€¼ï¼›åŽç»­ä½ å¯ç›´æŽ¥æ›¿æ¢å¯¹åº”å‡½æ•°
     mindrove_apply_augmentation: bool = True
 
-    # 是否对 MindRove 做标准化。
-    # 标准化在“重采样之后、增强之前”执行，公式为：
+    # æ˜¯å¦å¯¹ MindRove åšæ ‡å‡†åŒ–ã€‚
+    # æ ‡å‡†åŒ–åœ¨â€œé‡é‡‡æ ·ä¹‹åŽã€å¢žå¼ºä¹‹å‰â€æ‰§è¡Œï¼Œå…¬å¼ä¸ºï¼š
     #     x_norm = (x - mean) / std
-    # 这里的 mean / std 必须由外部显式提供，且按“左右手 + 模态”分别配置。
+    # è¿™é‡Œçš„ mean / std å¿…é¡»ç”±å¤–éƒ¨æ˜¾å¼æä¾›ï¼Œä¸”æŒ‰â€œå·¦å³æ‰‹ + æ¨¡æ€â€åˆ†åˆ«é…ç½®ã€‚
     mindrove_apply_normalization: bool = False
 
     # ---------------- MindRove normalization stats ----------------
-    # 约定：
-    # - EMG 的 mean/std 长度必须为 8
-    # - IMU 的 mean/std 长度必须为 6
-    # - 若启用 mindrove_apply_normalization=True，则对所有被请求的 hand+signal，
-    #   都必须显式提供对应的 mean 与 std；否则直接报错。
+    # çº¦å®šï¼š
+    # - EMG çš„ mean/std é•¿åº¦å¿…é¡»ä¸º 8
+    # - IMU çš„ mean/std é•¿åº¦å¿…é¡»ä¸º 6
+    # - è‹¥å¯ç”¨ mindrove_apply_normalization=Trueï¼Œåˆ™å¯¹æ‰€æœ‰è¢«è¯·æ±‚çš„ hand+signalï¼Œ
+    #   éƒ½å¿…é¡»æ˜¾å¼æä¾›å¯¹åº”çš„ mean ä¸Ž stdï¼›å¦åˆ™ç›´æŽ¥æŠ¥é”™ã€‚
     mindrove_left_emg_mean: Optional[Tuple[float, ...]] = None
     mindrove_left_emg_std: Optional[Tuple[float, ...]] = None
     mindrove_right_emg_mean: Optional[Tuple[float, ...]] = None
@@ -258,7 +262,7 @@ class PackedMultiModalConfig:
     mindrove_emg_noise_prob: float = 0.8
     mindrove_emg_noise_sigma: float = 0.05
 
-    # Drift：尽量对齐 tsaug.Drift
+    # Driftï¼šå°½é‡å¯¹é½ tsaug.Drift
     mindrove_emg_drift_prob: float = 0.0
     mindrove_emg_drift_max: Union[float, Tuple[float, float]] = 0.0
     mindrove_emg_drift_n_points: Union[int, List[int]] = 3
@@ -287,12 +291,12 @@ class PackedMultiModalConfig:
 
 
 # ============================================================
-# 2) label_map 加载与 tier 映射
+# 2) label_map åŠ è½½ä¸Ž tier æ˜ å°„
 # ============================================================
 
 def load_label_map_json(path: Union[str, Path]) -> Dict[str, Dict[str, int]]:
     """
-    读取 label_map.json：
+    è¯»å– label_map.jsonï¼š
     {
       "tier1": {"cap": 0, ...},
       "tier2": {"cap_pen": 0, ...},
@@ -314,10 +318,10 @@ def load_label_map_json(path: Union[str, Path]) -> Dict[str, Dict[str, int]]:
 
 def build_label_map_from_manifest(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
     """
-    如果没有提供外部 label_map.json，就从 manifest 动态构造。
-    注意：
-    - 这种做法适合单 split 调试
-    - 正式 train/val/test 最好还是用统一 label_map.json
+    å¦‚æžœæ²¡æœ‰æä¾›å¤–éƒ¨ label_map.jsonï¼Œå°±ä»Ž manifest åŠ¨æ€æž„é€ ã€‚
+    æ³¨æ„ï¼š
+    - è¿™ç§åšæ³•é€‚åˆå• split è°ƒè¯•
+    - æ­£å¼ train/val/test æœ€å¥½è¿˜æ˜¯ç”¨ç»Ÿä¸€ label_map.json
     """
     out: Dict[str, Dict[str, int]] = {}
     for tier in ("tier1", "tier2", "tier3"):
@@ -359,24 +363,24 @@ def map_tier_actions_to_ids(
 
 
 # ============================================================
-# 3) 配置与工具函数
+# 3) é…ç½®ä¸Žå·¥å…·å‡½æ•°
 # ============================================================
 def _seed_worker(worker_id: int) -> None:
     """
-    为每个 DataLoader worker 单独设置随机种子。
+    ä¸ºæ¯ä¸ª DataLoader worker å•ç‹¬è®¾ç½®éšæœºç§å­ã€‚
 
-    说明
+    è¯´æ˜Ž
     ----
-    1) PyTorch 会先给每个 worker 分配一个独立的 torch seed
-    2) 这里再把这个 seed 同步给 numpy 和 python.random
-    3) 这样可保证：
-       - torch / numpy / random 在同一 worker 内保持一致
-       - 不同 worker 之间不会共享同样的 numpy 随机状态
+    1) PyTorch ä¼šå…ˆç»™æ¯ä¸ª worker åˆ†é…ä¸€ä¸ªç‹¬ç«‹çš„ torch seed
+    2) è¿™é‡Œå†æŠŠè¿™ä¸ª seed åŒæ­¥ç»™ numpy å’Œ python.random
+    3) è¿™æ ·å¯ä¿è¯ï¼š
+       - torch / numpy / random åœ¨åŒä¸€ worker å†…ä¿æŒä¸€è‡´
+       - ä¸åŒ worker ä¹‹é—´ä¸ä¼šå…±äº«åŒæ ·çš„ numpy éšæœºçŠ¶æ€
 
-    注意
+    æ³¨æ„
     ----
-    torch.initial_seed() 返回的是当前 worker 已经被 PyTorch 设置好的 seed。
-    为了兼容 numpy 的 seed 范围，这里取低 32 位。
+    torch.initial_seed() è¿”å›žçš„æ˜¯å½“å‰ worker å·²ç»è¢« PyTorch è®¾ç½®å¥½çš„ seedã€‚
+    ä¸ºäº†å…¼å®¹ numpy çš„ seed èŒƒå›´ï¼Œè¿™é‡Œå–ä½Ž 32 ä½ã€‚
     """
     worker_seed = torch.initial_seed() % (2 ** 32)
     np.random.seed(worker_seed)
@@ -392,18 +396,18 @@ MINDROVE_SIGNAL_CHANNELS: Dict[str, int] = {
 
 def _get_mindrove_target_len(cfg: "PackedMultiModalConfig", signal: str) -> int:
     """
-    返回某一种 MindRove signal 的目标重采样长度。
+    è¿”å›žæŸä¸€ç§ MindRove signal çš„ç›®æ ‡é‡é‡‡æ ·é•¿åº¦ã€‚
 
-    兼容逻辑
+    å…¼å®¹é€»è¾‘
     --------
-    1) 如果 signal == "emg" 且 cfg.mindrove_emg_target_len 不为 None，
-       则使用 mindrove_emg_target_len。
-    2) 如果 signal == "imu" 且 cfg.mindrove_imu_target_len 不为 None，
-       则使用 mindrove_imu_target_len。
-    3) 否则回退到 cfg.mindrove_target_len。
+    1) å¦‚æžœ signal == "emg" ä¸” cfg.mindrove_emg_target_len ä¸ä¸º Noneï¼Œ
+       åˆ™ä½¿ç”¨ mindrove_emg_target_lenã€‚
+    2) å¦‚æžœ signal == "imu" ä¸” cfg.mindrove_imu_target_len ä¸ä¸º Noneï¼Œ
+       åˆ™ä½¿ç”¨ mindrove_imu_target_lenã€‚
+    3) å¦åˆ™å›žé€€åˆ° cfg.mindrove_target_lenã€‚
 
-    这样旧脚本只设置 mindrove_target_len 时行为完全不变；
-    新脚本可以显式设置 EMG / IMU 不同长度。
+    è¿™æ ·æ—§è„šæœ¬åªè®¾ç½® mindrove_target_len æ—¶è¡Œä¸ºå®Œå…¨ä¸å˜ï¼›
+    æ–°è„šæœ¬å¯ä»¥æ˜¾å¼è®¾ç½® EMG / IMU ä¸åŒé•¿åº¦ã€‚
     """
     signal = str(signal).strip().lower()
     if signal == "emg" and cfg.mindrove_emg_target_len is not None:
@@ -421,13 +425,13 @@ def _validate_mindrove_channel_stats(
     expected_channels: int,
 ) -> Tuple[float, ...]:
     """
-    严格校验单组 MindRove 标准化统计量。
+    ä¸¥æ ¼æ ¡éªŒå•ç»„ MindRove æ ‡å‡†åŒ–ç»Ÿè®¡é‡ã€‚
 
-    要求
+    è¦æ±‚
     ----
-    1) value 必须是 list 或 tuple
-    2) 长度必须与该信号通道数一致
-    3) 所有元素都必须是 int / float
+    1) value å¿…é¡»æ˜¯ list æˆ– tuple
+    2) é•¿åº¦å¿…é¡»ä¸Žè¯¥ä¿¡å·é€šé“æ•°ä¸€è‡´
+    3) æ‰€æœ‰å…ƒç´ éƒ½å¿…é¡»æ˜¯ int / float
     """
     if value is None:
         raise ValueError(f"{name} must be provided when MindRove normalization is enabled.")
@@ -487,7 +491,7 @@ def _validate_config(cfg: PackedMultiModalConfig) -> None:
     if cfg.missing_policy not in ("skip", "pad"):
         raise ValueError(f"missing_policy must be 'skip' or 'pad', got {cfg.missing_policy}")
 
-    # ---------------- RGB spatial augmentation 参数检查 ----------------
+    # ---------------- RGB spatial augmentation å‚æ•°æ£€æŸ¥ ----------------
     if "rgb" in cfg.use_modalities:
         if not isinstance(cfg.rgb_apply_spatial_aug, bool):
             raise TypeError(
@@ -570,8 +574,8 @@ def _validate_config(cfg: PackedMultiModalConfig) -> None:
         if not isinstance(cfg.mindrove_target_len, int) or cfg.mindrove_target_len <= 0:
             raise ValueError(f"mindrove_target_len must be positive int, got {cfg.mindrove_target_len}")
 
-        # 可选的 per-signal 目标长度。
-        # 允许 EMG / IMU 使用不同的重采样长度；未设置时回退到 mindrove_target_len。
+        # å¯é€‰çš„ per-signal ç›®æ ‡é•¿åº¦ã€‚
+        # å…è®¸ EMG / IMU ä½¿ç”¨ä¸åŒçš„é‡é‡‡æ ·é•¿åº¦ï¼›æœªè®¾ç½®æ—¶å›žé€€åˆ° mindrove_target_lenã€‚
         for attr_name in ("mindrove_emg_target_len", "mindrove_imu_target_len"):
             attr_value = getattr(cfg, attr_name)
             if attr_value is not None:
@@ -730,15 +734,15 @@ def _load_manifest(manifest_path: Path) -> List[Dict[str, Any]]:
 
 def _resize_depth_video_keep_dtype(video_tchw: torch.Tensor, out_hw: Tuple[int, int]) -> torch.Tensor:
     """
-    Depth resize：
-    - 输入：[T,1,H,W]，dtype 可能 int32/uint16/uint8
-    - 输出：[T,1,outH,outW]，dtype 尽量保持
+    Depth resizeï¼š
+    - è¾“å…¥ï¼š[T,1,H,W]ï¼Œdtype å¯èƒ½ int32/uint16/uint8
+    - è¾“å‡ºï¼š[T,1,outH,outW]ï¼Œdtype å°½é‡ä¿æŒ
 
-    做法：
-      1) 转 float32
+    åšæ³•ï¼š
+      1) è½¬ float32
       2) NEAREST resize
       3) round
-      4) cast 回原 dtype
+      4) cast å›žåŽŸ dtype
     """
     assert video_tchw.ndim == 4 and video_tchw.shape[1] >= 1
     orig_dtype = video_tchw.dtype
@@ -761,13 +765,13 @@ def _resize_depth_video_keep_dtype(video_tchw: torch.Tensor, out_hw: Tuple[int, 
 
 
 def _make_zero_rgb(cfg: PackedMultiModalConfig) -> torch.Tensor:
-    """pad 模式下 RGB 零视频：uint8 [T,3,H,W]"""
+    """pad æ¨¡å¼ä¸‹ RGB é›¶è§†é¢‘ï¼šuint8 [T,3,H,W]"""
     H, W = cfg.default_rgb_hw
     return torch.zeros((cfg.n_frames, 3, H, W), dtype=torch.uint8)
 
 
 def _make_zero_depth(cfg: PackedMultiModalConfig) -> torch.Tensor:
-    """pad 模式下 Depth 零视频：[T,1,H,W]"""
+    """pad æ¨¡å¼ä¸‹ Depth é›¶è§†é¢‘ï¼š[T,1,H,W]"""
     H, W = cfg.default_depth_hw
     dtype_str = str(cfg.default_depth_dtype).lower()
 
@@ -785,7 +789,7 @@ def _make_zero_depth(cfg: PackedMultiModalConfig) -> torch.Tensor:
 
 def _make_zero_mindrove_stream(signal: str, target_len: int) -> torch.Tensor:
     """
-    pad 模式下的 MindRove 零序列，统一输出为 channel-first: [C,L]
+    pad æ¨¡å¼ä¸‹çš„ MindRove é›¶åºåˆ—ï¼Œç»Ÿä¸€è¾“å‡ºä¸º channel-first: [C,L]
     """
     if signal not in MINDROVE_SIGNAL_CHANNELS:
         raise KeyError(f"Unsupported signal: {signal}")
@@ -795,18 +799,18 @@ def _make_zero_mindrove_stream(signal: str, target_len: int) -> torch.Tensor:
 
 def _resample_mindrove_lc_to_cf(seq_lc: torch.Tensor, signal: str, target_len: int) -> torch.Tensor:
     """
-    将 MindRove 单路序列从 [L,C] 重采样到固定长度，并转成 [C,L]。
+    å°† MindRove å•è·¯åºåˆ—ä»Ž [L,C] é‡é‡‡æ ·åˆ°å›ºå®šé•¿åº¦ï¼Œå¹¶è½¬æˆ [C,L]ã€‚
 
-    参数
+    å‚æ•°
     ----
     seq_lc : Tensor[L,C]
-        原始序列
+        åŽŸå§‹åºåˆ—
     signal : str
-        "emg" 或 "imu"
+        "emg" æˆ– "imu"
     target_len : int
-        重采样目标长度
+        é‡é‡‡æ ·ç›®æ ‡é•¿åº¦
 
-    返回
+    è¿”å›ž
     ----
     Tensor[C,target_len]
     """
@@ -834,7 +838,7 @@ def _resample_mindrove_lc_to_cf(seq_lc: torch.Tensor, signal: str, target_len: i
 
 
 # ============================================================
-# 4) MindRove 标准化与增强接口
+# 4) MindRove æ ‡å‡†åŒ–ä¸Žå¢žå¼ºæŽ¥å£
 # ============================================================
 
 def _get_mindrove_norm_stats(
@@ -843,7 +847,7 @@ def _get_mindrove_norm_stats(
     signal: str,
 ) -> Tuple[Tuple[float, ...], Tuple[float, ...]]:
     """
-    读取某一路 MindRove 流对应的 mean/std 配置。
+    è¯»å–æŸä¸€è·¯ MindRove æµå¯¹åº”çš„ mean/std é…ç½®ã€‚
     """
     mean_attr = f"mindrove_{hand}_{signal}_mean"
     std_attr = f"mindrove_{hand}_{signal}_std"
@@ -873,7 +877,7 @@ def _apply_mindrove_standardization_cf(
     key: str,
 ) -> torch.Tensor:
     """
-    对单条 [C,L] 的 MindRove 流做 per-channel mean/std 标准化。
+    å¯¹å•æ¡ [C,L] çš„ MindRove æµåš per-channel mean/std æ ‡å‡†åŒ–ã€‚
     """
     if not torch.is_tensor(x_cf):
         raise TypeError(f"MindRove stream '{key}' must be tensor, got {type(x_cf)}")
@@ -902,14 +906,14 @@ def apply_mindrove_normalization(
     stream_is_real: Optional[Dict[str, bool]] = None,
 ) -> Dict[str, torch.Tensor]:
     """
-    对 Dict[str, Tensor[C,L]] 中的每一路 MindRove 流做标准化。
+    å¯¹ Dict[str, Tensor[C,L]] ä¸­çš„æ¯ä¸€è·¯ MindRove æµåšæ ‡å‡†åŒ–ã€‚
 
-    规则
+    è§„åˆ™
     ----
-    1) 仅当 cfg.mindrove_apply_normalization=True 时执行
-    2) 标准化发生在“重采样之后、增强之前”
-    3) 若 stream_is_real 提供且某一路为 False，则该路保持原值不做标准化
-       （典型场景：missing_policy='pad' 时的零填充分支）
+    1) ä»…å½“ cfg.mindrove_apply_normalization=True æ—¶æ‰§è¡Œ
+    2) æ ‡å‡†åŒ–å‘ç”Ÿåœ¨â€œé‡é‡‡æ ·ä¹‹åŽã€å¢žå¼ºä¹‹å‰â€
+    3) è‹¥ stream_is_real æä¾›ä¸”æŸä¸€è·¯ä¸º Falseï¼Œåˆ™è¯¥è·¯ä¿æŒåŽŸå€¼ä¸åšæ ‡å‡†åŒ–
+       ï¼ˆå…¸åž‹åœºæ™¯ï¼šmissing_policy='pad' æ—¶çš„é›¶å¡«å……åˆ†æ”¯ï¼‰
     """
     if not isinstance(streams, dict):
         raise TypeError(f"streams must be dict[str, Tensor], got {type(streams)}")
@@ -953,10 +957,10 @@ def apply_mindrove_augmentation(
     cfg: PackedMultiModalConfig,
 ) -> Dict[str, torch.Tensor]:
     """
-    调用独立的 MindRove 增强模块。
+    è°ƒç”¨ç‹¬ç«‹çš„ MindRove å¢žå¼ºæ¨¡å—ã€‚
 
-    输入输出都保持 Dict[str, Tensor[C,L]]。
-    要求输入已经是重采样后的 channel-first 格式。
+    è¾“å…¥è¾“å‡ºéƒ½ä¿æŒ Dict[str, Tensor[C,L]]ã€‚
+    è¦æ±‚è¾“å…¥å·²ç»æ˜¯é‡é‡‡æ ·åŽçš„ channel-first æ ¼å¼ã€‚
     """
     return MindRoveAugmentation(streams, cfg)
 
@@ -965,15 +969,15 @@ def _merge_mindrove_hands(
     cfg: PackedMultiModalConfig,
 ) -> Dict[str, torch.Tensor]:
     """
-    将左右手同类信号在通道维拼接：
+    å°†å·¦å³æ‰‹åŒç±»ä¿¡å·åœ¨é€šé“ç»´æ‹¼æŽ¥ï¼š
       left_emg + right_emg -> emg
       left_imu + right_imu -> imu
 
-    约束
+    çº¦æŸ
     ----
-    cfg.mindrove_merge_hands=True 时：
-    - 必须同时请求左右手
-    - 对每个被请求的 signal，都必须同时拥有 left_* 和 right_*
+    cfg.mindrove_merge_hands=True æ—¶ï¼š
+    - å¿…é¡»åŒæ—¶è¯·æ±‚å·¦å³æ‰‹
+    - å¯¹æ¯ä¸ªè¢«è¯·æ±‚çš„ signalï¼Œéƒ½å¿…é¡»åŒæ—¶æ‹¥æœ‰ left_* å’Œ right_*
     """
     if not cfg.mindrove_merge_hands:
         return streams
@@ -1008,9 +1012,9 @@ def _merge_mindrove_hands(
 
 class PackedRGBDepthMindRoveMapDataset(Dataset):
     """
-    基于 manifest 的 map-style Dataset。
+    åŸºäºŽ manifest çš„ map-style Datasetã€‚
 
-    输出结构（在原 RGB / Depth 风格基础上新增 MindRove）：
+    è¾“å‡ºç»“æž„ï¼ˆåœ¨åŽŸ RGB / Depth é£Žæ ¼åŸºç¡€ä¸Šæ–°å¢ž MindRoveï¼‰ï¼š
     {
       "key": str,
       "sample_name": str,
@@ -1018,9 +1022,9 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
       "tier_ids": {...},
       "lighting": str,
       "pos": str,
-      "rgb": Tensor[T,3,H,W] 或 (view1, view2),
+      "rgb": Tensor[T,3,H,W] æˆ– (view1, view2),
       "depth": Tensor[T,1,H,W],
-      "mindrove": Dict[str, Tensor[C,L]] 或 (Dict, Dict)
+      "mindrove": Dict[str, Tensor[C,L]] æˆ– (Dict, Dict)
     }
     """
 
@@ -1038,7 +1042,7 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         self.manifest_path = self.dataset_root / manifest_name
         self.cfg = cfg
         
-        # 非训练模式下，MindRove 只做读取与重采样，不做增强
+        # éžè®­ç»ƒæ¨¡å¼ä¸‹ï¼ŒMindRove åªåšè¯»å–ä¸Žé‡é‡‡æ ·ï¼Œä¸åšå¢žå¼º
         if "mindrove" in self.cfg.use_modalities and not self.cfg.is_train:
             self.cfg.mindrove_apply_augmentation = False
 
@@ -1050,7 +1054,7 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         self.records = _load_manifest(self.manifest_path)
 
         if label_map is None:
-            # 先尝试 cfg.label_map_path
+            # å…ˆå°è¯• cfg.label_map_path
             if self.cfg.label_map_path is not None:
                 label_map_path = Path(self.cfg.label_map_path)
                 if not label_map_path.is_absolute():
@@ -1072,20 +1076,22 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
 
     def _filter_valid_records(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        初始化阶段过滤掉路径缺失的样本，尽量贴近旧 loader 的 skip 行为。
-        对 MindRove：
-        - 路径不存在 -> 过滤
-        - 若 missing_policy == "skip"，且请求的手在 manifest 中标记缺失 -> 过滤
+        åˆå§‹åŒ–é˜¶æ®µè¿‡æ»¤æŽ‰è·¯å¾„ç¼ºå¤±çš„æ ·æœ¬ï¼Œå°½é‡è´´è¿‘æ—§ loader çš„ skip è¡Œä¸ºã€‚
+        å¯¹ MindRoveï¼š
+        - è·¯å¾„ä¸å­˜åœ¨ -> è¿‡æ»¤
+        - è‹¥ missing_policy == "skip"ï¼Œä¸”è¯·æ±‚çš„æ‰‹åœ¨ manifest ä¸­æ ‡è®°ç¼ºå¤± -> è¿‡æ»¤
         """
         valid = []
         for rec in records:
             ok = True
 
             if "rgb" in self.cfg.use_modalities:
-                # 临时兼容 stage2 的脚本
+                # ä¸´æ—¶å…¼å®¹ stage2 çš„è„šæœ¬
                 rgb_rel = rec.get("rgb", None)
                 if rgb_rel is None:
-                    rgb_rel = rec.get("001484412812_rgb", None)
+                    camera_id = getattr(self.cfg, "rgb_camera_id", "001484412812")
+                    if camera_id:
+                        rgb_rel = rec.get(f"{camera_id}_rgb", None)
                 if rgb_rel is None or not (self.dataset_root / rgb_rel).is_file():
                     ok = False
 
@@ -1113,9 +1119,11 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
 
     def _load_rgb(self, rec: Dict[str, Any]) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         rgb_rel = rec.get("rgb", None)
-        # 临时兼容 stage2的脚本
+        # ä¸´æ—¶å…¼å®¹ stage2çš„è„šæœ¬
         if rgb_rel is None:
-            rgb_rel = rec.get("001484412812_rgb", None)
+            camera_id = getattr(self.cfg, "rgb_camera_id", "001484412812")
+            if camera_id:
+                rgb_rel = rec.get(f"{camera_id}_rgb", None)
         if rgb_rel is None:
             if self.cfg.missing_policy == "skip":
                 raise FileNotFoundError(f"Record missing rgb path: {rec.get('sample_name', 'unknown')}")
@@ -1128,7 +1136,7 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         obj = torch.load(self.dataset_root / rgb_rel, map_location="cpu")
         video = obj["frames"] if isinstance(obj, dict) else obj
 
-        # 期望 [T,3,H,W]
+        # æœŸæœ› [T,3,H,W]
         if not torch.is_tensor(video) or video.ndim != 4 or video.shape[1] != 3:
             raise ValueError(f"Invalid rgb tensor shape: {type(video)} / {getattr(video, 'shape', None)}")
 
@@ -1192,7 +1200,7 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         rec: Dict[str, Any],
     ) -> torch.Tensor:
         """
-        加载单路 MindRove 信号，并按该 signal 的目标长度重采样，返回 [C,L_signal]
+        åŠ è½½å•è·¯ MindRove ä¿¡å·ï¼Œå¹¶æŒ‰è¯¥ signal çš„ç›®æ ‡é•¿åº¦é‡é‡‡æ ·ï¼Œè¿”å›ž [C,L_signal]
         """
         has_key = f"has_{hand}"
         data_key = f"{hand}_{signal}"
@@ -1225,15 +1233,15 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         rec: Dict[str, Any],
     ) -> Union[Dict[str, torch.Tensor], Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]]:
         """
-        读取一个样本的 MindRove 数据。
+        è¯»å–ä¸€ä¸ªæ ·æœ¬çš„ MindRove æ•°æ®ã€‚
 
-        流程：
-        1) 从文件加载 left/right + emg/imu
-        2) 对每一条被请求的流按 signal 各自的目标长度重采样
-        3) 若启用标准化：对重采样后的每一条流按左右手+模态各自的 mean/std 做标准化
-        4) 若 single-view：输出 1 份（可选增强）
-        5) 若 two-view：对同一个“已重采样且已标准化”的片段独立增强两次，输出 2 份
-        6) 若启用 merge_hands：在标准化 / 增强后按 signal 合并左右手
+        æµç¨‹ï¼š
+        1) ä»Žæ–‡ä»¶åŠ è½½ left/right + emg/imu
+        2) å¯¹æ¯ä¸€æ¡è¢«è¯·æ±‚çš„æµæŒ‰ signal å„è‡ªçš„ç›®æ ‡é•¿åº¦é‡é‡‡æ ·
+        3) è‹¥å¯ç”¨æ ‡å‡†åŒ–ï¼šå¯¹é‡é‡‡æ ·åŽçš„æ¯ä¸€æ¡æµæŒ‰å·¦å³æ‰‹+æ¨¡æ€å„è‡ªçš„ mean/std åšæ ‡å‡†åŒ–
+        4) è‹¥ single-viewï¼šè¾“å‡º 1 ä»½ï¼ˆå¯é€‰å¢žå¼ºï¼‰
+        5) è‹¥ two-viewï¼šå¯¹åŒä¸€ä¸ªâ€œå·²é‡é‡‡æ ·ä¸”å·²æ ‡å‡†åŒ–â€çš„ç‰‡æ®µç‹¬ç«‹å¢žå¼ºä¸¤æ¬¡ï¼Œè¾“å‡º 2 ä»½
+        6) è‹¥å¯ç”¨ merge_handsï¼šåœ¨æ ‡å‡†åŒ– / å¢žå¼ºåŽæŒ‰ signal åˆå¹¶å·¦å³æ‰‹
         """
         mr_rel = rec.get("mindrove", None)
         if mr_rel is None:
@@ -1330,7 +1338,7 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
 
 def _collate_nested(vals: List[Any]) -> Any:
     """
-    递归 collate，支持：
+    é€’å½’ collateï¼Œæ”¯æŒï¼š
     - Tensor
     - int / float / bool
     - str
@@ -1363,10 +1371,10 @@ def _collate_nested(vals: List[Any]) -> Any:
 
 def packed_multimodal_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    自定义 collate：
-    - 保留 rgb two-view 为 (view1_batch, view2_batch)
-    - 支持 mindrove single-view dict
-    - 支持 mindrove two-view (dict1_batch, dict2_batch)
+    è‡ªå®šä¹‰ collateï¼š
+    - ä¿ç•™ rgb two-view ä¸º (view1_batch, view2_batch)
+    - æ”¯æŒ mindrove single-view dict
+    - æ”¯æŒ mindrove two-view (dict1_batch, dict2_batch)
     """
     if len(batch) == 0:
         raise RuntimeError("Empty batch in collate.")
@@ -1379,7 +1387,7 @@ def packed_multimodal_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 # ============================================================
-# 7) 构建 Dataset / DataLoader
+# 7) æž„å»º Dataset / DataLoader
 # ============================================================
 
 def build_packed_mapstyle_dataset(
@@ -1390,12 +1398,12 @@ def build_packed_mapstyle_dataset(
     verify_paths_on_init: bool = True,
 ) -> PackedRGBDepthMindRoveMapDataset:
     """
-    构建 map-style Dataset。
+    æž„å»º map-style Datasetã€‚
 
-    职责：
-    1) 规范化配置
-    2) 根据 train/val 挂载 RGB transform
-    3) 返回 PackedRGBDepthMindRoveMapDataset
+    èŒè´£ï¼š
+    1) è§„èŒƒåŒ–é…ç½®
+    2) æ ¹æ® train/val æŒ‚è½½ RGB transform
+    3) è¿”å›ž PackedRGBDepthMindRoveMapDataset
     """
 
     if "rgb" in cfg.use_modalities:
@@ -1407,14 +1415,14 @@ def build_packed_mapstyle_dataset(
                 gray_p = cfg.rgb_gray_p
                 blur_p = cfg.rgb_blur_p
             else:
-                # 不新增无随机增强 transform。
-                # 仍然使用 TemporallyConsistentSpatialAugmentation，
-                # 但把 flip / jitter / gray / blur 的概率全部置 0。
+                # ä¸æ–°å¢žæ— éšæœºå¢žå¼º transformã€‚
+                # ä»ç„¶ä½¿ç”¨ TemporallyConsistentSpatialAugmentationï¼Œ
+                # ä½†æŠŠ flip / jitter / gray / blur çš„æ¦‚çŽ‡å…¨éƒ¨ç½® 0ã€‚
                 #
-                # 注意：
-                # 这里不会关闭 RandomResizedCrop。
-                # 若要关闭 RandomResizedCrop，需要改 spatial_augmentation.py 的内部结构，
-                # 或额外使用 ValidationAugmentation / resize-only transform。
+                # æ³¨æ„ï¼š
+                # è¿™é‡Œä¸ä¼šå…³é—­ RandomResizedCropã€‚
+                # è‹¥è¦å…³é—­ RandomResizedCropï¼Œéœ€è¦æ”¹ spatial_augmentation.py çš„å†…éƒ¨ç»“æž„ï¼Œ
+                # æˆ–é¢å¤–ä½¿ç”¨ ValidationAugmentation / resize-only transformã€‚
                 hflip_p = 0.0
                 vflip_p = 0.0
                 jitter_p = 0.0
@@ -1474,13 +1482,13 @@ def build_packed_mapstyle_loader_from_dataset(
     pin_memory: bool = False,
 ) -> DataLoader:
     """
-    把已构建好的 dataset 包装成 DataLoader。
+    æŠŠå·²æž„å»ºå¥½çš„ dataset åŒ…è£…æˆ DataLoaderã€‚
 
-    说明：
-    - 若 sampler 不为 None（例如 DistributedSampler），则必须关闭 shuffle
-    - collate_fn 固定使用 packed_multimodal_collate
-    - worker_init_fn 会把 torch worker seed 同步给 numpy / random，
-      以保证 MindRove drift 等使用 np.random 的增强在多 worker 下随机性正确
+    è¯´æ˜Žï¼š
+    - è‹¥ sampler ä¸ä¸º Noneï¼ˆä¾‹å¦‚ DistributedSamplerï¼‰ï¼Œåˆ™å¿…é¡»å…³é—­ shuffle
+    - collate_fn å›ºå®šä½¿ç”¨ packed_multimodal_collate
+    - worker_init_fn ä¼šæŠŠ torch worker seed åŒæ­¥ç»™ numpy / randomï¼Œ
+      ä»¥ä¿è¯ MindRove drift ç­‰ä½¿ç”¨ np.random çš„å¢žå¼ºåœ¨å¤š worker ä¸‹éšæœºæ€§æ­£ç¡®
     """
     loader_kwargs = dict(
         dataset=dataset,
@@ -1517,7 +1525,7 @@ def build_packed_mapstyle_loader(
     pin_memory: bool = False,
 ) -> DataLoader:
     """
-    兼容旧接口的薄封装。
+    å…¼å®¹æ—§æŽ¥å£çš„è–„å°è£…ã€‚
     """
     ds = build_packed_mapstyle_dataset(
         dataset_root=dataset_root,
@@ -1553,8 +1561,8 @@ def build_weighted_sampler_for_packed_dataset(
     verbose: bool = True,
 ) -> Tuple[WeightedRandomSampler, Dict[str, Any]]:
     """
-    为 PackedRGBDepthMindRoveMapDataset 构建 WeightedRandomSampler。
-    这里只使用 dataset.records 中的标签信息，不会真的加载视频或 MindRove 文件。
+    ä¸º PackedRGBDepthMindRoveMapDataset æž„å»º WeightedRandomSamplerã€‚
+    è¿™é‡Œåªä½¿ç”¨ dataset.records ä¸­çš„æ ‡ç­¾ä¿¡æ¯ï¼Œä¸ä¼šçœŸçš„åŠ è½½è§†é¢‘æˆ– MindRove æ–‡ä»¶ã€‚
     """
     if not hasattr(dataset, "records"):
         raise TypeError("dataset must have attribute 'records'.")
@@ -1665,7 +1673,7 @@ def build_weighted_sampler_for_packed_dataset(
 
 
 # ============================================================
-# 9) 简单自测入口
+# 9) ç®€å•è‡ªæµ‹å…¥å£
 # ============================================================
 
 def _print_mindrove_shape_info(mr: Any) -> None:
@@ -1688,7 +1696,7 @@ def _print_mindrove_shape_info(mr: Any) -> None:
 
 
 ##########################################
-# 可视化原始信号和标准化后信号
+# å¯è§†åŒ–åŽŸå§‹ä¿¡å·å’Œæ ‡å‡†åŒ–åŽä¿¡å·
 ##########################################
 def visualize_mindrove_original_vs_normalized(
     mindrove_pt_path: Union[str, Path],
@@ -1707,28 +1715,28 @@ def visualize_mindrove_original_vs_normalized(
     show: bool = True,
 ) -> None:
     """
-    读取单个 mindrove.pt，按当前 dataloader 的逻辑先重采样，再做标准化，
-    然后可视化 original 与 normalized 的对比。
+    è¯»å–å•ä¸ª mindrove.ptï¼ŒæŒ‰å½“å‰ dataloader çš„é€»è¾‘å…ˆé‡é‡‡æ ·ï¼Œå†åšæ ‡å‡†åŒ–ï¼Œ
+    ç„¶åŽå¯è§†åŒ– original ä¸Ž normalized çš„å¯¹æ¯”ã€‚
 
-    参数
+    å‚æ•°
     ----
     mindrove_pt_path:
-        单个样本的 mindrove.pt 路径
+        å•ä¸ªæ ·æœ¬çš„ mindrove.pt è·¯å¾„
     target_len:
-        重采样目标长度
+        é‡é‡‡æ ·ç›®æ ‡é•¿åº¦
     hands:
-        例如 ("left", "right")
+        ä¾‹å¦‚ ("left", "right")
     signals:
-        例如 ("emg",) 或 ("imu",) 或 ("emg", "imu")
+        ä¾‹å¦‚ ("emg",) æˆ– ("imu",) æˆ– ("emg", "imu")
 
-    其余 mean/std:
-        与 dataloader 中的 PackedMultiModalConfig 完全同名同语义。
-        若某个 hand+signal 被请求，则必须提供对应 mean/std。
+    å…¶ä½™ mean/std:
+        ä¸Ž dataloader ä¸­çš„ PackedMultiModalConfig å®Œå…¨åŒååŒè¯­ä¹‰ã€‚
+        è‹¥æŸä¸ª hand+signal è¢«è¯·æ±‚ï¼Œåˆ™å¿…é¡»æä¾›å¯¹åº” mean/stdã€‚
 
     save_path:
-        若不为 None，则保存图片
+        è‹¥ä¸ä¸º Noneï¼Œåˆ™ä¿å­˜å›¾ç‰‡
     show:
-        是否弹窗显示
+        æ˜¯å¦å¼¹çª—æ˜¾ç¤º
     """
     import matplotlib.pyplot as plt
 
@@ -1737,8 +1745,8 @@ def visualize_mindrove_original_vs_normalized(
         raise FileNotFoundError(f"mindrove.pt not found: {mindrove_pt_path}")
 
     # --------------------------------------------------------
-    # 1) 构造一个仅用于测试 normalization 的 cfg
-    #    不做增强，只做 normalization
+    # 1) æž„é€ ä¸€ä¸ªä»…ç”¨äºŽæµ‹è¯• normalization çš„ cfg
+    #    ä¸åšå¢žå¼ºï¼Œåªåš normalization
     # --------------------------------------------------------
     cfg = PackedMultiModalConfig(
         use_modalities=("mindrove",),
@@ -1763,11 +1771,11 @@ def visualize_mindrove_original_vs_normalized(
         mindrove_right_imu_std=right_imu_std,
     )
 
-    # 触发与训练时一致的严格校验
+    # è§¦å‘ä¸Žè®­ç»ƒæ—¶ä¸€è‡´çš„ä¸¥æ ¼æ ¡éªŒ
     _validate_config(cfg)
 
     # --------------------------------------------------------
-    # 2) 读取 mindrove.pt，并按 dataloader 的逻辑重采样
+    # 2) è¯»å– mindrove.ptï¼Œå¹¶æŒ‰ dataloader çš„é€»è¾‘é‡é‡‡æ ·
     # --------------------------------------------------------
     mr_obj = torch.load(mindrove_pt_path, map_location="cpu")
     if not isinstance(mr_obj, dict):
@@ -1804,7 +1812,7 @@ def visualize_mindrove_original_vs_normalized(
             stream_is_real[key] = True
 
     # --------------------------------------------------------
-    # 3) 调用脚本现有的 normalization 逻辑
+    # 3) è°ƒç”¨è„šæœ¬çŽ°æœ‰çš„ normalization é€»è¾‘
     # --------------------------------------------------------
     normalized_streams = apply_mindrove_normalization(
         streams=original_streams,
@@ -1813,8 +1821,8 @@ def visualize_mindrove_original_vs_normalized(
     )
 
     # --------------------------------------------------------
-    # 4) 画图：每一路 3 列
-    #    原始信号 / 标准化后信号 / 标准化后统计量
+    # 4) ç”»å›¾ï¼šæ¯ä¸€è·¯ 3 åˆ—
+    #    åŽŸå§‹ä¿¡å· / æ ‡å‡†åŒ–åŽä¿¡å· / æ ‡å‡†åŒ–åŽç»Ÿè®¡é‡
     # --------------------------------------------------------
     keys = list(original_streams.keys())
     n_rows = len(keys)
@@ -1826,13 +1834,13 @@ def visualize_mindrove_original_vs_normalized(
 
     def _plot_stacked_channels(ax, x_cf: torch.Tensor, title: str):
         """
-        将 [C,L] 多通道信号按通道错开绘制，便于观察每个通道形状。
+        å°† [C,L] å¤šé€šé“ä¿¡å·æŒ‰é€šé“é”™å¼€ç»˜åˆ¶ï¼Œä¾¿äºŽè§‚å¯Ÿæ¯ä¸ªé€šé“å½¢çŠ¶ã€‚
         """
         x_cf = x_cf.detach().cpu().float()
         C, L = x_cf.shape
         t = torch.arange(L).numpy()
 
-        # gap 用于将各通道上下错开，避免重叠
+        # gap ç”¨äºŽå°†å„é€šé“ä¸Šä¸‹é”™å¼€ï¼Œé¿å…é‡å 
         amp = max(float(x_cf.abs().max().item()), 1e-6)
         gap = amp * 2.5
 
@@ -1855,21 +1863,21 @@ def visualize_mindrove_original_vs_normalized(
         x0 = original_streams[key]
         x1 = normalized_streams[key]
 
-        # 左：原始信号
+        # å·¦ï¼šåŽŸå§‹ä¿¡å·
         _plot_stacked_channels(
             axes[row, 0],
             x0,
             f"{key} | original (resampled)"
         )
 
-        # 中：标准化后信号
+        # ä¸­ï¼šæ ‡å‡†åŒ–åŽä¿¡å·
         _plot_stacked_channels(
             axes[row, 1],
             x1,
             f"{key} | normalized"
         )
 
-        # 右：打印标准化前后每通道 mean/std
+        # å³ï¼šæ‰“å°æ ‡å‡†åŒ–å‰åŽæ¯é€šé“ mean/std
         orig_mean = x0.mean(dim=1).detach().cpu().numpy()
         orig_std = x0.std(dim=1).detach().cpu().numpy()
         norm_mean = x1.mean(dim=1).detach().cpu().numpy()
@@ -1921,9 +1929,9 @@ def visualize_mindrove_original_vs_normalized(
 
 def main_visualize_normalization():
     """
-    单独测试：
-    读取一个 mindrove.pt，
-    可视化 original(resampled) 和 normalized 之后的信号。
+    å•ç‹¬æµ‹è¯•ï¼š
+    è¯»å–ä¸€ä¸ª mindrove.ptï¼Œ
+    å¯è§†åŒ– original(resampled) å’Œ normalized ä¹‹åŽçš„ä¿¡å·ã€‚
     """
     mindrove_pt_path = r"C:\Junxi_data_for_training_speedup\mapstyle_dataset\train\sample_0565\mindrove.pt"
 
@@ -1933,14 +1941,14 @@ def main_visualize_normalization():
         hands=("left", "right"),
         signals=("imu",),
 
-        # ---------------- 这里直接传你想测试的 normalization 参数 ----------------
+        # ---------------- è¿™é‡Œç›´æŽ¥ä¼ ä½ æƒ³æµ‹è¯•çš„ normalization å‚æ•° ----------------
         left_emg_mean=(0.0006, -0.0027, 0.0051, 0.0063, 0.0055, -0.0019, 0.0009, 0.0029),
         left_emg_std=(20.0286, 26.6126, 29.4076, 32.6272, 29.6518, 26.9408, 16.0612, 13.9617),
 
         right_emg_mean=(0.0056, -0.0043, -0.0147, -0.0193, -0.0166, 0.0023, 0.0032, 0.0055),
         right_emg_std=(21.9245, 30.5936, 34.8250, 41.6747, 38.2362, 29.3167, 17.7020, 15.3456),
 
-        # 如果这次只看 EMG，IMU 可以不传
+        # å¦‚æžœè¿™æ¬¡åªçœ‹ EMGï¼ŒIMU å¯ä»¥ä¸ä¼ 
         left_imu_mean=(-0.0301, -0.0033, -0.0366, -0.2910, -0.0086, 2.9009),
         left_imu_std=(0.2028, 0.1693, 0.1153, 42.9318, 42.8149, 48.6560),
         right_imu_mean=(0.0275, -0.0127, -0.0457, 1.7059, -0.7678, -6.7844),
@@ -1952,7 +1960,7 @@ def main_visualize_normalization():
 
 def main():
     """
-    你可以自行修改路径进行简单自测。
+    ä½ å¯ä»¥è‡ªè¡Œä¿®æ”¹è·¯å¾„è¿›è¡Œç®€å•è‡ªæµ‹ã€‚
     """
     dataset_root = r"C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
 
@@ -1967,13 +1975,13 @@ def main():
         rgb_two_views=True,
         label_map_path=r"C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset\label_map.json",
 
-        # ---------------- MindRove 示例 ----------------
+        # ---------------- MindRove ç¤ºä¾‹ ----------------
         mindrove_two_views=True,
         mindrove_target_len=256,
         mindrove_hands=("left", "right"),
         mindrove_signals=("emg",),
         mindrove_merge_hands=True,
-        mindrove_apply_augmentation=False,   # 当前占位实现为 identity
+        mindrove_apply_augmentation=False,   # å½“å‰å ä½å®žçŽ°ä¸º identity
     )
 
     dataset = build_packed_mapstyle_dataset(
@@ -2016,3 +2024,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

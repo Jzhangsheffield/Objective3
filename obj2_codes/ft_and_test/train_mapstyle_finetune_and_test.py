@@ -1,75 +1,75 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
 train_mapstyle_finetune_and_test.py
 
-本版本在原始 map-style 分类训练 / 测试脚本基础上，支持以下功能：
+æœ¬ç‰ˆæœ¬åœ¨åŽŸå§‹ map-style åˆ†ç±»è®­ç»ƒ / æµ‹è¯•è„šæœ¬åŸºç¡€ä¸Šï¼Œæ”¯æŒä»¥ä¸‹åŠŸèƒ½ï¼š
 
-1) 训练模式（run_mode=train）
-   - 支持从头训练（scratch）
-   - 支持提供多个预训练权重路径，逐个加载后分别训练
-   - 预训练加载时可选择自动丢弃对比学习头 / 分类头等不需要的权重
-   - 支持两种微调方式：
-       a) full      : 全部参数都训练
-       b) head_only : 只训练分类头，冻结 backbone
-   - 支持 discriminative learning rate（区分学习率）
-       a) backbone 一个学习率
-       b) 分类头一个学习率
-   - 每个实验（每个预训练源）都会单独保存：
-       - 日志
+1) è®­ç»ƒæ¨¡å¼ï¼ˆrun_mode=trainï¼‰
+   - æ”¯æŒä»Žå¤´è®­ç»ƒï¼ˆscratchï¼‰
+   - æ”¯æŒæä¾›å¤šä¸ªé¢„è®­ç»ƒæƒé‡è·¯å¾„ï¼Œé€ä¸ªåŠ è½½åŽåˆ†åˆ«è®­ç»ƒ
+   - é¢„è®­ç»ƒåŠ è½½æ—¶å¯é€‰æ‹©è‡ªåŠ¨ä¸¢å¼ƒå¯¹æ¯”å­¦ä¹ å¤´ / åˆ†ç±»å¤´ç­‰ä¸éœ€è¦çš„æƒé‡
+   - æ”¯æŒä¸¤ç§å¾®è°ƒæ–¹å¼ï¼š
+       a) full      : å…¨éƒ¨å‚æ•°éƒ½è®­ç»ƒ
+       b) head_only : åªè®­ç»ƒåˆ†ç±»å¤´ï¼Œå†»ç»“ backbone
+   - æ”¯æŒ discriminative learning rateï¼ˆåŒºåˆ†å­¦ä¹ çŽ‡ï¼‰
+       a) backbone ä¸€ä¸ªå­¦ä¹ çŽ‡
+       b) åˆ†ç±»å¤´ä¸€ä¸ªå­¦ä¹ çŽ‡
+   - æ¯ä¸ªå®žéªŒï¼ˆæ¯ä¸ªé¢„è®­ç»ƒæºï¼‰éƒ½ä¼šå•ç‹¬ä¿å­˜ï¼š
+       - æ—¥å¿—
        - checkpoint
        - datamap / training dynamics
-       - 训练摘要
+       - è®­ç»ƒæ‘˜è¦
 
-2) 测试模式（run_mode=test）
-   - 支持提供一个或多个 test manifest
-   - 支持提供多个已训练权重文件
-   - 按顺序或广播方式逐个加载并在测试集上评估
-   - 将测试结果汇总保存为 CSV
+2) æµ‹è¯•æ¨¡å¼ï¼ˆrun_mode=testï¼‰
+   - æ”¯æŒæä¾›ä¸€ä¸ªæˆ–å¤šä¸ª test manifest
+   - æ”¯æŒæä¾›å¤šä¸ªå·²è®­ç»ƒæƒé‡æ–‡ä»¶
+   - æŒ‰é¡ºåºæˆ–å¹¿æ’­æ–¹å¼é€ä¸ªåŠ è½½å¹¶åœ¨æµ‹è¯•é›†ä¸Šè¯„ä¼°
+   - å°†æµ‹è¯•ç»“æžœæ±‡æ€»ä¿å­˜ä¸º CSV
 
 ============================================================
-本版本最重要的修改点：
+æœ¬ç‰ˆæœ¬æœ€é‡è¦çš„ä¿®æ”¹ç‚¹ï¼š
 ============================================================
-- 不再按文件名中的 imbalance_XXX 等内容自动匹配
-- 改为按命令行输入顺序匹配
+- ä¸å†æŒ‰æ–‡ä»¶åä¸­çš„ imbalance_XXX ç­‰å†…å®¹è‡ªåŠ¨åŒ¹é…
+- æ”¹ä¸ºæŒ‰å‘½ä»¤è¡Œè¾“å…¥é¡ºåºåŒ¹é…
 
-训练模式顺序匹配规则：
+è®­ç»ƒæ¨¡å¼é¡ºåºåŒ¹é…è§„åˆ™ï¼š
 ---------------------
-假设你输入：
+å‡è®¾ä½ è¾“å…¥ï¼š
     --train_manifests A.jsonl B.jsonl C.jsonl
     --val_manifests   VA.jsonl VB.jsonl VC.jsonl
     --pretrained_weight_paths P1.pth P2.pth P3.pth
 
-则会构造三个实验：
+åˆ™ä¼šæž„é€ ä¸‰ä¸ªå®žéªŒï¼š
     A + VA + P1
     B + VB + P2
     C + VC + P3
 
-广播规则：
+å¹¿æ’­è§„åˆ™ï¼š
 ---------
-1) train manifest：
-   - 可以提供 1 个，然后广播给所有 pretrained weights
-   - 或提供与 pretrained weights 数量相同的多个，按顺序一一对应
+1) train manifestï¼š
+   - å¯ä»¥æä¾› 1 ä¸ªï¼Œç„¶åŽå¹¿æ’­ç»™æ‰€æœ‰ pretrained weights
+   - æˆ–æä¾›ä¸Ž pretrained weights æ•°é‡ç›¸åŒçš„å¤šä¸ªï¼ŒæŒ‰é¡ºåºä¸€ä¸€å¯¹åº”
 
-2) val manifest：
-   - 可以不提供（全部不做验证）
-   - 可以提供 1 个，然后广播给所有实验
-   - 或提供与实验数相同的多个，按顺序一一对应
+2) val manifestï¼š
+   - å¯ä»¥ä¸æä¾›ï¼ˆå…¨éƒ¨ä¸åšéªŒè¯ï¼‰
+   - å¯ä»¥æä¾› 1 ä¸ªï¼Œç„¶åŽå¹¿æ’­ç»™æ‰€æœ‰å®žéªŒ
+   - æˆ–æä¾›ä¸Žå®žéªŒæ•°ç›¸åŒçš„å¤šä¸ªï¼ŒæŒ‰é¡ºåºä¸€ä¸€å¯¹åº”
 
-测试模式顺序匹配规则：
+æµ‹è¯•æ¨¡å¼é¡ºåºåŒ¹é…è§„åˆ™ï¼š
 ---------------------
-假设你输入：
+å‡è®¾ä½ è¾“å…¥ï¼š
     --test_manifest T1.jsonl T2.jsonl
     --test_weight_paths W1.pth W2.pth
 
-则会测试：
+åˆ™ä¼šæµ‹è¯•ï¼š
     T1 + W1
     T2 + W2
 
-广播规则：
+å¹¿æ’­è§„åˆ™ï¼š
 ---------
-- 若只提供 1 个 test manifest，则广播给所有 test_weight_paths
+- è‹¥åªæä¾› 1 ä¸ª test manifestï¼Œåˆ™å¹¿æ’­ç»™æ‰€æœ‰ test_weight_paths
 """
 
 import os
@@ -99,7 +99,7 @@ from utils_.log_training_dynamics import TrainingDynamicsLogger
 from loss.focal_loss import FocalLoss
 
 # ============================================================
-# map-style loader 相关导入
+# map-style loader ç›¸å…³å¯¼å…¥
 # ============================================================
 from utils_.mapstype_dataloader_with_index_mindrove_modified_varlen import (
     PackedMultiModalConfig,
@@ -116,94 +116,94 @@ from utils_.mapstype_dataloader_with_index_mindrove_modified_varlen import (
 parser = argparse.ArgumentParser(
         description="Train / finetune / batch-test a classifier on map-style dataset (rgb/depth/mindrove)")
 
-# ---------------- 运行模式 ----------------
+# ---------------- è¿è¡Œæ¨¡å¼ ----------------
 parser.add_argument(
     "--run_mode",
     type=str,
     default="train",
     choices=["train", "test"],
-    help="train: 训练/微调；test: 仅批量测试多个权重",
+    help="train: è®­ç»ƒ/å¾®è°ƒï¼›test: ä»…æ‰¹é‡æµ‹è¯•å¤šä¸ªæƒé‡",
 )
 
-# ---------------- 基本路径 ----------------
+# ---------------- åŸºæœ¬è·¯å¾„ ----------------
 parser.add_argument(
     "--save_path",
     type=str,
     default=r"./weights",
-    help="所有实验输出的根目录"
+    help="æ‰€æœ‰å®žéªŒè¾“å‡ºçš„æ ¹ç›®å½•"
 )
 parser.add_argument(
     "--datamap_csv_path",
     type=str,
     default=r"./datamaps",
-    help="datamap / training dynamics 根目录"
+    help="datamap / training dynamics æ ¹ç›®å½•"
 )
 parser.add_argument(
     "--dataset_root",
     type=str,
     required=True,
-    help="map-style 数据集根目录"
+    help="map-style æ•°æ®é›†æ ¹ç›®å½•"
 )
 parser.add_argument(
     "--label_map_json",
     type=str,
     required=True,
-    help="统一 label_map.json 路径"
+    help="ç»Ÿä¸€ label_map.json è·¯å¾„"
 )
 
-# ---------------- manifest 路径 ----------------
-# 为了兼容旧调用方式，仍然保留单个参数和多个参数两种接口。
-# 其中：
-#   - 单个参数 train_manifest / val_manifest 会被视为列表中的第一个元素
-#   - 多个参数 train_manifests / val_manifests 会按输入顺序追加在后面
+# ---------------- manifest è·¯å¾„ ----------------
+# ä¸ºäº†å…¼å®¹æ—§è°ƒç”¨æ–¹å¼ï¼Œä»ç„¶ä¿ç•™å•ä¸ªå‚æ•°å’Œå¤šä¸ªå‚æ•°ä¸¤ç§æŽ¥å£ã€‚
+# å…¶ä¸­ï¼š
+#   - å•ä¸ªå‚æ•° train_manifest / val_manifest ä¼šè¢«è§†ä¸ºåˆ—è¡¨ä¸­çš„ç¬¬ä¸€ä¸ªå…ƒç´ 
+#   - å¤šä¸ªå‚æ•° train_manifests / val_manifests ä¼šæŒ‰è¾“å…¥é¡ºåºè¿½åŠ åœ¨åŽé¢
 parser.add_argument(
     "--train_manifest",
     type=str,
     default=None,
-    help="单个训练 manifest 文件路径或文件名；保留用于向后兼容"
+    help="å•ä¸ªè®­ç»ƒ manifest æ–‡ä»¶è·¯å¾„æˆ–æ–‡ä»¶åï¼›ä¿ç•™ç”¨äºŽå‘åŽå…¼å®¹"
 )
 parser.add_argument(
     "--train_manifests",
     nargs="*",
     default=[],
-    help="多个训练 manifest；本版本按输入顺序匹配，而不是按文件名自动匹配"
+    help="å¤šä¸ªè®­ç»ƒ manifestï¼›æœ¬ç‰ˆæœ¬æŒ‰è¾“å…¥é¡ºåºåŒ¹é…ï¼Œè€Œä¸æ˜¯æŒ‰æ–‡ä»¶åè‡ªåŠ¨åŒ¹é…"
 )
 parser.add_argument(
     "--val_manifest",
     type=str,
     default=None,
-    help="单个验证 manifest 文件路径或文件名；保留用于向后兼容"
+    help="å•ä¸ªéªŒè¯ manifest æ–‡ä»¶è·¯å¾„æˆ–æ–‡ä»¶åï¼›ä¿ç•™ç”¨äºŽå‘åŽå…¼å®¹"
 )
 parser.add_argument(
     "--val_manifests",
     nargs="*",
     default=[],
-    help="多个验证 manifest；本版本按输入顺序匹配，而不是按文件名自动匹配"
+    help="å¤šä¸ªéªŒè¯ manifestï¼›æœ¬ç‰ˆæœ¬æŒ‰è¾“å…¥é¡ºåºåŒ¹é…ï¼Œè€Œä¸æ˜¯æŒ‰æ–‡ä»¶åè‡ªåŠ¨åŒ¹é…"
 )
 
-# 注意：这里已经改成支持多个 test manifest
+# æ³¨æ„ï¼šè¿™é‡Œå·²ç»æ”¹æˆæ”¯æŒå¤šä¸ª test manifest
 parser.add_argument(
     "--test_manifest",
     nargs="+",
     default=[],
     help=(
-        "一个或多个测试 manifest 文件路径或文件名。"
-        "若只给 1 个，会广播给所有 test_weight_paths；"
-        "若给多个，则按输入顺序与 test_weight_paths 一一对应。"
+        "ä¸€ä¸ªæˆ–å¤šä¸ªæµ‹è¯• manifest æ–‡ä»¶è·¯å¾„æˆ–æ–‡ä»¶åã€‚"
+        "è‹¥åªç»™ 1 ä¸ªï¼Œä¼šå¹¿æ’­ç»™æ‰€æœ‰ test_weight_pathsï¼›"
+        "è‹¥ç»™å¤šä¸ªï¼Œåˆ™æŒ‰è¾“å…¥é¡ºåºä¸Ž test_weight_paths ä¸€ä¸€å¯¹åº”ã€‚"
     )
 )
 
-# ---------------- 文件命名 -------------------
+# ---------------- æ–‡ä»¶å‘½å -------------------
 parser.add_argument(
     "--pretrained_tag_mode",
     type=str,
     default="legacy",
     choices=["legacy", "last_k_dirs", "relative_to_anchor"],
     help=(
-        "如何从 pretrained_weight_paths 构造实验目录名。"
-        "legacy: 旧逻辑，只用 parent.name + stem；"
-        "last_k_dirs: 使用权重路径最后 k 层目录 + stem；"
-        "relative_to_anchor: 取某个锚点目录之后的相对路径作为标签。"
+        "å¦‚ä½•ä»Ž pretrained_weight_paths æž„é€ å®žéªŒç›®å½•åã€‚"
+        "legacy: æ—§é€»è¾‘ï¼Œåªç”¨ parent.name + stemï¼›"
+        "last_k_dirs: ä½¿ç”¨æƒé‡è·¯å¾„æœ€åŽ k å±‚ç›®å½• + stemï¼›"
+        "relative_to_anchor: å–æŸä¸ªé”šç‚¹ç›®å½•ä¹‹åŽçš„ç›¸å¯¹è·¯å¾„ä½œä¸ºæ ‡ç­¾ã€‚"
     ),
 )
 
@@ -211,7 +211,7 @@ parser.add_argument(
     "--pretrained_tag_last_k",
     type=int,
     default=4,
-    help="当 pretrained_tag_mode=last_k_dirs 时，取权重路径末尾多少层目录参与命名"
+    help="å½“ pretrained_tag_mode=last_k_dirs æ—¶ï¼Œå–æƒé‡è·¯å¾„æœ«å°¾å¤šå°‘å±‚ç›®å½•å‚ä¸Žå‘½å"
 )
 
 parser.add_argument(
@@ -219,31 +219,37 @@ parser.add_argument(
     type=str,
     default=None,
     help=(
-        "当 pretrained_tag_mode=relative_to_anchor 时使用。"
-        "例如设为 'J_test'，则从 J_test 之后的相对路径开始构造标签。"
+        "å½“ pretrained_tag_mode=relative_to_anchor æ—¶ä½¿ç”¨ã€‚"
+        "ä¾‹å¦‚è®¾ä¸º 'J_test'ï¼Œåˆ™ä»Ž J_test ä¹‹åŽçš„ç›¸å¯¹è·¯å¾„å¼€å§‹æž„é€ æ ‡ç­¾ã€‚"
     ),
 )
 
-# ---------------- 标签 / 模态 ----------------
+# ---------------- æ ‡ç­¾ / æ¨¡æ€ ----------------
 parser.add_argument(
     "--tier_mode",
     type=str,
     default="tier1",
     choices=["tier1", "tier2", "tier3"],
-    help="使用哪个 tier 的标签训练/测试"
+    help="ä½¿ç”¨å“ªä¸ª tier çš„æ ‡ç­¾è®­ç»ƒ/æµ‹è¯•"
 )
 parser.add_argument(
     "--n_frames",
     type=int,
     default=16,
-    help="每个样本采样帧数"
+    help="æ¯ä¸ªæ ·æœ¬é‡‡æ ·å¸§æ•°"
+)
+parser.add_argument(
+    "--rgb_camera_id",
+    type=str,
+    default="001484412812",
+    help="RGB camera id to use when manifest has camera-specific fields, e.g. 001484412812"
 )
 parser.add_argument(
     "--use_modality",
     type=str,
     default="rgb",
     choices=["rgb", "depth", "mindrove"],
-    help="当前分类只使用单模态输入：rgb / depth / mindrove"
+    help="å½“å‰åˆ†ç±»åªä½¿ç”¨å•æ¨¡æ€è¾“å…¥ï¼šrgb / depth / mindrove"
 )
 
 # ---------------- DataLoader ----------------
@@ -251,60 +257,60 @@ parser.add_argument(
     "--num_workers_train",
     type=int,
     default=8,
-    help="训练集 DataLoader worker 数量"
+    help="è®­ç»ƒé›† DataLoader worker æ•°é‡"
 )
 parser.add_argument(
     "--num_workers_val",
     type=int,
     default=6,
-    help="验证集 DataLoader worker 数量"
+    help="éªŒè¯é›† DataLoader worker æ•°é‡"
 )
 parser.add_argument(
     "--num_workers_test",
     type=int,
     default=8,
-    help="测试集 DataLoader worker 数量"
+    help="æµ‹è¯•é›† DataLoader worker æ•°é‡"
 )
 parser.add_argument(
     "--prefetch_factor_train",
     type=int,
     default=2,
-    help="训练集 prefetch_factor；num_workers=0 时忽略"
+    help="è®­ç»ƒé›† prefetch_factorï¼›num_workers=0 æ—¶å¿½ç•¥"
 )
 parser.add_argument(
     "--prefetch_factor_val",
     type=int,
     default=2,
-    help="验证集 prefetch_factor；num_workers=0 时忽略"
+    help="éªŒè¯é›† prefetch_factorï¼›num_workers=0 æ—¶å¿½ç•¥"
 )
 parser.add_argument(
     "--prefetch_factor_test",
     type=int,
     default=2,
-    help="测试集 prefetch_factor；num_workers=0 时忽略"
+    help="æµ‹è¯•é›† prefetch_factorï¼›num_workers=0 æ—¶å¿½ç•¥"
 )
 
-# ---------------- 验证开关 ----------------
+# ---------------- éªŒè¯å¼€å…³ ----------------
 parser.add_argument(
     "--disable_val",
     action="store_true",
-    help="训练时禁用验证"
+    help="è®­ç»ƒæ—¶ç¦ç”¨éªŒè¯"
 )
 
-# ---------------- 输出空间尺寸（由 loader 内部完成） ----------------
+# ---------------- è¾“å‡ºç©ºé—´å°ºå¯¸ï¼ˆç”± loader å†…éƒ¨å®Œæˆï¼‰ ----------------
 parser.add_argument(
     "--rgb_size",
     type=int,
     default=224,
-    help="RGB 输出尺寸（H=W）"
+    help="RGB è¾“å‡ºå°ºå¯¸ï¼ˆH=Wï¼‰"
 )
 parser.add_argument(
     "--depth_size",
     type=int,
     default=224,
-    help="Depth 输出尺寸（H=W）"
+    help="Depth è¾“å‡ºå°ºå¯¸ï¼ˆH=Wï¼‰"
 )
-# ---------------- RGB normalization 参数（由 loader 内部 Normalize 使用） ----------------
+# ---------------- RGB normalization å‚æ•°ï¼ˆç”± loader å†…éƒ¨ Normalize ä½¿ç”¨ï¼‰ ----------------
 parser.add_argument(
     "--rgb_mean",
     nargs=3,
@@ -312,8 +318,8 @@ parser.add_argument(
     default=[0.356, 0.363, 0.367],
     metavar=("R_MEAN", "G_MEAN", "B_MEAN"),
     help=(
-        "RGB Normalize 使用的 mean，必须给 3 个 float，顺序为 R G B。"
-        "例如：--rgb_mean 0.356 0.363 0.367"
+        "RGB Normalize ä½¿ç”¨çš„ meanï¼Œå¿…é¡»ç»™ 3 ä¸ª floatï¼Œé¡ºåºä¸º R G Bã€‚"
+        "ä¾‹å¦‚ï¼š--rgb_mean 0.356 0.363 0.367"
     ),
 )
 parser.add_argument(
@@ -323,45 +329,45 @@ parser.add_argument(
     default=[0.288, 0.271, 0.270],
     metavar=("R_STD", "G_STD", "B_STD"),
     help=(
-        "RGB Normalize 使用的 std，必须给 3 个正数，顺序为 R G B。"
-        "例如：--rgb_std 0.288 0.271 0.270"
+        "RGB Normalize ä½¿ç”¨çš„ stdï¼Œå¿…é¡»ç»™ 3 ä¸ªæ­£æ•°ï¼Œé¡ºåºä¸º R G Bã€‚"
+        "ä¾‹å¦‚ï¼š--rgb_std 0.288 0.271 0.270"
     ),
 )
 
-# ---------------- RGB train augment 参数（由 loader 使用） ----------------
+# ---------------- RGB train augment å‚æ•°ï¼ˆç”± loader ä½¿ç”¨ï¼‰ ----------------
 parser.add_argument(
     "--rrc_scale_min",
     type=float,
     default=0.6,
-    help="RandomResizedCrop scale 最小值"
+    help="RandomResizedCrop scale æœ€å°å€¼"
 )
 parser.add_argument(
     "--rrc_scale_max",
     type=float,
     default=1.0,
-    help="RandomResizedCrop scale 最大值"
+    help="RandomResizedCrop scale æœ€å¤§å€¼"
 )
 parser.add_argument(
     "--rrc_ratio_min",
     type=float,
     default=0.75,
-    help="RandomResizedCrop ratio 最小值"
+    help="RandomResizedCrop ratio æœ€å°å€¼"
 )
 parser.add_argument(
     "--rrc_ratio_max",
     type=float,
     default=1.3333333333,
-    help="RandomResizedCrop ratio 最大值"
+    help="RandomResizedCrop ratio æœ€å¤§å€¼"
 )
 parser.add_argument(
     "--rgb_apply_spatial_aug",
     action=argparse.BooleanOptionalAction,
     default=True,
     help=(
-        "训练集是否启用 RGB 随机空间增强中的 flip/jitter/gray/blur。"
-        "注意：设为 False 时仍使用 TemporallyConsistentSpatialAugmentation，"
-        "因此 RandomResizedCrop 仍然保留；只会把 flip/jitter/gray/blur 的概率置 0。"
-        "验证/测试集不受该参数影响。"
+        "è®­ç»ƒé›†æ˜¯å¦å¯ç”¨ RGB éšæœºç©ºé—´å¢žå¼ºä¸­çš„ flip/jitter/gray/blurã€‚"
+        "æ³¨æ„ï¼šè®¾ä¸º False æ—¶ä»ä½¿ç”¨ TemporallyConsistentSpatialAugmentationï¼Œ"
+        "å› æ­¤ RandomResizedCrop ä»ç„¶ä¿ç•™ï¼›åªä¼šæŠŠ flip/jitter/gray/blur çš„æ¦‚çŽ‡ç½® 0ã€‚"
+        "éªŒè¯/æµ‹è¯•é›†ä¸å—è¯¥å‚æ•°å½±å“ã€‚"
     ),
 )
 
@@ -369,76 +375,76 @@ parser.add_argument(
     "--rgb_hflip_p",
     type=float,
     default=0.5,
-    help="训练集 RGB RandomHorizontalFlip 概率"
+    help="è®­ç»ƒé›† RGB RandomHorizontalFlip æ¦‚çŽ‡"
 )
 parser.add_argument(
     "--rgb_vflip_p",
     type=float,
     default=0.5,
-    help="训练集 RGB RandomVerticalFlip 概率；机械操作视频通常建议为 0"
+    help="è®­ç»ƒé›† RGB RandomVerticalFlip æ¦‚çŽ‡ï¼›æœºæ¢°æ“ä½œè§†é¢‘é€šå¸¸å»ºè®®ä¸º 0"
 )
 
 parser.add_argument(
     "--rgb_jitter_p",
     type=float,
     default=0.5,
-    help="训练集 RGB ColorJitter 被应用的概率"
+    help="è®­ç»ƒé›† RGB ColorJitter è¢«åº”ç”¨çš„æ¦‚çŽ‡"
 )
 parser.add_argument(
     "--rgb_jitter_brightness",
     type=float,
     default=0.24,
-    help="ColorJitter brightness 强度"
+    help="ColorJitter brightness å¼ºåº¦"
 )
 parser.add_argument(
     "--rgb_jitter_contrast",
     type=float,
     default=0.24,
-    help="ColorJitter contrast 强度"
+    help="ColorJitter contrast å¼ºåº¦"
 )
 parser.add_argument(
     "--rgb_jitter_saturation",
     type=float,
     default=0.24,
-    help="ColorJitter saturation 强度"
+    help="ColorJitter saturation å¼ºåº¦"
 )
 parser.add_argument(
     "--rgb_jitter_hue",
     type=float,
     default=0.16,
-    help="ColorJitter hue 强度；torchvision 要求通常不超过 0.5"
+    help="ColorJitter hue å¼ºåº¦ï¼›torchvision è¦æ±‚é€šå¸¸ä¸è¶…è¿‡ 0.5"
 )
 
 parser.add_argument(
     "--rgb_gray_p",
     type=float,
     default=0.2,
-    help="训练集 RGB RandomGrayscale 概率"
+    help="è®­ç»ƒé›† RGB RandomGrayscale æ¦‚çŽ‡"
 )
 
 parser.add_argument(
     "--rgb_blur_p",
     type=float,
     default=0.5,
-    help="训练集 RGB GaussianBlur 被应用的概率"
+    help="è®­ç»ƒé›† RGB GaussianBlur è¢«åº”ç”¨çš„æ¦‚çŽ‡"
 )
 parser.add_argument(
     "--rgb_blur_kernel",
     type=int,
     default=7,
-    help="GaussianBlur kernel size，必须是 >=3 的奇数"
+    help="GaussianBlur kernel sizeï¼Œå¿…é¡»æ˜¯ >=3 çš„å¥‡æ•°"
 )
 parser.add_argument(
     "--rgb_blur_sigma_min",
     type=float,
     default=0.1,
-    help="GaussianBlur sigma 下界"
+    help="GaussianBlur sigma ä¸‹ç•Œ"
 )
 parser.add_argument(
     "--rgb_blur_sigma_max",
     type=float,
     default=1.0,
-    help="GaussianBlur sigma 上界"
+    help="GaussianBlur sigma ä¸Šç•Œ"
 )
 
 # ---------------- MindRove data config ----------------
@@ -446,67 +452,67 @@ parser.add_argument(
     "--mindrove_target_len",
     type=int,
     default=256,
-    help="MindRove 序列重采样后的统一长度"
+    help="MindRove åºåˆ—é‡é‡‡æ ·åŽçš„ç»Ÿä¸€é•¿åº¦"
 )
 parser.add_argument(
     "--mindrove_hands",
     nargs="+",
     default=["left", "right"],
     choices=["left", "right"],
-    help="MindRove 使用哪些手的数据"
+    help="MindRove ä½¿ç”¨å“ªäº›æ‰‹çš„æ•°æ®"
 )
 parser.add_argument(
     "--mindrove_signals",
     nargs="+",
     default=["emg", "imu"],
     choices=["emg", "imu"],
-    help="MindRove 使用哪些信号"
+    help="MindRove ä½¿ç”¨å“ªäº›ä¿¡å·"
 )
 parser.add_argument(
     "--mindrove_merge_hands",
     action="store_true",
-    help="是否将左右手同类信号在通道维拼接后输出"
+    help="æ˜¯å¦å°†å·¦å³æ‰‹åŒç±»ä¿¡å·åœ¨é€šé“ç»´æ‹¼æŽ¥åŽè¾“å‡º"
 )
 parser.add_argument(
     "--mindrove_apply_augmentation",
     action=argparse.BooleanOptionalAction,
     default=True,
-    help="训练集是否启用 MindRove 样本级增强；验证/测试集会由 dataloader 自动关闭"
+    help="è®­ç»ƒé›†æ˜¯å¦å¯ç”¨ MindRove æ ·æœ¬çº§å¢žå¼ºï¼›éªŒè¯/æµ‹è¯•é›†ä¼šç”± dataloader è‡ªåŠ¨å…³é—­"
 )
 parser.add_argument(
     "--mindrove_apply_normalization",
     action=argparse.BooleanOptionalAction,
     default=False,
-    help="是否在重采样后、增强前，对 MindRove 做 per-channel mean/std 标准化"
+    help="æ˜¯å¦åœ¨é‡é‡‡æ ·åŽã€å¢žå¼ºå‰ï¼Œå¯¹ MindRove åš per-channel mean/std æ ‡å‡†åŒ–"
 )
 parser.add_argument(
     "--disable_train_augmentation",
     action="store_true",
     help=(
-        "统一关闭训练集增强。启用后："
-        "RGB 的 RandomResizedCrop 会退化为 scale=(1,1)、ratio=(1,1)，"
-        "flip/jitter/gray/blur 概率全部置 0；"
-        "MindRove 样本级增强也会关闭。验证/测试本来就不启用训练增强。"
+        "ç»Ÿä¸€å…³é—­è®­ç»ƒé›†å¢žå¼ºã€‚å¯ç”¨åŽï¼š"
+        "RGB çš„ RandomResizedCrop ä¼šé€€åŒ–ä¸º scale=(1,1)ã€ratio=(1,1)ï¼Œ"
+        "flip/jitter/gray/blur æ¦‚çŽ‡å…¨éƒ¨ç½® 0ï¼›"
+        "MindRove æ ·æœ¬çº§å¢žå¼ºä¹Ÿä¼šå…³é—­ã€‚éªŒè¯/æµ‹è¯•æœ¬æ¥å°±ä¸å¯ç”¨è®­ç»ƒå¢žå¼ºã€‚"
     ),
 )
 
 # ---------------- MindRove normalization stats ----------------
 parser.add_argument("--mindrove_left_emg_mean", nargs="+", type=float, default=None,
-                    help="左手 EMG 的 per-channel mean，长度必须为 8")
+                    help="å·¦æ‰‹ EMG çš„ per-channel meanï¼Œé•¿åº¦å¿…é¡»ä¸º 8")
 parser.add_argument("--mindrove_left_emg_std", nargs="+", type=float, default=None,
-                    help="左手 EMG 的 per-channel std，长度必须为 8")
+                    help="å·¦æ‰‹ EMG çš„ per-channel stdï¼Œé•¿åº¦å¿…é¡»ä¸º 8")
 parser.add_argument("--mindrove_right_emg_mean", nargs="+", type=float, default=None,
-                    help="右手 EMG 的 per-channel mean，长度必须为 8")
+                    help="å³æ‰‹ EMG çš„ per-channel meanï¼Œé•¿åº¦å¿…é¡»ä¸º 8")
 parser.add_argument("--mindrove_right_emg_std", nargs="+", type=float, default=None,
-                    help="右手 EMG 的 per-channel std，长度必须为 8")
+                    help="å³æ‰‹ EMG çš„ per-channel stdï¼Œé•¿åº¦å¿…é¡»ä¸º 8")
 parser.add_argument("--mindrove_left_imu_mean", nargs="+", type=float, default=None,
-                    help="左手 IMU 的 per-channel mean，长度必须为 6")
+                    help="å·¦æ‰‹ IMU çš„ per-channel meanï¼Œé•¿åº¦å¿…é¡»ä¸º 6")
 parser.add_argument("--mindrove_left_imu_std", nargs="+", type=float, default=None,
-                    help="左手 IMU 的 per-channel std，长度必须为 6")
+                    help="å·¦æ‰‹ IMU çš„ per-channel stdï¼Œé•¿åº¦å¿…é¡»ä¸º 6")
 parser.add_argument("--mindrove_right_imu_mean", nargs="+", type=float, default=None,
-                    help="右手 IMU 的 per-channel mean，长度必须为 6")
+                    help="å³æ‰‹ IMU çš„ per-channel meanï¼Œé•¿åº¦å¿…é¡»ä¸º 6")
 parser.add_argument("--mindrove_right_imu_std", nargs="+", type=float, default=None,
-                    help="右手 IMU 的 per-channel std，长度必须为 6")
+                    help="å³æ‰‹ IMU çš„ per-channel stdï¼Œé•¿åº¦å¿…é¡»ä¸º 6")
 
 # ---------------- MindRove augmentation params ----------------
 parser.add_argument("--mindrove_time_warp_prob", type=float, default=0.5)
@@ -520,9 +526,9 @@ parser.add_argument("--mindrove_emg_noise_prob", type=float, default=0.8)
 parser.add_argument("--mindrove_emg_noise_sigma", type=float, default=0.05)
 parser.add_argument("--mindrove_emg_drift_prob", type=float, default=0.0)
 parser.add_argument("--mindrove_emg_drift_max", nargs="+", type=float, default=[0.0],
-                    help="EMG drift 的最大幅值；传 1 个值表示固定幅值，传 2 个值表示 [low, high]")
+                    help="EMG drift çš„æœ€å¤§å¹…å€¼ï¼›ä¼  1 ä¸ªå€¼è¡¨ç¤ºå›ºå®šå¹…å€¼ï¼Œä¼  2 ä¸ªå€¼è¡¨ç¤º [low, high]")
 parser.add_argument("--mindrove_emg_drift_n_points", nargs="+", type=int, default=[3],
-                    help="EMG drift 控制点数；传 1 个值表示固定值，传多个值表示候选列表")
+                    help="EMG drift æŽ§åˆ¶ç‚¹æ•°ï¼›ä¼  1 ä¸ªå€¼è¡¨ç¤ºå›ºå®šå€¼ï¼Œä¼ å¤šä¸ªå€¼è¡¨ç¤ºå€™é€‰åˆ—è¡¨")
 parser.add_argument("--mindrove_emg_drift_kind", type=str, default="additive",
                     choices=["additive", "multiplicative"])
 parser.add_argument("--mindrove_emg_drift_per_channel", action=argparse.BooleanOptionalAction, default=False)
@@ -537,9 +543,9 @@ parser.add_argument("--mindrove_imu_noise_prob", type=float, default=0.8)
 parser.add_argument("--mindrove_imu_noise_sigma", type=float, default=0.05)
 parser.add_argument("--mindrove_imu_drift_prob", type=float, default=0.0)
 parser.add_argument("--mindrove_imu_drift_max", nargs="+", type=float, default=[0.0],
-                    help="IMU drift 的最大幅值；传 1 个值表示固定幅值，传 2 个值表示 [low, high]")
+                    help="IMU drift çš„æœ€å¤§å¹…å€¼ï¼›ä¼  1 ä¸ªå€¼è¡¨ç¤ºå›ºå®šå¹…å€¼ï¼Œä¼  2 ä¸ªå€¼è¡¨ç¤º [low, high]")
 parser.add_argument("--mindrove_imu_drift_n_points", nargs="+", type=int, default=[3],
-                    help="IMU drift 控制点数；传 1 个值表示固定值，传多个值表示候选列表")
+                    help="IMU drift æŽ§åˆ¶ç‚¹æ•°ï¼›ä¼  1 ä¸ªå€¼è¡¨ç¤ºå›ºå®šå€¼ï¼Œä¼ å¤šä¸ªå€¼è¡¨ç¤ºå€™é€‰åˆ—è¡¨")
 parser.add_argument("--mindrove_imu_drift_kind", type=str, default="additive",
                     choices=["additive", "multiplicative"])
 parser.add_argument("--mindrove_imu_drift_per_channel", action=argparse.BooleanOptionalAction, default=False)
@@ -548,33 +554,33 @@ parser.add_argument("--mindrove_imu_negate_prob", type=float, default=0.0)
 parser.add_argument("--mindrove_imu_channel_dropout_prob", type=float, default=0.0)
 parser.add_argument("--mindrove_imu_channel_dropout_max_channels", type=int, default=1)
 
-# ---------------- 模型与训练 ----------------
+# ---------------- æ¨¡åž‹ä¸Žè®­ç»ƒ ----------------
 parser.add_argument(
     "--model_depth",
     type=int,
     default=18,
-    help="3D ResNet 深度"
+    help="3D ResNet æ·±åº¦"
 )
 parser.add_argument(
     "--num_classes",
     type=int,
     default=17,
-    help="分类类别数量"
+    help="åˆ†ç±»ç±»åˆ«æ•°é‡"
 )
 parser.add_argument(
     "--l2_normalize_before_fc",
     action=argparse.BooleanOptionalAction,
     default=False,
     help=(
-        "是否在模型最终 fc 分类头之前对 backbone feature 做 L2 normalize。"
-        "默认关闭，保持原始行为。注意：训练和测试必须使用相同设置。"
+        "æ˜¯å¦åœ¨æ¨¡åž‹æœ€ç»ˆ fc åˆ†ç±»å¤´ä¹‹å‰å¯¹ backbone feature åš L2 normalizeã€‚"
+        "é»˜è®¤å…³é—­ï¼Œä¿æŒåŽŸå§‹è¡Œä¸ºã€‚æ³¨æ„ï¼šè®­ç»ƒå’Œæµ‹è¯•å¿…é¡»ä½¿ç”¨ç›¸åŒè®¾ç½®ã€‚"
     ),
 )
 parser.add_argument(
     "--epochs",
     type=int,
     default=100,
-    help="训练轮数"
+    help="è®­ç»ƒè½®æ•°"
 )
 parser.add_argument(
     "--batch_size",
@@ -586,7 +592,7 @@ parser.add_argument(
     "--learning_rate",
     type=float,
     default=0.05,
-    help="默认基础学习率；单学习率模式下直接使用"
+    help="é»˜è®¤åŸºç¡€å­¦ä¹ çŽ‡ï¼›å•å­¦ä¹ çŽ‡æ¨¡å¼ä¸‹ç›´æŽ¥ä½¿ç”¨"
 )
 parser.add_argument(
     "--momentum",
@@ -598,7 +604,7 @@ parser.add_argument(
     "--weight_decay",
     type=float,
     default=1e-4,
-    help="优化器的 weight decay；SGD 和 AdamW 都会使用该值"
+    help="ä¼˜åŒ–å™¨çš„ weight decayï¼›SGD å’Œ AdamW éƒ½ä¼šä½¿ç”¨è¯¥å€¼"
 )
 
 parser.add_argument(
@@ -607,9 +613,9 @@ parser.add_argument(
     default="sgd",
     choices=["sgd", "adamw"],
     help=(
-        "选择微调优化器。"
-        "sgd: 使用 torch.optim.SGD，保留 momentum；"
-        "adamw: 使用 torch.optim.AdamW，不使用 momentum，采用 decoupled weight decay。"
+        "é€‰æ‹©å¾®è°ƒä¼˜åŒ–å™¨ã€‚"
+        "sgd: ä½¿ç”¨ torch.optim.SGDï¼Œä¿ç•™ momentumï¼›"
+        "adamw: ä½¿ç”¨ torch.optim.AdamWï¼Œä¸ä½¿ç”¨ momentumï¼Œé‡‡ç”¨ decoupled weight decayã€‚"
     ),
 )
 
@@ -617,39 +623,39 @@ parser.add_argument(
     "--adamw_beta1",
     type=float,
     default=0.9,
-    help="AdamW beta1；仅在 --optimizer adamw 时使用"
+    help="AdamW beta1ï¼›ä»…åœ¨ --optimizer adamw æ—¶ä½¿ç”¨"
 )
 
 parser.add_argument(
     "--adamw_beta2",
     type=float,
     default=0.999,
-    help="AdamW beta2；仅在 --optimizer adamw 时使用"
+    help="AdamW beta2ï¼›ä»…åœ¨ --optimizer adamw æ—¶ä½¿ç”¨"
 )
 
 parser.add_argument(
     "--adamw_eps",
     type=float,
     default=1e-8,
-    help="AdamW epsilon；仅在 --optimizer adamw 时使用"
+    help="AdamW epsilonï¼›ä»…åœ¨ --optimizer adamw æ—¶ä½¿ç”¨"
 )
 parser.add_argument(
     "--cos",
     action="store_true",
-    help="使用 cosine 学习率衰减"
+    help="ä½¿ç”¨ cosine å­¦ä¹ çŽ‡è¡°å‡"
 )
 parser.add_argument(
     "--schedules",
     default=[25, 50, 75],
     nargs="*",
     type=int,
-    help="若不用 cosine，则使用 multi-step milestones"
+    help="è‹¥ä¸ç”¨ cosineï¼Œåˆ™ä½¿ç”¨ multi-step milestones"
 )
 parser.add_argument(
     "--seed",
     type=int,
     default=None,
-    help="随机种子"
+    help="éšæœºç§å­"
 )
 
 # ---------------- MindRove 1D backbone ----------------
@@ -666,57 +672,57 @@ parser.add_argument("--mindrove_use_stem_pool", action=argparse.BooleanOptionalA
 parser.add_argument("--mindrove_zero_init_residual", action=argparse.BooleanOptionalAction, default=False,
                     help="whether to zero-initialize the last BN in each residual branch")
 
-# ---------------- Weighted Sampler（train only） ----------------
+# ---------------- Weighted Samplerï¼ˆtrain onlyï¼‰ ----------------
 parser.add_argument(
     "--use_weighted_sampler",
     action="store_true",
-    help="是否对训练集启用 WeightedRandomSampler"
+    help="æ˜¯å¦å¯¹è®­ç»ƒé›†å¯ç”¨ WeightedRandomSampler"
 )
 parser.add_argument(
     "--sampler_tier",
     type=str,
     default=None,
     choices=["tier1", "tier2", "tier3"],
-    help="weighted sampler 按哪个 tier 重采样；默认跟随 tier_mode"
+    help="weighted sampler æŒ‰å“ªä¸ª tier é‡é‡‡æ ·ï¼›é»˜è®¤è·Ÿéš tier_mode"
 )
 parser.add_argument(
     "--sampler_mode",
     type=str,
     default="sqrt_inv",
     choices=["inv", "sqrt_inv"],
-    help="weighted sampler 权重方式"
+    help="weighted sampler æƒé‡æ–¹å¼"
 )
 
 # ---------------- Weighted CE ----------------
 parser.add_argument(
     "--use_weighted_ce",
     action="store_true",
-    help="启用 Weighted Cross-Entropy"
+    help="å¯ç”¨ Weighted Cross-Entropy"
 )
 parser.add_argument(
     "--weight_method",
     type=str,
     default="class_balanced",
     choices=["class_balanced", "inv_freq"],
-    help="类别权重计算方法"
+    help="ç±»åˆ«æƒé‡è®¡ç®—æ–¹æ³•"
 )
 parser.add_argument(
     "--cb_beta",
     type=float,
     default=0.999,
-    help="class_balanced 权重中的 beta"
+    help="class_balanced æƒé‡ä¸­çš„ beta"
 )
 parser.add_argument(
     "--weight_normalize_mean",
     action="store_true",
-    help="是否将类别权重归一化到均值=1"
+    help="æ˜¯å¦å°†ç±»åˆ«æƒé‡å½’ä¸€åŒ–åˆ°å‡å€¼=1"
 )
 
 # ---------------- Focal Loss ----------------
 parser.add_argument(
     "--use_focal",
     action="store_true",
-    help="启用 Focal Loss"
+    help="å¯ç”¨ Focal Loss"
 )
 parser.add_argument(
     "--focal_gamma",
@@ -727,106 +733,106 @@ parser.add_argument(
 parser.add_argument(
     "--focal_use_alpha",
     action="store_true",
-    help="Focal Loss 是否使用 alpha 类权重"
+    help="Focal Loss æ˜¯å¦ä½¿ç”¨ alpha ç±»æƒé‡"
 )
 
 # ---------------- AMP ----------------
 parser.add_argument(
     "--enable_amp",
     action="store_true",
-    help="是否启用 AMP 混合精度训练"
+    help="æ˜¯å¦å¯ç”¨ AMP æ··åˆç²¾åº¦è®­ç»ƒ"
 )
 
-# ---------------- 预训练 / 微调相关 ----------------
+# ---------------- é¢„è®­ç»ƒ / å¾®è°ƒç›¸å…³ ----------------
 parser.add_argument(
     "--pretrained_weight_paths",
     nargs="*",
     default=[],
     help=(
-        "训练模式下可传入多个预训练权重路径。"
-        "本版本按输入顺序与 train_manifest(s) / val_manifest(s) 对齐。"
+        "è®­ç»ƒæ¨¡å¼ä¸‹å¯ä¼ å…¥å¤šä¸ªé¢„è®­ç»ƒæƒé‡è·¯å¾„ã€‚"
+        "æœ¬ç‰ˆæœ¬æŒ‰è¾“å…¥é¡ºåºä¸Ž train_manifest(s) / val_manifest(s) å¯¹é½ã€‚"
     ),
 )
 parser.add_argument(
     "--include_scratch_baseline",
     action="store_true",
-    help="当提供多个预训练权重时，是否额外再跑 scratch baseline"
+    help="å½“æä¾›å¤šä¸ªé¢„è®­ç»ƒæƒé‡æ—¶ï¼Œæ˜¯å¦é¢å¤–å†è·‘ scratch baseline"
 )
 parser.add_argument(
     "--finetune_mode",
     type=str,
     default="full",
     choices=["full", "head_only"],
-    help="full: 全部微调；head_only: 只训练分类头"
+    help="full: å…¨éƒ¨å¾®è°ƒï¼›head_only: åªè®­ç»ƒåˆ†ç±»å¤´"
 )
 
-# 默认丢掉对比学习头 / projector / predictor 等
+# é»˜è®¤ä¸¢æŽ‰å¯¹æ¯”å­¦ä¹ å¤´ / projector / predictor ç­‰
 parser.add_argument(
     "--keep_pretrained_head",
     action="store_true",
-    help="默认会丢掉预训练中的 fc/head/projector/predictor 等头部参数；传该开关可保留",
+    help="é»˜è®¤ä¼šä¸¢æŽ‰é¢„è®­ç»ƒä¸­çš„ fc/head/projector/predictor ç­‰å¤´éƒ¨å‚æ•°ï¼›ä¼ è¯¥å¼€å…³å¯ä¿ç•™",
 )
 parser.add_argument(
     "--pretrained_strict",
     action="store_true",
-    help="预训练加载时是否 strict=True；默认 strict=False，更适合微调",
+    help="é¢„è®­ç»ƒåŠ è½½æ—¶æ˜¯å¦ strict=Trueï¼›é»˜è®¤ strict=Falseï¼Œæ›´é€‚åˆå¾®è°ƒ",
 )
 
-# ---------------- 区分学习率（discriminative LR） ----------------
+# ---------------- åŒºåˆ†å­¦ä¹ çŽ‡ï¼ˆdiscriminative LRï¼‰ ----------------
 parser.add_argument(
     "--use_discriminative_lr",
     action="store_true",
-    help="是否为 backbone 和分类头使用不同学习率（仅对 full finetune 有意义）",
+    help="æ˜¯å¦ä¸º backbone å’Œåˆ†ç±»å¤´ä½¿ç”¨ä¸åŒå­¦ä¹ çŽ‡ï¼ˆä»…å¯¹ full finetune æœ‰æ„ä¹‰ï¼‰",
 )
 parser.add_argument(
     "--backbone_learning_rate",
     type=float,
     default=None,
-    help="backbone 学习率；为空则回退到 learning_rate",
+    help="backbone å­¦ä¹ çŽ‡ï¼›ä¸ºç©ºåˆ™å›žé€€åˆ° learning_rate",
 )
 parser.add_argument(
     "--head_learning_rate",
     type=float,
     default=None,
-    help="分类头学习率；为空则回退到 learning_rate",
+    help="åˆ†ç±»å¤´å­¦ä¹ çŽ‡ï¼›ä¸ºç©ºåˆ™å›žé€€åˆ° learning_rate",
 )
 
-# ---------------- checkpoint 保存策略 ----------------
+# ---------------- checkpoint ä¿å­˜ç­–ç•¥ ----------------
 parser.add_argument(
     "--save_period",
     type=int,
     default=20,
-    help="每隔多少个 epoch 保存一个周期性 checkpoint"
+    help="æ¯éš”å¤šå°‘ä¸ª epoch ä¿å­˜ä¸€ä¸ªå‘¨æœŸæ€§ checkpoint"
 )
 parser.add_argument(
     "--best_after_epoch",
     type=int,
     default=0,
-    help="只在 epoch >= 该值之后保存 best checkpoint"
+    help="åªåœ¨ epoch >= è¯¥å€¼ä¹‹åŽä¿å­˜ best checkpoint"
 )
 
-# ---------------- 批量测试 ----------------
+# ---------------- æ‰¹é‡æµ‹è¯• ----------------
 parser.add_argument(
     "--test_weight_paths",
     nargs="*",
     default=[],
     help=(
-        "测试模式下可传入多个已训练权重路径。"
-        "本版本按输入顺序与 test_manifest 对齐。"
+        "æµ‹è¯•æ¨¡å¼ä¸‹å¯ä¼ å…¥å¤šä¸ªå·²è®­ç»ƒæƒé‡è·¯å¾„ã€‚"
+        "æœ¬ç‰ˆæœ¬æŒ‰è¾“å…¥é¡ºåºä¸Ž test_manifest å¯¹é½ã€‚"
     ),
 )
 parser.add_argument(
     "--test_results_csv",
     type=str,
     default=None,
-    help="测试结果 CSV 保存路径；为空则默认存到 save_path/test_results.csv",
+    help="æµ‹è¯•ç»“æžœ CSV ä¿å­˜è·¯å¾„ï¼›ä¸ºç©ºåˆ™é»˜è®¤å­˜åˆ° save_path/test_results.csv",
 )
 
 args = parser.parse_args()
 
 
 # ============================================================
-# 全局 AMP / device 配置
+# å…¨å±€ AMP / device é…ç½®
 # ============================================================
 os.makedirs(args.save_path, exist_ok=True)
 has_cuda = torch.cuda.is_available()
@@ -836,16 +842,16 @@ torch.backends.cudnn.benchmark = True
 
 
 # ============================================================
-# 1) 工具函数
+# 1) å·¥å…·å‡½æ•°
 # ============================================================
 def seed_everything(s: int = 42):
     """
-    尽量提高可复现性。
+    å°½é‡æé«˜å¯å¤çŽ°æ€§ã€‚
 
-    注意：
-    - 这会让 cudnn.deterministic=True
-    - 可能会比 benchmark 模式更慢
-    - 若 DataLoader 内部还有复杂随机增强，严格逐位复现仍可能受 worker 随机性影响
+    æ³¨æ„ï¼š
+    - è¿™ä¼šè®© cudnn.deterministic=True
+    - å¯èƒ½ä¼šæ¯” benchmark æ¨¡å¼æ›´æ…¢
+    - è‹¥ DataLoader å†…éƒ¨è¿˜æœ‰å¤æ‚éšæœºå¢žå¼ºï¼Œä¸¥æ ¼é€ä½å¤çŽ°ä»å¯èƒ½å— worker éšæœºæ€§å½±å“
     """
     np.random.seed(s)
     random.seed(s)
@@ -862,7 +868,7 @@ def ensure_dir(path: str):
 
 def sanitize_name(name: str) -> str:
     """
-    将路径 stem / 任意字符串转换成更适合作为目录名或文件名片段的形式。
+    å°†è·¯å¾„ stem / ä»»æ„å­—ç¬¦ä¸²è½¬æ¢æˆæ›´é€‚åˆä½œä¸ºç›®å½•åæˆ–æ–‡ä»¶åç‰‡æ®µçš„å½¢å¼ã€‚
     """
     name = re.sub(r"[^a-zA-Z0-9._-]+", "_", str(name))
     name = name.strip("._-")
@@ -872,22 +878,22 @@ def sanitize_name(name: str) -> str:
 
 def build_pretrained_src_tag(pretrained_path: str | None, args) -> str:
     """
-    根据开关，从预训练权重路径构造更稳定、更不易冲突的 src tag。
+    æ ¹æ®å¼€å…³ï¼Œä»Žé¢„è®­ç»ƒæƒé‡è·¯å¾„æž„é€ æ›´ç¨³å®šã€æ›´ä¸æ˜“å†²çªçš„ src tagã€‚
 
     mode:
     - legacy:
         parent.name + stem
-        例如: proto_1_checkpoint_0200
+        ä¾‹å¦‚: proto_1_checkpoint_0200
 
     - last_k_dirs:
-        取路径最后 k 层目录 + stem
-        例如:
+        å–è·¯å¾„æœ€åŽ k å±‚ç›®å½• + stem
+        ä¾‹å¦‚:
         signal_emg/ablation_contrastive_rel/prem_0.5/proto_1/checkpoint_0200.pth
         -> signal_emg_ablation_contrastive_rel_prem_0.5_proto_1_checkpoint_0200
 
     - relative_to_anchor:
-        从某个锚点目录之后开始取相对路径 + stem
-        例如 anchor='J_test' 时:
+        ä»ŽæŸä¸ªé”šç‚¹ç›®å½•ä¹‹åŽå¼€å§‹å–ç›¸å¯¹è·¯å¾„ + stem
+        ä¾‹å¦‚ anchor='J_test' æ—¶:
         J_test/signal_emg/ablation_contrastive_rel/prem_0.5/proto_1/checkpoint_0200.pth
         -> signal_emg_ablation_contrastive_rel_prem_0.5_proto_1_checkpoint_0200
     """
@@ -912,7 +918,7 @@ def build_pretrained_src_tag(pretrained_path: str | None, args) -> str:
         anchor = args.pretrained_tag_anchor
         if not anchor:
             raise ValueError(
-                "pretrained_tag_mode='relative_to_anchor' 时，必须提供 --pretrained_tag_anchor"
+                "pretrained_tag_mode='relative_to_anchor' æ—¶ï¼Œå¿…é¡»æä¾› --pretrained_tag_anchor"
             )
 
         parts = list(p.parts)
@@ -920,7 +926,7 @@ def build_pretrained_src_tag(pretrained_path: str | None, args) -> str:
             anchor_idx = parts.index(anchor)
         except ValueError:
             raise ValueError(
-                f"anchor '{anchor}' 不在 pretrained path 中：{pretrained_path}"
+                f"anchor '{anchor}' ä¸åœ¨ pretrained path ä¸­ï¼š{pretrained_path}"
             )
 
         rel_parts = [sanitize_name(x) for x in parts[anchor_idx + 1:-1]]
@@ -934,9 +940,9 @@ def build_pretrained_src_tag(pretrained_path: str | None, args) -> str:
 
 def compact_manifest_stem(path_or_name: str | None) -> str:
     """
-    将 manifest 文件名压缩成更短的实验标签。
+    å°† manifest æ–‡ä»¶ååŽ‹ç¼©æˆæ›´çŸ­çš„å®žéªŒæ ‡ç­¾ã€‚
 
-    例如：
+    ä¾‹å¦‚ï¼š
         train_manifest_M_MR_J.jsonl -> M_MR_J
         val_manifest_N_left.jsonl   -> N_left
         train_manifest.jsonl        -> data
@@ -966,12 +972,12 @@ def compact_manifest_stem(path_or_name: str | None) -> str:
 
 def resolve_manifest_arg(dataset_root: str, manifest_arg: str | None) -> str | None:
     """
-    兼容两种传法：
-    1) 直接传文件名，例如 train_manifest.jsonl
-    2) 传绝对路径或相对路径
+    å…¼å®¹ä¸¤ç§ä¼ æ³•ï¼š
+    1) ç›´æŽ¥ä¼ æ–‡ä»¶åï¼Œä¾‹å¦‚ train_manifest.jsonl
+    2) ä¼ ç»å¯¹è·¯å¾„æˆ–ç›¸å¯¹è·¯å¾„
 
-    对于绝对路径，如果它位于 dataset_root 内部，则转换成相对路径，
-    这样更兼容很多 map-style dataset builder 的实现方式。
+    å¯¹äºŽç»å¯¹è·¯å¾„ï¼Œå¦‚æžœå®ƒä½äºŽ dataset_root å†…éƒ¨ï¼Œåˆ™è½¬æ¢æˆç›¸å¯¹è·¯å¾„ï¼Œ
+    è¿™æ ·æ›´å…¼å®¹å¾ˆå¤š map-style dataset builder çš„å®žçŽ°æ–¹å¼ã€‚
     """
     if manifest_arg is None:
         return None
@@ -984,7 +990,7 @@ def resolve_manifest_arg(dataset_root: str, manifest_arg: str | None) -> str | N
             rel = manifest_path.resolve().relative_to(dataset_root_path)
             return str(rel)
         except Exception:
-            # 若绝对路径不在 dataset_root 下，则直接原样返回
+            # è‹¥ç»å¯¹è·¯å¾„ä¸åœ¨ dataset_root ä¸‹ï¼Œåˆ™ç›´æŽ¥åŽŸæ ·è¿”å›ž
             return str(manifest_path)
 
     return str(manifest_path)
@@ -992,12 +998,12 @@ def resolve_manifest_arg(dataset_root: str, manifest_arg: str | None) -> str | N
 
 def combine_manifest_args(single_manifest: str | None, multi_manifests: list[str] | None) -> list[str]:
     """
-    将单个 manifest 参数与多个 manifest 参数合并成一个去重后的有序列表。
+    å°†å•ä¸ª manifest å‚æ•°ä¸Žå¤šä¸ª manifest å‚æ•°åˆå¹¶æˆä¸€ä¸ªåŽ»é‡åŽçš„æœ‰åºåˆ—è¡¨ã€‚
 
-    设计目的：
-    - 保留 --train_manifest / --val_manifest 的旧接口
-    - 同时支持新增的 --train_manifests / --val_manifests
-    - 保证顺序稳定：single_manifest 会排在最前面，multi_manifests 依次追加
+    è®¾è®¡ç›®çš„ï¼š
+    - ä¿ç•™ --train_manifest / --val_manifest çš„æ—§æŽ¥å£
+    - åŒæ—¶æ”¯æŒæ–°å¢žçš„ --train_manifests / --val_manifests
+    - ä¿è¯é¡ºåºç¨³å®šï¼šsingle_manifest ä¼šæŽ’åœ¨æœ€å‰é¢ï¼Œmulti_manifests ä¾æ¬¡è¿½åŠ 
     """
     merged = []
     seen = set()
@@ -1023,9 +1029,9 @@ def combine_manifest_args(single_manifest: str | None, multi_manifests: list[str
 
 def normalize_string_list(values) -> list[str]:
     """
-    将 argparse 传入的列表参数清理成有序字符串列表。
-    - 去掉空字符串
-    - 去掉纯空白
+    å°† argparse ä¼ å…¥çš„åˆ—è¡¨å‚æ•°æ¸…ç†æˆæœ‰åºå­—ç¬¦ä¸²åˆ—è¡¨ã€‚
+    - åŽ»æŽ‰ç©ºå­—ç¬¦ä¸²
+    - åŽ»æŽ‰çº¯ç©ºç™½
     """
     out = []
     for x in values:
@@ -1040,18 +1046,18 @@ def normalize_string_list(values) -> list[str]:
 
 def build_reverse_label_map(label_map_json_path: str, tier_mode: str) -> dict[int, str]:
     """
-    从 label_map.json 构建:
+    ä»Ž label_map.json æž„å»º:
         class_id -> class_name
-    的反向映射。
+    çš„åå‘æ˜ å°„ã€‚
 
-    例如原始 label_map[tier_mode] 可能是:
+    ä¾‹å¦‚åŽŸå§‹ label_map[tier_mode] å¯èƒ½æ˜¯:
         {
             "adjust": 0,
             "take": 1,
             ...
         }
 
-    这里转换成:
+    è¿™é‡Œè½¬æ¢æˆ:
         {
             0: "adjust",
             1: "take",
@@ -1070,7 +1076,7 @@ def build_reverse_label_map(label_map_json_path: str, tier_mode: str) -> dict[in
 
 def _safe_float(x):
     """
-    将 numpy / torch 标量转换成 Python float，便于 json 保存。
+    å°† numpy / torch æ ‡é‡è½¬æ¢æˆ Python floatï¼Œä¾¿äºŽ json ä¿å­˜ã€‚
     """
     if x is None:
         return None
@@ -1079,8 +1085,8 @@ def _safe_float(x):
 
 def round_metric_dict(d: dict, ndigits: int = 4) -> dict:
     """
-    将 per-class metric dict 中的 float 保留固定小数位。
-    None 保持为 None。
+    å°† per-class metric dict ä¸­çš„ float ä¿ç•™å›ºå®šå°æ•°ä½ã€‚
+    None ä¿æŒä¸º Noneã€‚
     """
     out = {}
     for k, v in d.items():
@@ -1098,25 +1104,25 @@ def compute_classification_metrics(
     reverse_label_map: dict[int, str] | None = None,
 ) -> dict:
     """
-    计算多分类指标。
+    è®¡ç®—å¤šåˆ†ç±»æŒ‡æ ‡ã€‚
 
-    返回内容包括：
+    è¿”å›žå†…å®¹åŒ…æ‹¬ï¼š
     1) overall accuracy
     2) balanced accuracy
-       - 等于所有 present classes 的 per-class recall 平均
-       - present classes 指在当前 split 中真实样本数 > 0 的类别
+       - ç­‰äºŽæ‰€æœ‰ present classes çš„ per-class recall å¹³å‡
+       - present classes æŒ‡åœ¨å½“å‰ split ä¸­çœŸå®žæ ·æœ¬æ•° > 0 çš„ç±»åˆ«
     3) macro-F1
-       - 先计算每个 present class 的 F1，再取平均
+       - å…ˆè®¡ç®—æ¯ä¸ª present class çš„ F1ï¼Œå†å–å¹³å‡
     4) per-class accuracy
-       - 对每个类别 c:
+       - å¯¹æ¯ä¸ªç±»åˆ« c:
          per_class_acc[c] = TP_c / (TP_c + FN_c)
-       - 也就是该类别的 recall
+       - ä¹Ÿå°±æ˜¯è¯¥ç±»åˆ«çš„ recall
     5) per-class support
-       - 每个类别在当前 split 中的真实样本数
+       - æ¯ä¸ªç±»åˆ«åœ¨å½“å‰ split ä¸­çš„çœŸå®žæ ·æœ¬æ•°
 
-    注意：
-    - 如果某个类别在当前 split 中 support=0，则它不参与 balanced_acc 和 macro_f1 平均。
-    - 这比把缺失类别强行记为 0 更合理，因为验证集或测试集可能不包含所有类别。
+    æ³¨æ„ï¼š
+    - å¦‚æžœæŸä¸ªç±»åˆ«åœ¨å½“å‰ split ä¸­ support=0ï¼Œåˆ™å®ƒä¸å‚ä¸Ž balanced_acc å’Œ macro_f1 å¹³å‡ã€‚
+    - è¿™æ¯”æŠŠç¼ºå¤±ç±»åˆ«å¼ºè¡Œè®°ä¸º 0 æ›´åˆç†ï¼Œå› ä¸ºéªŒè¯é›†æˆ–æµ‹è¯•é›†å¯èƒ½ä¸åŒ…å«æ‰€æœ‰ç±»åˆ«ã€‚
     """
 
     y_true_t = torch.as_tensor(y_true, dtype=torch.long).view(-1)
@@ -1227,7 +1233,7 @@ def compute_classification_metrics(
 
 def format_metrics_for_log(metrics: dict, prefix: str) -> str:
     """
-    将 acc / balanced_acc / macro_f1 格式化成一段日志文本。
+    å°† acc / balanced_acc / macro_f1 æ ¼å¼åŒ–æˆä¸€æ®µæ—¥å¿—æ–‡æœ¬ã€‚
     """
     return (
         f"{prefix}_acc: {metrics['acc']:.4f}, "
@@ -1238,17 +1244,17 @@ def format_metrics_for_log(metrics: dict, prefix: str) -> str:
 
 def align_required_sequence(values: list[str], target_len: int, field_name: str) -> list[str]:
     """
-    将“必须存在”的字符串列表对齐到 target_len。
+    å°†â€œå¿…é¡»å­˜åœ¨â€çš„å­—ç¬¦ä¸²åˆ—è¡¨å¯¹é½åˆ° target_lenã€‚
 
-    允许两种长度：
+    å…è®¸ä¸¤ç§é•¿åº¦ï¼š
     1) len(values) == 1
-       -> 广播给所有实验
+       -> å¹¿æ’­ç»™æ‰€æœ‰å®žéªŒ
     2) len(values) == target_len
-       -> 按顺序一一对应
+       -> æŒ‰é¡ºåºä¸€ä¸€å¯¹åº”
 
-    其他长度直接报错。
+    å…¶ä»–é•¿åº¦ç›´æŽ¥æŠ¥é”™ã€‚
 
-    例如：
+    ä¾‹å¦‚ï¼š
         values = ["train_a.jsonl"], target_len = 3
         -> ["train_a.jsonl", "train_a.jsonl", "train_a.jsonl"]
 
@@ -1256,7 +1262,7 @@ def align_required_sequence(values: list[str], target_len: int, field_name: str)
         -> ["a", "b", "c"]
     """
     if len(values) == 0:
-        raise ValueError(f"{field_name} 不能为空。")
+        raise ValueError(f"{field_name} ä¸èƒ½ä¸ºç©ºã€‚")
 
     if len(values) == 1:
         return values * target_len
@@ -1265,22 +1271,22 @@ def align_required_sequence(values: list[str], target_len: int, field_name: str)
         return list(values)
 
     raise ValueError(
-        f"{field_name} 的数量不合法：len={len(values)}，目标实验数={target_len}。\n"
-        f"允许的情况只有：1（广播）或 {target_len}（逐项顺序匹配）。"
+        f"{field_name} çš„æ•°é‡ä¸åˆæ³•ï¼šlen={len(values)}ï¼Œç›®æ ‡å®žéªŒæ•°={target_len}ã€‚\n"
+        f"å…è®¸çš„æƒ…å†µåªæœ‰ï¼š1ï¼ˆå¹¿æ’­ï¼‰æˆ– {target_len}ï¼ˆé€é¡¹é¡ºåºåŒ¹é…ï¼‰ã€‚"
     )
 
 
 def align_optional_sequence(values: list[str], target_len: int, field_name: str) -> list[str | None]:
     """
-    将“可为空”的字符串列表对齐到 target_len。
+    å°†â€œå¯ä¸ºç©ºâ€çš„å­—ç¬¦ä¸²åˆ—è¡¨å¯¹é½åˆ° target_lenã€‚
 
-    允许三种长度：
+    å…è®¸ä¸‰ç§é•¿åº¦ï¼š
     1) len(values) == 0
-       -> 全部置为 None
+       -> å…¨éƒ¨ç½®ä¸º None
     2) len(values) == 1
-       -> 广播给所有实验
+       -> å¹¿æ’­ç»™æ‰€æœ‰å®žéªŒ
     3) len(values) == target_len
-       -> 按顺序一一对应
+       -> æŒ‰é¡ºåºä¸€ä¸€å¯¹åº”
     """
     if len(values) == 0:
         return [None] * target_len
@@ -1292,45 +1298,45 @@ def align_optional_sequence(values: list[str], target_len: int, field_name: str)
         return list(values)
 
     raise ValueError(
-        f"{field_name} 的数量不合法：len={len(values)}，目标实验数={target_len}。\n"
-        f"允许的情况只有：0（全部 None）、1（广播）或 {target_len}（逐项顺序匹配）。"
+        f"{field_name} çš„æ•°é‡ä¸åˆæ³•ï¼šlen={len(values)}ï¼Œç›®æ ‡å®žéªŒæ•°={target_len}ã€‚\n"
+        f"å…è®¸çš„æƒ…å†µåªæœ‰ï¼š0ï¼ˆå…¨éƒ¨ Noneï¼‰ã€1ï¼ˆå¹¿æ’­ï¼‰æˆ– {target_len}ï¼ˆé€é¡¹é¡ºåºåŒ¹é…ï¼‰ã€‚"
     )
 
 
 def build_train_manifest_list(args) -> list[str]:
     """
-    统一生成训练 manifest 的有序列表。
+    ç»Ÿä¸€ç”Ÿæˆè®­ç»ƒ manifest çš„æœ‰åºåˆ—è¡¨ã€‚
     """
     return combine_manifest_args(args.train_manifest, args.train_manifests)
 
 
 def build_val_manifest_list(args) -> list[str]:
     """
-    统一生成验证 manifest 的有序列表。
+    ç»Ÿä¸€ç”ŸæˆéªŒè¯ manifest çš„æœ‰åºåˆ—è¡¨ã€‚
     """
     return combine_manifest_args(args.val_manifest, args.val_manifests)
 
 
 def build_test_manifest_list(args) -> list[str]:
     """
-    统一生成测试 manifest 的有序列表。
+    ç»Ÿä¸€ç”Ÿæˆæµ‹è¯• manifest çš„æœ‰åºåˆ—è¡¨ã€‚
 
-    注意：
-    - 本版本中 --test_manifest 已经可以接收多个值
-    - 因此这里不再区分 single / multi 两套接口
+    æ³¨æ„ï¼š
+    - æœ¬ç‰ˆæœ¬ä¸­ --test_manifest å·²ç»å¯ä»¥æŽ¥æ”¶å¤šä¸ªå€¼
+    - å› æ­¤è¿™é‡Œä¸å†åŒºåˆ† single / multi ä¸¤å¥—æŽ¥å£
     """
     return normalize_string_list(args.test_manifest)
 
 
 def validate_args(args):
     """
-    根据 run_mode 做条件检查。
+    æ ¹æ® run_mode åšæ¡ä»¶æ£€æŸ¥ã€‚
 
-    本版本的重点：
-    - 不再检查 imbalance_XXX 等文件名标签
-    - 改为检查“顺序对齐 / 广播”是否合法
+    æœ¬ç‰ˆæœ¬çš„é‡ç‚¹ï¼š
+    - ä¸å†æ£€æŸ¥ imbalance_XXX ç­‰æ–‡ä»¶åæ ‡ç­¾
+    - æ”¹ä¸ºæ£€æŸ¥â€œé¡ºåºå¯¹é½ / å¹¿æ’­â€æ˜¯å¦åˆæ³•
     """
-        # ---------------- RGB spatial augmentation 参数检查 ----------------
+        # ---------------- RGB spatial augmentation å‚æ•°æ£€æŸ¥ ----------------
     if not (0.0 < args.rrc_scale_min <= args.rrc_scale_max <= 1.0):
         raise ValueError(
             f"Require 0 < rrc_scale_min <= rrc_scale_max <= 1, "
@@ -1383,54 +1389,54 @@ def validate_args(args):
         pretrained_list = normalize_string_list(args.pretrained_weight_paths)
 
         if len(train_manifest_list) == 0:
-            raise ValueError("run_mode=train 时，必须提供 --train_manifest 或 --train_manifests")
+            raise ValueError("run_mode=train æ—¶ï¼Œå¿…é¡»æä¾› --train_manifest æˆ– --train_manifests")
 
-        # 若没有预训练权重，则实验数由 train manifests 决定
+        # è‹¥æ²¡æœ‰é¢„è®­ç»ƒæƒé‡ï¼Œåˆ™å®žéªŒæ•°ç”± train manifests å†³å®š
         if len(pretrained_list) == 0:
             num_main_runs = len(train_manifest_list)
 
-            # 训练集在这种情况下不需要广播，直接一条 train manifest 对应一个实验
-            # 这里主要检查 val 是否能与 num_main_runs 对齐
+            # è®­ç»ƒé›†åœ¨è¿™ç§æƒ…å†µä¸‹ä¸éœ€è¦å¹¿æ’­ï¼Œç›´æŽ¥ä¸€æ¡ train manifest å¯¹åº”ä¸€ä¸ªå®žéªŒ
+            # è¿™é‡Œä¸»è¦æ£€æŸ¥ val æ˜¯å¦èƒ½ä¸Ž num_main_runs å¯¹é½
             _ = align_optional_sequence(val_manifest_list, num_main_runs, "val manifest(s)")
 
-        # 若有预训练权重，则 train / val 都要能对齐到 pretrained 数量
+        # è‹¥æœ‰é¢„è®­ç»ƒæƒé‡ï¼Œåˆ™ train / val éƒ½è¦èƒ½å¯¹é½åˆ° pretrained æ•°é‡
         else:
             num_main_runs = len(pretrained_list)
             _ = align_required_sequence(train_manifest_list, num_main_runs, "train manifest(s)")
             _ = align_optional_sequence(val_manifest_list, num_main_runs, "val manifest(s)")
 
         if args.use_discriminative_lr and args.finetune_mode == "head_only":
-            print("[warning] finetune_mode=head_only 时，use_discriminative_lr 没有实际意义，将只使用分类头学习率。")
+            print("[warning] finetune_mode=head_only æ—¶ï¼Œuse_discriminative_lr æ²¡æœ‰å®žé™…æ„ä¹‰ï¼Œå°†åªä½¿ç”¨åˆ†ç±»å¤´å­¦ä¹ çŽ‡ã€‚")
 
     elif args.run_mode == "test":
         test_manifest_list = build_test_manifest_list(args)
         test_weight_list = normalize_string_list(args.test_weight_paths)
 
         if len(test_manifest_list) == 0:
-            raise ValueError("run_mode=test 时，必须提供至少一个 --test_manifest")
+            raise ValueError("run_mode=test æ—¶ï¼Œå¿…é¡»æä¾›è‡³å°‘ä¸€ä¸ª --test_manifest")
         if len(test_weight_list) == 0:
-            raise ValueError("run_mode=test 时，必须至少提供一个 --test_weight_paths")
+            raise ValueError("run_mode=test æ—¶ï¼Œå¿…é¡»è‡³å°‘æä¾›ä¸€ä¸ª --test_weight_paths")
 
-        # 测试 manifest 支持：
-        # - 1 个：广播
-        # - 与 test weights 数量相同：逐项匹配
+        # æµ‹è¯• manifest æ”¯æŒï¼š
+        # - 1 ä¸ªï¼šå¹¿æ’­
+        # - ä¸Ž test weights æ•°é‡ç›¸åŒï¼šé€é¡¹åŒ¹é…
         _ = align_required_sequence(test_manifest_list, len(test_weight_list), "test manifest(s)")
 
 
 # ============================================================
-# 2) 学习率调度（支持多 param group）
+# 2) å­¦ä¹ çŽ‡è°ƒåº¦ï¼ˆæ”¯æŒå¤š param groupï¼‰
 # ============================================================
 def compute_lr_factor(epoch: int, args) -> float:
     """
-    计算相对于“初始学习率”的缩放比例。
+    è®¡ç®—ç›¸å¯¹äºŽâ€œåˆå§‹å­¦ä¹ çŽ‡â€çš„ç¼©æ”¾æ¯”ä¾‹ã€‚
 
-    这样设计的原因：
-    - 单学习率时：当前 lr = learning_rate * factor
-    - 双学习率时：
+    è¿™æ ·è®¾è®¡çš„åŽŸå› ï¼š
+    - å•å­¦ä¹ çŽ‡æ—¶ï¼šå½“å‰ lr = learning_rate * factor
+    - åŒå­¦ä¹ çŽ‡æ—¶ï¼š
         backbone lr = backbone_initial_lr * factor
         head lr     = head_initial_lr * factor
 
-    这样就不会在第一个 epoch 把双学习率覆盖成同一个值。
+    è¿™æ ·å°±ä¸ä¼šåœ¨ç¬¬ä¸€ä¸ª epoch æŠŠåŒå­¦ä¹ çŽ‡è¦†ç›–æˆåŒä¸€ä¸ªå€¼ã€‚
     """
     if args.cos:
         return 0.5 * (1.0 + math.cos(math.pi * epoch / args.epochs))
@@ -1444,10 +1450,10 @@ def compute_lr_factor(epoch: int, args) -> float:
 
 def adjust_learning_rate(optimizer, epoch, args) -> dict:
     """
-    对所有 param group 按各自 initial_lr 成比例衰减。
+    å¯¹æ‰€æœ‰ param group æŒ‰å„è‡ª initial_lr æˆæ¯”ä¾‹è¡°å‡ã€‚
 
-    返回：
-        一个字典，方便写日志，比如：
+    è¿”å›žï¼š
+        ä¸€ä¸ªå­—å…¸ï¼Œæ–¹ä¾¿å†™æ—¥å¿—ï¼Œæ¯”å¦‚ï¼š
         {
             "backbone": 0.001,
             "head": 0.01,
@@ -1468,14 +1474,14 @@ def adjust_learning_rate(optimizer, epoch, args) -> dict:
 
 def format_lr_dict(lr_dict: dict) -> str:
     """
-    将多个 param group 的学习率格式化成日志字符串。
+    å°†å¤šä¸ª param group çš„å­¦ä¹ çŽ‡æ ¼å¼åŒ–æˆæ—¥å¿—å­—ç¬¦ä¸²ã€‚
     """
     parts = [f"{k}: {v:.6f}" for k, v in lr_dict.items()]
     return ", ".join(parts)
 
 
 # ============================================================
-# 3) 类别权重相关
+# 3) ç±»åˆ«æƒé‡ç›¸å…³
 # ============================================================
 def build_class_weights_from_counts(
     counts,
@@ -1486,10 +1492,10 @@ def build_class_weights_from_counts(
     eps: float = 1e-12,
 ) -> torch.Tensor:
     """
-    根据给定类别计数表构造 loss 的类别权重。
+    æ ¹æ®ç»™å®šç±»åˆ«è®¡æ•°è¡¨æž„é€  loss çš„ç±»åˆ«æƒé‡ã€‚
 
     counts:
-        可以是 list[int] 或 dict[int, int]
+        å¯ä»¥æ˜¯ list[int] æˆ– dict[int, int]
     method:
         - inv_freq
         - class_balanced
@@ -1524,10 +1530,10 @@ def build_class_weights_from_counts(
 
 def build_class_counts_from_mapstyle_dataset(dataset, tier_mode: str, num_classes: int):
     """
-    根据 map-style 训练数据集对象自动统计类别样本数。
+    æ ¹æ® map-style è®­ç»ƒæ•°æ®é›†å¯¹è±¡è‡ªåŠ¨ç»Ÿè®¡ç±»åˆ«æ ·æœ¬æ•°ã€‚
 
-    这里直接读取 dataset.records 中 manifest 标签字段，
-    不走 __getitem__，因此不会真的加载视频帧文件。
+    è¿™é‡Œç›´æŽ¥è¯»å– dataset.records ä¸­ manifest æ ‡ç­¾å­—æ®µï¼Œ
+    ä¸èµ° __getitem__ï¼Œå› æ­¤ä¸ä¼šçœŸçš„åŠ è½½è§†é¢‘å¸§æ–‡ä»¶ã€‚
     """
     if not hasattr(dataset, "records"):
         raise TypeError("dataset must have attribute 'records'.")
@@ -1565,15 +1571,15 @@ def build_class_counts_from_mapstyle_dataset(dataset, tier_mode: str, num_classe
 
 
 # ============================================================
-# 4) map-style dataset / loader 构建
+# 4) map-style dataset / loader æž„å»º
 # ============================================================
 def _pack_cli_float_scalar_or_pair(values, arg_name: str):
     """
-    将 argparse 读入的 float 列表整理为：
-    - 1 个值 -> float
-    - 2 个值 -> (float, float)
+    å°† argparse è¯»å…¥çš„ float åˆ—è¡¨æ•´ç†ä¸ºï¼š
+    - 1 ä¸ªå€¼ -> float
+    - 2 ä¸ªå€¼ -> (float, float)
 
-    这里用于 drift_max，严格限制只能传 1 个或 2 个值。
+    è¿™é‡Œç”¨äºŽ drift_maxï¼Œä¸¥æ ¼é™åˆ¶åªèƒ½ä¼  1 ä¸ªæˆ– 2 ä¸ªå€¼ã€‚
     """
     if values is None:
         return None
@@ -1589,11 +1595,11 @@ def _pack_cli_float_scalar_or_pair(values, arg_name: str):
 
 def _pack_cli_int_scalar_or_list(values, arg_name: str):
     """
-    将 argparse 读入的 int 列表整理为：
-    - 1 个值 -> int
-    - 多个值 -> list[int]
+    å°† argparse è¯»å…¥çš„ int åˆ—è¡¨æ•´ç†ä¸ºï¼š
+    - 1 ä¸ªå€¼ -> int
+    - å¤šä¸ªå€¼ -> list[int]
 
-    这里用于 drift_n_points。
+    è¿™é‡Œç”¨äºŽ drift_n_pointsã€‚
     """
     if values is None:
         return None
@@ -1610,9 +1616,9 @@ def _pack_cli_int_scalar_or_list(values, arg_name: str):
 
 def build_mapstyle_cfg(args, is_train: bool):
     """
-    构建 map-style dataset config。
+    æž„å»º map-style dataset configã€‚
 
-    这是分类脚本，不做 two-view 对比学习：
+    è¿™æ˜¯åˆ†ç±»è„šæœ¬ï¼Œä¸åš two-view å¯¹æ¯”å­¦ä¹ ï¼š
     - rgb_two_views = False
     - mindrove_two_views = False
     """
@@ -1621,15 +1627,15 @@ def build_mapstyle_cfg(args, is_train: bool):
     use_modalities = (args.use_modality,)
 
     # ------------------------------------------------------------
-    # 训练增强总开关
+    # è®­ç»ƒå¢žå¼ºæ€»å¼€å…³
     # ------------------------------------------------------------
-    # 原脚本中 RGB 的 --no-rgb_apply_spatial_aug 只会关闭
-    # flip / jitter / gray / blur，但 RandomResizedCrop 仍然存在。
-    # 为了真正“关闭训练增强”，这里新增 --disable_train_augmentation：
-    #   1) 只在 is_train=True 时生效；
-    #   2) RGB: RRC 退化为不裁剪，所有随机概率置 0；
-    #   3) MindRove: 样本级增强整体关闭。
-    # 验证/测试集仍然依赖 dataloader 的 is_train=False 路径，不受影响。
+    # åŽŸè„šæœ¬ä¸­ RGB çš„ --no-rgb_apply_spatial_aug åªä¼šå…³é—­
+    # flip / jitter / gray / blurï¼Œä½† RandomResizedCrop ä»ç„¶å­˜åœ¨ã€‚
+    # ä¸ºäº†çœŸæ­£â€œå…³é—­è®­ç»ƒå¢žå¼ºâ€ï¼Œè¿™é‡Œæ–°å¢ž --disable_train_augmentationï¼š
+    #   1) åªåœ¨ is_train=True æ—¶ç”Ÿæ•ˆï¼›
+    #   2) RGB: RRC é€€åŒ–ä¸ºä¸è£å‰ªï¼Œæ‰€æœ‰éšæœºæ¦‚çŽ‡ç½® 0ï¼›
+    #   3) MindRove: æ ·æœ¬çº§å¢žå¼ºæ•´ä½“å…³é—­ã€‚
+    # éªŒè¯/æµ‹è¯•é›†ä»ç„¶ä¾èµ– dataloader çš„ is_train=False è·¯å¾„ï¼Œä¸å—å½±å“ã€‚
     if is_train and bool(args.disable_train_augmentation):
         rrc_scale = (1.0, 1.0)
         rrc_ratio = (1.0, 1.0)
@@ -1654,7 +1660,8 @@ def build_mapstyle_cfg(args, is_train: bool):
     cfg = PackedMultiModalConfig(
         # -------- common --------
         n_frames=args.n_frames,
-        rgb_two_views=False,
+        rgb_two_views=False,
+        rgb_camera_id=args.rgb_camera_id,
         use_modalities=use_modalities,
         missing_policy="skip",
         load_labels=True,
@@ -1761,12 +1768,12 @@ def build_one_mapstyle_dataset_and_loader(
     sampler=None,
 ):
     """
-    构建单个 dataset + loader。
+    æž„å»ºå•ä¸ª dataset + loaderã€‚
 
-    说明：
-    - train / val / test 都走这个统一入口
-    - train 和 val/test 的区别主要由 is_train 控制
-    - 验证/测试默认不使用 weighted sampler，不打乱，不 drop_last
+    è¯´æ˜Žï¼š
+    - train / val / test éƒ½èµ°è¿™ä¸ªç»Ÿä¸€å…¥å£
+    - train å’Œ val/test çš„åŒºåˆ«ä¸»è¦ç”± is_train æŽ§åˆ¶
+    - éªŒè¯/æµ‹è¯•é»˜è®¤ä¸ä½¿ç”¨ weighted samplerï¼Œä¸æ‰“ä¹±ï¼Œä¸ drop_last
     """
     label_map = load_label_map_json(args.label_map_json)
     manifest_name = resolve_manifest_arg(args.dataset_root, manifest_arg)
@@ -1796,10 +1803,10 @@ def build_one_mapstyle_dataset_and_loader(
 
 def prepare_train_val_loaders_for_manifests(args, train_manifest: str, val_manifest: str | None):
     """
-    根据显式给定的 train_manifest / val_manifest 构建 loaders。
+    æ ¹æ®æ˜¾å¼ç»™å®šçš„ train_manifest / val_manifest æž„å»º loadersã€‚
 
-    由于本版本的训练源现在是“按顺序分配”出来的，所以这里保持简单：
-    给定一个明确的 train_manifest 和可选 val_manifest，直接构建对应 DataLoader。
+    ç”±äºŽæœ¬ç‰ˆæœ¬çš„è®­ç»ƒæºçŽ°åœ¨æ˜¯â€œæŒ‰é¡ºåºåˆ†é…â€å‡ºæ¥çš„ï¼Œæ‰€ä»¥è¿™é‡Œä¿æŒç®€å•ï¼š
+    ç»™å®šä¸€ä¸ªæ˜Žç¡®çš„ train_manifest å’Œå¯é€‰ val_manifestï¼Œç›´æŽ¥æž„å»ºå¯¹åº” DataLoaderã€‚
     """
     train_sampler = None
     train_shuffle = True
@@ -1857,7 +1864,7 @@ def prepare_train_val_loaders_for_manifests(args, train_manifest: str, val_manif
 
 def prepare_train_val_loaders(args):
     """
-    向后兼容接口：仍然允许旧代码只依赖 args.train_manifest / args.val_manifest。
+    å‘åŽå…¼å®¹æŽ¥å£ï¼šä»ç„¶å…è®¸æ—§ä»£ç åªä¾èµ– args.train_manifest / args.val_manifestã€‚
     """
     return prepare_train_val_loaders_for_manifests(
         args=args,
@@ -1868,9 +1875,9 @@ def prepare_train_val_loaders(args):
 
 def prepare_test_loader_for_manifest(args, test_manifest: str):
     """
-    构建某一个 test manifest 对应的测试集 loader。
+    æž„å»ºæŸä¸€ä¸ª test manifest å¯¹åº”çš„æµ‹è¯•é›† loaderã€‚
 
-    本版本测试模式支持多个 test manifest，因此不能再只依赖 args.test_manifest 全局唯一值。
+    æœ¬ç‰ˆæœ¬æµ‹è¯•æ¨¡å¼æ”¯æŒå¤šä¸ª test manifestï¼Œå› æ­¤ä¸èƒ½å†åªä¾èµ– args.test_manifest å…¨å±€å”¯ä¸€å€¼ã€‚
     """
     _test_dataset, testloader = build_one_mapstyle_dataset_and_loader(
         args=args,
@@ -1887,11 +1894,11 @@ def prepare_test_loader_for_manifest(args, test_manifest: str):
 
 
 # ============================================================
-# 5) 模型构建 / 预训练权重加载 / 冻结策略
+# 5) æ¨¡åž‹æž„å»º / é¢„è®­ç»ƒæƒé‡åŠ è½½ / å†»ç»“ç­–ç•¥
 # ============================================================
 def prepare_model(args):
     """
-    根据 use_modality 构建分类模型：
+    æ ¹æ® use_modality æž„å»ºåˆ†ç±»æ¨¡åž‹ï¼š
     - rgb / depth  -> 3D ResNet
     - mindrove     -> ResNet1D
     """
@@ -1924,9 +1931,9 @@ def prepare_model(args):
 
 def strip_prefixes_from_key(key: str) -> str:
     """
-    去掉常见封装前缀，以提高预训练兼容性。
+    åŽ»æŽ‰å¸¸è§å°è£…å‰ç¼€ï¼Œä»¥æé«˜é¢„è®­ç»ƒå…¼å®¹æ€§ã€‚
 
-    典型前缀包括：
+    å…¸åž‹å‰ç¼€åŒ…æ‹¬ï¼š
     - module.
     - model.
     - backbone.
@@ -1934,9 +1941,9 @@ def strip_prefixes_from_key(key: str) -> str:
     - encoder_q.
     - base_encoder.
     - online_encoder.
-    等等
+    ç­‰ç­‰
 
-    这里使用“循环剥离”的方式，避免出现多层包裹时只去掉一层前缀的问题。
+    è¿™é‡Œä½¿ç”¨â€œå¾ªçŽ¯å‰¥ç¦»â€çš„æ–¹å¼ï¼Œé¿å…å‡ºçŽ°å¤šå±‚åŒ…è£¹æ—¶åªåŽ»æŽ‰ä¸€å±‚å‰ç¼€çš„é—®é¢˜ã€‚
     """
     prefixes = [
         "module.",
@@ -1964,14 +1971,14 @@ def strip_prefixes_from_key(key: str) -> str:
 
 def extract_state_dict_from_checkpoint(ckpt_obj):
     """
-    从不同格式的 checkpoint 中取出真正的 state_dict。
+    ä»Žä¸åŒæ ¼å¼çš„ checkpoint ä¸­å–å‡ºçœŸæ­£çš„ state_dictã€‚
 
-    常见情况：
-    - 直接就是 state_dict
+    å¸¸è§æƒ…å†µï¼š
+    - ç›´æŽ¥å°±æ˜¯ state_dict
     - {"model_state_dict": ...}
     - {"state_dict": ...}
     - {"model": ...}
-    - 其他自定义保存形式
+    - å…¶ä»–è‡ªå®šä¹‰ä¿å­˜å½¢å¼
     """
     if not isinstance(ckpt_obj, dict):
         raise TypeError("Checkpoint object must be a dict-like object.")
@@ -1988,7 +1995,7 @@ def extract_state_dict_from_checkpoint(ckpt_obj):
         if k in ckpt_obj and isinstance(ckpt_obj[k], dict):
             return ckpt_obj[k]
 
-    # 如果本身已经像 state_dict：key -> Tensor
+    # å¦‚æžœæœ¬èº«å·²ç»åƒ state_dictï¼škey -> Tensor
     tensor_like = 0
     for k, v in ckpt_obj.items():
         if isinstance(k, str) and torch.is_tensor(v):
@@ -2001,15 +2008,15 @@ def extract_state_dict_from_checkpoint(ckpt_obj):
 
 def should_drop_pretrained_key(key: str) -> bool:
     """
-    判断某个 key 是否属于应该在“微调加载预训练”时丢掉的头部参数。
+    åˆ¤æ–­æŸä¸ª key æ˜¯å¦å±žäºŽåº”è¯¥åœ¨â€œå¾®è°ƒåŠ è½½é¢„è®­ç»ƒâ€æ—¶ä¸¢æŽ‰çš„å¤´éƒ¨å‚æ•°ã€‚
 
-    对比学习预训练通常会带有：
+    å¯¹æ¯”å­¦ä¹ é¢„è®­ç»ƒé€šå¸¸ä¼šå¸¦æœ‰ï¼š
     - projector
     - predictor
     - mlp head
-    - 旧的 fc / classifier
+    - æ—§çš„ fc / classifier
 
-    这些层通常与当前下游分类任务不兼容，因此默认建议丢弃。
+    è¿™äº›å±‚é€šå¸¸ä¸Žå½“å‰ä¸‹æ¸¸åˆ†ç±»ä»»åŠ¡ä¸å…¼å®¹ï¼Œå› æ­¤é»˜è®¤å»ºè®®ä¸¢å¼ƒã€‚
     """
     first_token = key.split(".")[0]
     drop_roots = {
@@ -2033,13 +2040,13 @@ def normalize_and_filter_state_dict(
     drop_pretrained_head: bool,
 ):
     """
-    对加载到的 state_dict 做三类清洗：
+    å¯¹åŠ è½½åˆ°çš„ state_dict åšä¸‰ç±»æ¸…æ´—ï¼š
 
-    1) 统一 key 前缀
-    2) 可选丢弃预训练头 / 对比头
-    3) 只保留“当前模型中存在且 shape 一致”的参数
+    1) ç»Ÿä¸€ key å‰ç¼€
+    2) å¯é€‰ä¸¢å¼ƒé¢„è®­ç»ƒå¤´ / å¯¹æ¯”å¤´
+    3) åªä¿ç•™â€œå½“å‰æ¨¡åž‹ä¸­å­˜åœ¨ä¸” shape ä¸€è‡´â€çš„å‚æ•°
 
-    返回：
+    è¿”å›žï¼š
         filtered_state_dict, report
     """
     cleaned = {}
@@ -2084,11 +2091,11 @@ def load_pretrained_weights(
     map_location: str = "cpu",
 ):
     """
-    用于“训练前加载预训练 backbone 权重”。
+    ç”¨äºŽâ€œè®­ç»ƒå‰åŠ è½½é¢„è®­ç»ƒ backbone æƒé‡â€ã€‚
 
-    与测试加载不同点：
-    - 这里默认 drop_pretrained_head=True
-    - 更符合对比学习预训练 -> 下游分类微调的场景
+    ä¸Žæµ‹è¯•åŠ è½½ä¸åŒç‚¹ï¼š
+    - è¿™é‡Œé»˜è®¤ drop_pretrained_head=True
+    - æ›´ç¬¦åˆå¯¹æ¯”å­¦ä¹ é¢„è®­ç»ƒ -> ä¸‹æ¸¸åˆ†ç±»å¾®è°ƒçš„åœºæ™¯
     """
     if not os.path.isfile(ckpt_path):
         raise FileNotFoundError(f"Pretrained checkpoint not found: {ckpt_path}")
@@ -2119,12 +2126,12 @@ def load_pretrained_weights(
 
 def load_model_weights_for_eval(model, ckpt_path: str, map_location: str = "cpu"):
     """
-    用于“测试 / 评估时加载已训练好的分类模型权重”。
+    ç”¨äºŽâ€œæµ‹è¯• / è¯„ä¼°æ—¶åŠ è½½å·²è®­ç»ƒå¥½çš„åˆ†ç±»æ¨¡åž‹æƒé‡â€ã€‚
 
-    这里不主动丢弃头部，因为测试时需要完整的分类模型。
-    但仍然会：
-    - 去常见前缀
-    - 只加载存在且 shape 一致的参数
+    è¿™é‡Œä¸ä¸»åŠ¨ä¸¢å¼ƒå¤´éƒ¨ï¼Œå› ä¸ºæµ‹è¯•æ—¶éœ€è¦å®Œæ•´çš„åˆ†ç±»æ¨¡åž‹ã€‚
+    ä½†ä»ç„¶ä¼šï¼š
+    - åŽ»å¸¸è§å‰ç¼€
+    - åªåŠ è½½å­˜åœ¨ä¸” shape ä¸€è‡´çš„å‚æ•°
     """
     if not os.path.isfile(ckpt_path):
         raise FileNotFoundError(f"Checkpoint not found for evaluation: {ckpt_path}")
@@ -2153,13 +2160,13 @@ def load_model_weights_for_eval(model, ckpt_path: str, map_location: str = "cpu"
 
 def configure_finetune_mode(model, finetune_mode: str):
     """
-    配置参数冻结策略。
+    é…ç½®å‚æ•°å†»ç»“ç­–ç•¥ã€‚
 
     full:
-        全部参数都可训练
+        å…¨éƒ¨å‚æ•°éƒ½å¯è®­ç»ƒ
 
     head_only:
-        只训练 model.fc，其他全部冻结
+        åªè®­ç»ƒ model.fcï¼Œå…¶ä»–å…¨éƒ¨å†»ç»“
     """
     if finetune_mode == "full":
         for p in model.parameters():
@@ -2183,22 +2190,22 @@ def configure_finetune_mode(model, finetune_mode: str):
 
 def build_optimizer(model, args):
     """
-    根据微调模式和双学习率设置，构建优化器。
+    æ ¹æ®å¾®è°ƒæ¨¡å¼å’ŒåŒå­¦ä¹ çŽ‡è®¾ç½®ï¼Œæž„å»ºä¼˜åŒ–å™¨ã€‚
 
-    支持三种典型情况：
-    1) full + 单学习率
+    æ”¯æŒä¸‰ç§å…¸åž‹æƒ…å†µï¼š
+    1) full + å•å­¦ä¹ çŽ‡
     2) head_only
-    3) full + discriminative lr（backbone / head 两组 lr）
+    3) full + discriminative lrï¼ˆbackbone / head ä¸¤ç»„ lrï¼‰
 
-    新增：
-    - args.optimizer='sgd'   : 使用 SGD(momentum, weight_decay)
-    - args.optimizer='adamw' : 使用 AdamW(betas, eps, decoupled weight_decay)，不使用 momentum
+    æ–°å¢žï¼š
+    - args.optimizer='sgd'   : ä½¿ç”¨ SGD(momentum, weight_decay)
+    - args.optimizer='adamw' : ä½¿ç”¨ AdamW(betas, eps, decoupled weight_decay)ï¼Œä¸ä½¿ç”¨ momentum
 
-    注意：优化器选择和参数分组是解耦的。也就是说，
-    head_only / full / discriminative lr 先决定训练哪些参数以及每组 lr，
-    然后再由 args.optimizer 决定用 SGD 还是 AdamW 更新这些参数。
+    æ³¨æ„ï¼šä¼˜åŒ–å™¨é€‰æ‹©å’Œå‚æ•°åˆ†ç»„æ˜¯è§£è€¦çš„ã€‚ä¹Ÿå°±æ˜¯è¯´ï¼Œ
+    head_only / full / discriminative lr å…ˆå†³å®šè®­ç»ƒå“ªäº›å‚æ•°ä»¥åŠæ¯ç»„ lrï¼Œ
+    ç„¶åŽå†ç”± args.optimizer å†³å®šç”¨ SGD è¿˜æ˜¯ AdamW æ›´æ–°è¿™äº›å‚æ•°ã€‚
 
-    返回：
+    è¿”å›žï¼š
         optimizer, optimizer_meta
     """
     configure_finetune_mode(model, args.finetune_mode)
@@ -2291,7 +2298,7 @@ def build_optimizer(model, args):
                 "num_trainable_params": sum(p.numel() for p in model.parameters() if p.requires_grad),
             }
 
-    # 记录优化器名称，方便后续 summary.csv / config.json 中区分实验。
+    # è®°å½•ä¼˜åŒ–å™¨åç§°ï¼Œæ–¹ä¾¿åŽç»­ summary.csv / config.json ä¸­åŒºåˆ†å®žéªŒã€‚
     optimizer_name = str(args.optimizer).lower().strip()
     optimizer_meta["optimizer"] = optimizer_name
     optimizer_meta["weight_decay"] = float(args.weight_decay)
@@ -2328,7 +2335,7 @@ def build_optimizer(model, args):
 
 
 # ============================================================
-# 6) 从 batch(dict) 中抽取 inputs / labels / ids
+# 6) ä»Ž batch(dict) ä¸­æŠ½å– inputs / labels / ids
 # ============================================================
 MINDROVE_SIGNAL_CHANNELS = {
     "emg": 8,
@@ -2338,11 +2345,11 @@ MINDROVE_SIGNAL_CHANNELS = {
 
 def build_mindrove_input_keys(args) -> list[str]:
     """
-    根据命令行配置，确定 MindRove 输入在 batch["mindrove"] 中应该按什么顺序取出并拼接。
-    这个顺序一旦定下，训练 / 测试 / 微调必须保持一致。
+    æ ¹æ®å‘½ä»¤è¡Œé…ç½®ï¼Œç¡®å®š MindRove è¾“å…¥åœ¨ batch["mindrove"] ä¸­åº”è¯¥æŒ‰ä»€ä¹ˆé¡ºåºå–å‡ºå¹¶æ‹¼æŽ¥ã€‚
+    è¿™ä¸ªé¡ºåºä¸€æ—¦å®šä¸‹ï¼Œè®­ç»ƒ / æµ‹è¯• / å¾®è°ƒå¿…é¡»ä¿æŒä¸€è‡´ã€‚
     """
     if args.mindrove_merge_hands:
-        # merge 后的 key 只有 "emg" / "imu"
+        # merge åŽçš„ key åªæœ‰ "emg" / "imu"
         return [sig for sig in args.mindrove_signals]
 
     keys = []
@@ -2354,7 +2361,7 @@ def build_mindrove_input_keys(args) -> list[str]:
 
 def compute_mindrove_in_channels(args) -> int:
     """
-    自动计算 MindRove 输入通道数。
+    è‡ªåŠ¨è®¡ç®— MindRove è¾“å…¥é€šé“æ•°ã€‚
     """
     total = 0
 
@@ -2372,7 +2379,7 @@ def compute_mindrove_in_channels(args) -> int:
 
 def concat_mindrove_batch_dict(batch_mindrove: dict, args) -> torch.Tensor:
     """
-    将 batch["mindrove"] 的 dict[str, Tensor[B,C,L]] 按固定顺序在通道维拼接成 [B,C,L]。
+    å°† batch["mindrove"] çš„ dict[str, Tensor[B,C,L]] æŒ‰å›ºå®šé¡ºåºåœ¨é€šé“ç»´æ‹¼æŽ¥æˆ [B,C,L]ã€‚
     """
     if not isinstance(batch_mindrove, dict):
         raise TypeError(
@@ -2413,7 +2420,7 @@ def concat_mindrove_batch_dict(batch_mindrove: dict, args) -> torch.Tensor:
 
 def _extract_inputs_and_labels(batch: dict, tier_mode: str, use_modality: str, args):
     """
-    返回：
+    è¿”å›žï¼š
       inputs:
         - rgb/depth   -> Tensor[B,T,C,H,W]
         - mindrove    -> Tensor[B,C,L]
@@ -2446,7 +2453,7 @@ def _extract_inputs_and_labels(batch: dict, tier_mode: str, use_modality: str, a
 
 def _ensure_bcthw(x_btchw: torch.Tensor) -> torch.Tensor:
     """
-    将 [B,T,C,H,W] 转成 3D CNN 常用的 [B,C,T,H,W]。
+    å°† [B,T,C,H,W] è½¬æˆ 3D CNN å¸¸ç”¨çš„ [B,C,T,H,W]ã€‚
     """
     if x_btchw.ndim != 5:
         raise ValueError(f"Expect 5D tensor [B,T,C,H,W], got shape={tuple(x_btchw.shape)}")
@@ -2455,8 +2462,8 @@ def _ensure_bcthw(x_btchw: torch.Tensor) -> torch.Tensor:
 
 def preprocess_rgb_already_normed(x_btchw: torch.Tensor) -> torch.Tensor:
     """
-    map-style loader 内部已经完成 RGB 的空间增强、ToDtype 和 Normalize。
-    因此这里不要重复 Normalize，只确保 dtype=float32。
+    map-style loader å†…éƒ¨å·²ç»å®Œæˆ RGB çš„ç©ºé—´å¢žå¼ºã€ToDtype å’Œ Normalizeã€‚
+    å› æ­¤è¿™é‡Œä¸è¦é‡å¤ Normalizeï¼Œåªç¡®ä¿ dtype=float32ã€‚
     """
     if x_btchw.dtype != torch.float32:
         x_btchw = x_btchw.to(torch.float32)
@@ -2465,7 +2472,7 @@ def preprocess_rgb_already_normed(x_btchw: torch.Tensor) -> torch.Tensor:
 
 def preprocess_depth_to_float(x_btchw: torch.Tensor) -> torch.Tensor:
     """
-    Depth 不额外做归一化，只转成 float32。
+    Depth ä¸é¢å¤–åšå½’ä¸€åŒ–ï¼Œåªè½¬æˆ float32ã€‚
     """
     if x_btchw.dtype != torch.float32:
         x_btchw = x_btchw.to(torch.float32)
@@ -2473,7 +2480,7 @@ def preprocess_depth_to_float(x_btchw: torch.Tensor) -> torch.Tensor:
 
 def _ensure_bcl(x_bcl: torch.Tensor) -> torch.Tensor:
     """
-    确保 MindRove 输入为 [B,C,L]。
+    ç¡®ä¿ MindRove è¾“å…¥ä¸º [B,C,L]ã€‚
     """
     if x_bcl.ndim != 3:
         raise ValueError(f"Expect 3D tensor [B,C,L], got shape={tuple(x_bcl.shape)}")
@@ -2482,11 +2489,11 @@ def _ensure_bcl(x_bcl: torch.Tensor) -> torch.Tensor:
 
 def preprocess_mindrove_to_float(x_bcl: torch.Tensor) -> torch.Tensor:
     """
-    MindRove 在这里不再做额外标准化。
+    MindRove åœ¨è¿™é‡Œä¸å†åšé¢å¤–æ ‡å‡†åŒ–ã€‚
 
-    说明：
-    - 若启用了标准化，已在 dataloader 内部完成
-    - 这里仅保证 dtype=float32，避免训练脚本再次重复处理
+    è¯´æ˜Žï¼š
+    - è‹¥å¯ç”¨äº†æ ‡å‡†åŒ–ï¼Œå·²åœ¨ dataloader å†…éƒ¨å®Œæˆ
+    - è¿™é‡Œä»…ä¿è¯ dtype=float32ï¼Œé¿å…è®­ç»ƒè„šæœ¬å†æ¬¡é‡å¤å¤„ç†
     """
     if x_bcl.dtype != torch.float32:
         x_bcl = x_bcl.to(torch.float32)
@@ -2495,8 +2502,8 @@ def preprocess_mindrove_to_float(x_bcl: torch.Tensor) -> torch.Tensor:
 
 def move_and_prepare_inputs(inputs, use_modality: str, device, args):
     """
-    将不同模态输入统一变成模型可直接接受的格式。
-    返回：
+    å°†ä¸åŒæ¨¡æ€è¾“å…¥ç»Ÿä¸€å˜æˆæ¨¡åž‹å¯ç›´æŽ¥æŽ¥å—çš„æ ¼å¼ã€‚
+    è¿”å›žï¼š
       rgb/depth  -> [B,C,T,H,W]
       mindrove   -> [B,C,L]
     """
@@ -2521,17 +2528,17 @@ def move_and_prepare_inputs(inputs, use_modality: str, device, args):
 
 
 # ============================================================
-# 7) loss 构建
+# 7) loss æž„å»º
 # ============================================================
 def build_training_criterion(args, train_dataset, device):
     """
-    构建训练损失函数。
+    æž„å»ºè®­ç»ƒæŸå¤±å‡½æ•°ã€‚
 
-    若启用：
+    è‹¥å¯ç”¨ï¼š
     - Weighted CE
     - Focal(alpha)
 
-    则先从 train_dataset.records 自动统计 class counts。
+    åˆ™å…ˆä»Ž train_dataset.records è‡ªåŠ¨ç»Ÿè®¡ class countsã€‚
     """
     weights = None
 
@@ -2604,7 +2611,7 @@ def train_one_epoch(
     use_amp = bool(enable_amp and device.type == "cuda")
     print(f"use amp: {use_amp}")
 
-    # -------- 滑动窗口计时：便于观察瓶颈 --------
+    # -------- æ»‘åŠ¨çª—å£è®¡æ—¶ï¼šä¾¿äºŽè§‚å¯Ÿç“¶é¢ˆ --------
     data_times = deque(maxlen=50)
     prep_times = deque(maxlen=50)
     gpu_times = deque(maxlen=50)
@@ -2614,11 +2621,11 @@ def train_one_epoch(
     pbar = tqdm.tqdm(loader, dynamic_ncols=True)
 
     for step, batch in enumerate(pbar):
-        # 1) data 时间
+        # 1) data æ—¶é—´
         t_data = time.perf_counter() - end
         data_times.append(t_data)
 
-        # 2) 取数据
+        # 2) å–æ•°æ®
         inputs_raw, labels, clip_ids = _extract_inputs_and_labels(
             batch=batch,
             tier_mode=tier_mode,
@@ -2667,7 +2674,7 @@ def train_one_epoch(
             t_gpu = ev_start.elapsed_time(ev_end) / 1000.0
             gpu_times.append(t_gpu)
 
-        # 6) 统计
+        # 6) ç»Ÿè®¡
         bs = inputs_model.size(0)
         total_seen += bs
         num_corrects += (preds == labels).sum().item()
@@ -2699,7 +2706,7 @@ def train_one_epoch(
 
             log_times.append(time.perf_counter() - t0_log)
 
-        # 8) 进度条显示
+        # 8) è¿›åº¦æ¡æ˜¾ç¤º
         md = sum(data_times) / len(data_times) if data_times else 0.0
         mp = sum(prep_times) / len(prep_times) if prep_times else 0.0
         mg = sum(gpu_times) / len(gpu_times) if gpu_times else 0.0
@@ -2752,9 +2759,9 @@ def evaluate(
     split_name: str = "val",
 ):
     """
-    统一验证 / 测试函数。
+    ç»Ÿä¸€éªŒè¯ / æµ‹è¯•å‡½æ•°ã€‚
 
-    split_name 仅用于日志显示，例如：
+    split_name ä»…ç”¨äºŽæ—¥å¿—æ˜¾ç¤ºï¼Œä¾‹å¦‚ï¼š
     - val
     - test
     """
@@ -2836,13 +2843,13 @@ def evaluate_test_with_per_sample_csv(
     metrics_json_path: str | None = None,
 ):
     """
-    专门用于 test 的详细评估函数。
+    ä¸“é—¨ç”¨äºŽ test çš„è¯¦ç»†è¯„ä¼°å‡½æ•°ã€‚
 
-    功能：
-    1) 计算整体 test acc / test loss
-    2) 为当前权重单独保存一个逐样本 CSV
+    åŠŸèƒ½ï¼š
+    1) è®¡ç®—æ•´ä½“ test acc / test loss
+    2) ä¸ºå½“å‰æƒé‡å•ç‹¬ä¿å­˜ä¸€ä¸ªé€æ ·æœ¬ CSV
 
-    CSV 每行对应一个测试样本，包含：
+    CSV æ¯è¡Œå¯¹åº”ä¸€ä¸ªæµ‹è¯•æ ·æœ¬ï¼ŒåŒ…å«ï¼š
     - sample_name
     - original_key
     - true_label_id
@@ -2875,7 +2882,7 @@ def evaluate_test_with_per_sample_csv(
             args=args,
         )
 
-        # 尽量保留 sample_name 与 original_key
+        # å°½é‡ä¿ç•™ sample_name ä¸Ž original_key
         sample_names = batch.get("sample_name", None)
         original_keys = batch.get("key", None)
 
@@ -2989,7 +2996,7 @@ def evaluate_test_with_per_sample_csv(
 
 
 # ============================================================
-# 9) checkpoint / 配置 / 结果保存
+# 9) checkpoint / é…ç½® / ç»“æžœä¿å­˜
 # ============================================================
 def save_json(path: str, data: dict):
     with open(path, "w", encoding="utf-8") as f:
@@ -3009,9 +3016,9 @@ def save_checkpoint(
     ckpt_name: str | None = None,
 ):
     """
-    保存 checkpoint。
+    ä¿å­˜ checkpointã€‚
 
-    命名规则：
+    å‘½åè§„åˆ™ï¼š
     - best_val.pth
     - last.pth
     - epoch_020.pth
@@ -3040,17 +3047,17 @@ def save_checkpoint(
 
 def save_train_summary_csv(csv_path: str, rows: list[dict], append: bool = False):
     """
-    保存或追加汇总 CSV。
+    ä¿å­˜æˆ–è¿½åŠ æ±‡æ€» CSVã€‚
 
-    参数
+    å‚æ•°
     ----
     csv_path : str
-        目标 csv 路径
+        ç›®æ ‡ csv è·¯å¾„
     rows : list[dict]
-        要写入的多行数据
+        è¦å†™å…¥çš„å¤šè¡Œæ•°æ®
     append : bool
-        False: 覆盖写入
-        True : 追加写入；若文件不存在则自动写表头，若已存在则只追加内容
+        False: è¦†ç›–å†™å…¥
+        True : è¿½åŠ å†™å…¥ï¼›è‹¥æ–‡ä»¶ä¸å­˜åœ¨åˆ™è‡ªåŠ¨å†™è¡¨å¤´ï¼Œè‹¥å·²å­˜åœ¨åˆ™åªè¿½åŠ å†…å®¹
     """
     if len(rows) == 0:
         return
@@ -3064,9 +3071,9 @@ def save_train_summary_csv(csv_path: str, rows: list[dict], append: bool = False
     with open(csv_path, mode, newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
 
-        # 只有以下两种情况才写表头：
-        # 1) 覆盖写入
-        # 2) 追加写入但文件原本不存在
+        # åªæœ‰ä»¥ä¸‹ä¸¤ç§æƒ…å†µæ‰å†™è¡¨å¤´ï¼š
+        # 1) è¦†ç›–å†™å…¥
+        # 2) è¿½åŠ å†™å…¥ä½†æ–‡ä»¶åŽŸæœ¬ä¸å­˜åœ¨
         if (not append) or (not file_exists):
             writer.writeheader()
 
@@ -3074,44 +3081,44 @@ def save_train_summary_csv(csv_path: str, rows: list[dict], append: bool = False
 
 
 # ============================================================
-# 10) 训练实验源构造（按输入顺序对齐）
+# 10) è®­ç»ƒå®žéªŒæºæž„é€ ï¼ˆæŒ‰è¾“å…¥é¡ºåºå¯¹é½ï¼‰
 # ============================================================
 def build_training_sources(args):
     """
-    按输入顺序构造训练实验源。
+    æŒ‰è¾“å…¥é¡ºåºæž„é€ è®­ç»ƒå®žéªŒæºã€‚
 
-    本函数是本版本最关键的逻辑之一。
-    它彻底替代了旧版本基于文件名内容自动匹配的方式。
+    æœ¬å‡½æ•°æ˜¯æœ¬ç‰ˆæœ¬æœ€å…³é”®çš„é€»è¾‘ä¹‹ä¸€ã€‚
+    å®ƒå½»åº•æ›¿ä»£äº†æ—§ç‰ˆæœ¬åŸºäºŽæ–‡ä»¶åå†…å®¹è‡ªåŠ¨åŒ¹é…çš„æ–¹å¼ã€‚
 
-    返回格式：
+    è¿”å›žæ ¼å¼ï¼š
         [
             {
-                "pretrained_path": ... 或 None,
+                "pretrained_path": ... æˆ– None,
                 "train_manifest": ...,
-                "val_manifest": ... 或 None,
+                "val_manifest": ... æˆ– None,
             },
             ...
         ]
 
-    规则总结：
+    è§„åˆ™æ€»ç»“ï¼š
     ----------------------------------------
-    A) 没有预训练权重
-       - 实验数 = train manifests 数量
-       - 每个 train manifest 对应一个实验
-       - val manifests 可 0/1/N 个（N=实验数）
+    A) æ²¡æœ‰é¢„è®­ç»ƒæƒé‡
+       - å®žéªŒæ•° = train manifests æ•°é‡
+       - æ¯ä¸ª train manifest å¯¹åº”ä¸€ä¸ªå®žéªŒ
+       - val manifests å¯ 0/1/N ä¸ªï¼ˆN=å®žéªŒæ•°ï¼‰
 
-    B) 有预训练权重
-       - 实验数 = pretrained_weight_paths 数量
-       - train manifests 可 1/N 个（N=实验数）
-       - val manifests 可 0/1/N 个（N=实验数）
-       - 按顺序或广播对齐
+    B) æœ‰é¢„è®­ç»ƒæƒé‡
+       - å®žéªŒæ•° = pretrained_weight_paths æ•°é‡
+       - train manifests å¯ 1/N ä¸ªï¼ˆN=å®žéªŒæ•°ï¼‰
+       - val manifests å¯ 0/1/N ä¸ªï¼ˆN=å®žéªŒæ•°ï¼‰
+       - æŒ‰é¡ºåºæˆ–å¹¿æ’­å¯¹é½
 
     C) include_scratch_baseline=True
-       - 会额外追加 scratch 实验
-       - scratch 实验按“主实验解析后的 (train_manifest, val_manifest) 组合”去重后追加
-       - 这样：
-            * 若单个 train/val 被广播，只会追加 1 个 scratch baseline
-            * 若不同 train/val 对应不同实验，则会为每个不同组合追加一个 scratch baseline
+       - ä¼šé¢å¤–è¿½åŠ  scratch å®žéªŒ
+       - scratch å®žéªŒæŒ‰â€œä¸»å®žéªŒè§£æžåŽçš„ (train_manifest, val_manifest) ç»„åˆâ€åŽ»é‡åŽè¿½åŠ 
+       - è¿™æ ·ï¼š
+            * è‹¥å•ä¸ª train/val è¢«å¹¿æ’­ï¼Œåªä¼šè¿½åŠ  1 ä¸ª scratch baseline
+            * è‹¥ä¸åŒ train/val å¯¹åº”ä¸åŒå®žéªŒï¼Œåˆ™ä¼šä¸ºæ¯ä¸ªä¸åŒç»„åˆè¿½åŠ ä¸€ä¸ª scratch baseline
     """
     train_manifest_list = build_train_manifest_list(args)
     val_manifest_list = build_val_manifest_list(args)
@@ -3119,7 +3126,7 @@ def build_training_sources(args):
 
     sources = []
 
-    # ---------------- 情况 A：没有预训练权重，只跑 scratch ----------------
+    # ---------------- æƒ…å†µ Aï¼šæ²¡æœ‰é¢„è®­ç»ƒæƒé‡ï¼Œåªè·‘ scratch ----------------
     if len(pretrained_list) == 0:
         num_runs = len(train_manifest_list)
         aligned_train = align_required_sequence(train_manifest_list, num_runs, "train manifest(s)")
@@ -3133,7 +3140,7 @@ def build_training_sources(args):
             })
         return sources
 
-    # ---------------- 情况 B：有预训练权重，按顺序对齐 ----------------
+    # ---------------- æƒ…å†µ Bï¼šæœ‰é¢„è®­ç»ƒæƒé‡ï¼ŒæŒ‰é¡ºåºå¯¹é½ ----------------
     num_runs = len(pretrained_list)
     aligned_train = align_required_sequence(train_manifest_list, num_runs, "train manifest(s)")
     aligned_val = align_optional_sequence(val_manifest_list, num_runs, "val manifest(s)")
@@ -3145,7 +3152,7 @@ def build_training_sources(args):
             "val_manifest": aligned_val[i],
         })
 
-    # ---------------- 情况 C：额外追加 scratch baseline ----------------
+    # ---------------- æƒ…å†µ Cï¼šé¢å¤–è¿½åŠ  scratch baseline ----------------
     if args.include_scratch_baseline:
         seen_pairs = set()
         for i in range(num_runs):
@@ -3188,7 +3195,7 @@ def build_run_name(pretrained_path: str | None, train_manifest: str, val_manifes
 
 
 # ============================================================
-# 11) 单次训练实验
+# 11) å•æ¬¡è®­ç»ƒå®žéªŒ
 # ============================================================
 def run_one_training_experiment(
     args,
@@ -3202,13 +3209,13 @@ def run_one_training_experiment(
     val_manifest_used: str | None,
 ):
     """
-    执行一次完整训练实验。
+    æ‰§è¡Œä¸€æ¬¡å®Œæ•´è®­ç»ƒå®žéªŒã€‚
 
-    这里的一次实验定义为：
-    - scratch 训练，或
-    - 从某一个预训练权重初始化后进行微调
+    è¿™é‡Œçš„ä¸€æ¬¡å®žéªŒå®šä¹‰ä¸ºï¼š
+    - scratch è®­ç»ƒï¼Œæˆ–
+    - ä»ŽæŸä¸€ä¸ªé¢„è®­ç»ƒæƒé‡åˆå§‹åŒ–åŽè¿›è¡Œå¾®è°ƒ
 
-    每个实验都会写到独立子目录，避免多个实验互相覆盖。
+    æ¯ä¸ªå®žéªŒéƒ½ä¼šå†™åˆ°ç‹¬ç«‹å­ç›®å½•ï¼Œé¿å…å¤šä¸ªå®žéªŒäº’ç›¸è¦†ç›–ã€‚
     """
     run_name = build_run_name(
         pretrained_path=pretrained_path,
@@ -3563,20 +3570,20 @@ def run_one_training_experiment(
 
 
 # ============================================================
-# 12) 批量测试（按输入顺序对齐）
+# 12) æ‰¹é‡æµ‹è¯•ï¼ˆæŒ‰è¾“å…¥é¡ºåºå¯¹é½ï¼‰
 # ============================================================
 def run_batch_test(args, device):
     """
-    批量加载多个已训练好的分类模型权重，并在一个或多个 test manifest 上逐个测试。
+    æ‰¹é‡åŠ è½½å¤šä¸ªå·²è®­ç»ƒå¥½çš„åˆ†ç±»æ¨¡åž‹æƒé‡ï¼Œå¹¶åœ¨ä¸€ä¸ªæˆ–å¤šä¸ª test manifest ä¸Šé€ä¸ªæµ‹è¯•ã€‚
 
-    顺序匹配规则：
+    é¡ºåºåŒ¹é…è§„åˆ™ï¼š
     ----------------------------------------
-    - 若 test_manifest 只给 1 个，则广播给所有 test_weight_paths
-    - 若给多个，则 test_manifest[i] 对应 test_weight_paths[i]
+    - è‹¥ test_manifest åªç»™ 1 ä¸ªï¼Œåˆ™å¹¿æ’­ç»™æ‰€æœ‰ test_weight_paths
+    - è‹¥ç»™å¤šä¸ªï¼Œåˆ™ test_manifest[i] å¯¹åº” test_weight_paths[i]
 
-    输出两类结果：
-    1) 总汇总 CSV：保存到 args.test_results_csv 或 args.save_path/test_results.csv
-    2) 每个权重单独的逐样本 CSV：保存到该权重所在目录，避免重名冲突
+    è¾“å‡ºä¸¤ç±»ç»“æžœï¼š
+    1) æ€»æ±‡æ€» CSVï¼šä¿å­˜åˆ° args.test_results_csv æˆ– args.save_path/test_results.csv
+    2) æ¯ä¸ªæƒé‡å•ç‹¬çš„é€æ ·æœ¬ CSVï¼šä¿å­˜åˆ°è¯¥æƒé‡æ‰€åœ¨ç›®å½•ï¼Œé¿å…é‡åå†²çª
     """
     ensure_dir(args.save_path)
 
@@ -3599,7 +3606,7 @@ def run_batch_test(args, device):
         print(f"test_manifest_used: {test_manifest_used}")
         print(f"weight_path:        {weight_path}")
 
-        # 若多个权重共用同一个 test manifest，则复用 loader，减少重复开销
+        # è‹¥å¤šä¸ªæƒé‡å…±ç”¨åŒä¸€ä¸ª test manifestï¼Œåˆ™å¤ç”¨ loaderï¼Œå‡å°‘é‡å¤å¼€é”€
         if test_manifest_used not in test_loader_cache:
             test_loader_cache[test_manifest_used] = prepare_test_loader_for_manifest(args, test_manifest_used)
 
@@ -3610,7 +3617,7 @@ def run_batch_test(args, device):
         print("[eval load report]")
         print(json.dumps(load_report, indent=2, ensure_ascii=False))
 
-        # per_sample_test 详细命名
+        # per_sample_test è¯¦ç»†å‘½å
         # weight_path_obj = Path(weight_path)
         # weight_dir = str(weight_path_obj.parent)
         # weight_stem = sanitize_name(weight_path_obj.stem)
@@ -3621,11 +3628,11 @@ def run_batch_test(args, device):
         # )
         # per_sample_csv_path = os.path.join(weight_dir, per_sample_csv_name)
 
-        # per_sample_test 简略命名，放置超过 260 字符限制
+        # per_sample_test ç®€ç•¥å‘½åï¼Œæ”¾ç½®è¶…è¿‡ 260 å­—ç¬¦é™åˆ¶
         weight_path_obj = Path(weight_path)
         weight_dir = str(weight_path_obj.parent)
 
-        # 固定文件名，避免路径过长
+        # å›ºå®šæ–‡ä»¶åï¼Œé¿å…è·¯å¾„è¿‡é•¿
         weight_stem = sanitize_name(Path(weight_path).stem)
         per_sample_csv_name = "per_sample_test.csv"
         per_sample_csv_path = os.path.join(
@@ -3704,8 +3711,8 @@ def main(args):
         all_summaries = []
         sources = build_training_sources(args)
 
-        # 为了避免同一份 manifest 被重复构建，使用 cache
-        # cache key 由 (train_manifest, val_manifest) 组成
+        # ä¸ºäº†é¿å…åŒä¸€ä»½ manifest è¢«é‡å¤æž„å»ºï¼Œä½¿ç”¨ cache
+        # cache key ç”± (train_manifest, val_manifest) ç»„æˆ
         loader_cache = {}
 
         for run_index, source in enumerate(sources, start=1):
@@ -3749,3 +3756,5 @@ def main(args):
 
 if __name__ == "__main__":
     main(args)
+
+
