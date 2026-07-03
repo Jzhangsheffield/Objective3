@@ -1,0 +1,17 @@
+{
+  "default_split": "train",
+  "rules": [
+    {
+      "name": "M_left_right_to_test",
+      "split": "test",
+      "person": ["M"],
+      "lighting": ["left", "right"]
+    },
+    {
+      "name": "M_normal_to_val",
+      "split": "val",
+      "person": ["M"],
+      "lighting": ["normal"]
+    }
+  ]
+}

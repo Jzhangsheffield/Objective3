@@ -1,0 +1,16 @@
+*.pt
+*.pth
+*datamap*/
+masked_testset_s3d/
+*csvs*/
+*weights*/
+*weight*/
+VideoCL/MoCo/train/
+*.mp4
+*.avi
+*.pyc
+mindrove_ablation/
+__pycache__/
+rgb_M_J_diff_seeds/
+fusion_test_M_J/
+codes_of_initial_exp_with_obj2_models/
