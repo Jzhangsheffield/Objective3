@@ -1,18 +1,18 @@
 ﻿#!/bin/bash
-#SBATCH --job-name=rgb_J_cam001484_p1
+#SBATCH --job-name=rgb_J_cam001528_p1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=12:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --output=slurm-%x-%j.out
 #SBATCH --error=slurm-%x-%j.err
 
 set -euo pipefail
 
 # ============================================================
-# RGB SupLoss ablation for J_as_test, camera 001484412812
+# RGB SupLoss ablation for J_as_test, camera 001528512812
 #
 # Runs:
 #   3 tiers x 8 ablation configs = 24 training runs
@@ -28,7 +28,7 @@ set -euo pipefail
 #   8) suploss + rel (prem0.8) + proto -> contrastive_proto_rel
 #
 # Note:
-#   The current dataloader falls back to record["001484412812_rgb"]
+#   The current dataloader falls back to record["001528512812_rgb"]
 #   when record["rgb"] is absent, so no training-code change is needed
 #   for this camera.
 # ============================================================
@@ -46,13 +46,13 @@ set -euo pipefail
 # 1) Project / data paths
 # ------------------------------
 # Override any variable at submit time if your SLURM node uses Linux mount paths, e.g.:
-#   sbatch --export=ALL,PROJECT_ROOT=/path/to/obj2_codes,DATASET_ROOT=/path/to/Stage_2_Mapstyle_Dataset run_rgb_J_as_test_cam001484412812_p1_12runs.slurm
+#   sbatch --export=ALL,PROJECT_ROOT=/path/to/obj2_codes,DATASET_ROOT=/path/to/Stage_2_Mapstyle_Dataset run_rgb_J_as_test_cam001528512812_p1_12runs.slurm
 PROJECT_ROOT="${PROJECT_ROOT:-D:/Junxi_data/Objective3_thermal_crimp/obj2_codes}"
 PY_SCRIPT="${PY_SCRIPT:-${PROJECT_ROOT}/train/MoCo_main_supcon_mapstyle_varproto_debug_topk_adamw.py}"
 DATASET_ROOT="${DATASET_ROOT:-C:/Junxi_data_for_training_speedup/Stage_2_Mapstyle_Dataset}"
 TRAIN_MANIFEST_NAME="${TRAIN_MANIFEST_NAME:-J_as_test/train_manifest.jsonl}"
 LABEL_MAP_JSON="${LABEL_MAP_JSON:-${DATASET_ROOT}/label_map.json}"
-OUT_ROOT="${OUT_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001484412812_p1_24runs}"
+OUT_ROOT="${OUT_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001528512812_p1_24runs}"
 PYTHON_BIN="${PYTHON_BIN:-python}"
 
 # ------------------------------
@@ -69,13 +69,13 @@ fi
 # ------------------------------
 # 3) Dataset / label / clip parameters
 # ------------------------------
-CAMERA_ID="${CAMERA_ID:-001484412812}"
+CAMERA_ID="${CAMERA_ID:-001528512812}"
 TIER_LIST="${TIER_LIST:-tier1 tier2 tier3}"
 N_FRAMES="${N_FRAMES:-16}"
 
-# J_as_test/train_rgb_camera_stats.json, camera 001484412812, scaled to [0,1].
-RGB_MEAN="${RGB_MEAN:-0.5369 0.5295 0.5208}"
-RGB_STD="${RGB_STD:-0.2311 0.2360 0.2363}"
+# J_as_test/train_rgb_camera_stats.json, camera 001528512812, scaled to [0,1].
+RGB_MEAN="${RGB_MEAN:-0.5776 0.5690 0.5624}"
+RGB_STD="${RGB_STD:-0.2199 0.2274 0.2225}"
 
 # ------------------------------
 # 4) RGB augmentation parameters
