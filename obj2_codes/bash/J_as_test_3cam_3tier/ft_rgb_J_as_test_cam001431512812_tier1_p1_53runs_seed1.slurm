@@ -1,24 +1,28 @@
-﻿#!/bin/bash
-#SBATCH --job-name=ft_rgb_J_cam001431_p1
+#!/bin/bash
+#SBATCH --job-name=ft_rgb_J_cam001431_tier1
+#SBATCH --partition=gpu,gpu-h100,gpu-h100-nvl
+#SBATCH --qos=gpu
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12
-#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=80G
+#SBATCH --gres=gpu:1
+#SBATCH --mail-user=jzhang319@sheffield.ac.uk
+#SBATCH --mail-type=ALL
 #SBATCH --time=3-23:00:00
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
+#SBATCH --output=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/ft_and_test/out/slurm-%x-%j.out
+#SBATCH --error=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/ft_and_test/out/slurm-%x-%j.err
 
 set -euo pipefail
 
 # ============================================================
-# RGB finetuning for J_as_test, camera 001431512812
+# RGB finetuning for J_as_test, camera 001431512812, tier1
 #
 # Pretraining source:
-#   results/rgb_J_as_test_cam001431512812_p1_24runs
+#   results/rgb_J_as_test_cam001431512812_p1_26runs
 #
-# For each tier:
-#   - find 8 checkpoint_0200.pth files under the tier pretraining directory
+# This script runs only tier1:
+#   - find 26 checkpoint_0200.pth files under the tier1 pretraining directory
 #   - run scratch_full baseline when RUN_SCRATCH_BASELINE=1
 #   - run pretrained head_only when RUN_HEAD_ONLY=1
 #   - run pretrained full fine-tuning when RUN_FULL=1
@@ -36,10 +40,10 @@ set -euo pipefail
 # module load cuDNN/8.9.2.26-CUDA-12.1.1
 # source activate pytorch
 
-ANACONDA_MODULE="${ANACONDA_MODULE:-}"
-CUDNN_MODULE="${CUDNN_MODULE:-}"
-CONDA_ENV_NAME="${CONDA_ENV_NAME:-}"
-SKIP_ENV_SETUP="${SKIP_ENV_SETUP:-1}"
+ANACONDA_MODULE="${ANACONDA_MODULE:-Anaconda3/2022.05}"
+CUDNN_MODULE="${CUDNN_MODULE:-cuDNN/8.9.2.26-CUDA-12.1.1}"
+CONDA_ENV_NAME="${CONDA_ENV_NAME:-pytorch}"
+SKIP_ENV_SETUP="${SKIP_ENV_SETUP:-0}"
 
 if [[ "${SKIP_ENV_SETUP}" != "1" ]]; then
   if [[ -n "${ANACONDA_MODULE}" ]]; then module load "${ANACONDA_MODULE}"; fi
@@ -57,14 +61,15 @@ LABEL_MAP_JSON="${LABEL_MAP_JSON:-${DATASET_ROOT}/label_map.json}"
 
 TRAIN_MANIFEST="${TRAIN_MANIFEST:-${DATASET_ROOT}/J_as_test/train_manifest.jsonl}"
 VAL_MANIFEST="${VAL_MANIFEST:-${DATASET_ROOT}/J_as_test/test_manifest.jsonl}"
+TEST_MANIFEST="${TEST_MANIFEST:-${DATASET_ROOT}/J_as_test/test_manifest.jsonl}"
 
 CAMERA_ID="${CAMERA_ID:-001431512812}"
-PRETRAIN_ROOT="${PRETRAIN_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001431512812_p1_24runs}"
+PRETRAIN_ROOT="${PRETRAIN_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001431512812_p1_26runs}"
 CHECKPOINT_NAME="${CHECKPOINT_NAME:-checkpoint_0200.pth}"
-EXPECTED_NUM_CKPTS_PER_TIER="${EXPECTED_NUM_CKPTS_PER_TIER:-8}"
+EXPECTED_NUM_CKPTS_PER_TIER="${EXPECTED_NUM_CKPTS_PER_TIER:-26}"
 ALLOW_CKPT_COUNT_MISMATCH="${ALLOW_CKPT_COUNT_MISMATCH:-0}"
 
-OUTPUT_ROOT="${OUTPUT_ROOT:-${PROJECT_ROOT}/results/ft_rgb_J_as_test_cam001431512812_p1_24runs_seed${SEED:-1}}"
+OUTPUT_ROOT="${OUTPUT_ROOT:-${PROJECT_ROOT}/results/ft_rgb_J_as_test_cam001431512812_tier1_p1_26runs_seed${SEED:-1}}"
 SAVE_ROOT="${SAVE_ROOT:-${OUTPUT_ROOT}/weights}"
 DATAMAP_ROOT="${DATAMAP_ROOT:-${OUTPUT_ROOT}/datamaps}"
 CKPT_LIST_ROOT="${CKPT_LIST_ROOT:-${OUTPUT_ROOT}/checkpoint_lists}"
@@ -76,10 +81,21 @@ DRY_RUN="${DRY_RUN:-0}"
 # ------------------------------
 # 2) Run selection
 # ------------------------------
-TIER_LIST="${TIER_LIST:-tier1 tier2 tier3}"
+TIER_LIST="${TIER_LIST:-tier1}"
 RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-1}"
 RUN_HEAD_ONLY="${RUN_HEAD_ONLY:-1}"
 RUN_FULL="${RUN_FULL:-1}"
+# ------------------------------
+# 2b) Post-finetuning test selection
+# ------------------------------
+RUN_TEST_AFTER_FINETUNE="${RUN_TEST_AFTER_FINETUNE:-1}"
+TEST_MANIFESTS="${TEST_MANIFESTS:-${TEST_MANIFEST}}"
+TEST_CHECKPOINT_NAMES="${TEST_CHECKPOINT_NAMES:-best_val.pth last.pth}"
+TEST_FINETUNE_MODES="${TEST_FINETUNE_MODES:-scratch_full head_only full}"
+TEST_RESULTS_ROOT="${TEST_RESULTS_ROOT:-${OUTPUT_ROOT}/test_results}"
+ALLOW_MISSING_TEST_WEIGHTS="${ALLOW_MISSING_TEST_WEIGHTS:-1}"
+NUM_WORKERS_TEST="${NUM_WORKERS_TEST:-8}"
+PREFETCH_FACTOR_TEST="${PREFETCH_FACTOR_TEST:-2}"
 
 # ------------------------------
 # 3) Dataset / model parameters
@@ -101,14 +117,14 @@ RRC_SCALE_MIN="${RRC_SCALE_MIN:-0.6}"
 RRC_SCALE_MAX="${RRC_SCALE_MAX:-1.0}"
 RRC_RATIO_MIN="${RRC_RATIO_MIN:-0.75}"
 RRC_RATIO_MAX="${RRC_RATIO_MAX:-1.3333333333}"
-RGB_HFLIP_P="${RGB_HFLIP_P:-0.5}"
-RGB_VFLIP_P="${RGB_VFLIP_P:-0.5}"
-RGB_JITTER_P="${RGB_JITTER_P:-0.0}"
+RGB_HFLIP_P="${RGB_HFLIP_P:-0.0}"
+RGB_VFLIP_P="${RGB_VFLIP_P:-0.0}"
+RGB_JITTER_P="${RGB_JITTER_P:-0.5}"
 RGB_JITTER_BRIGHTNESS="${RGB_JITTER_BRIGHTNESS:-0.24}"
 RGB_JITTER_CONTRAST="${RGB_JITTER_CONTRAST:-0.24}"
 RGB_JITTER_SATURATION="${RGB_JITTER_SATURATION:-0.24}"
 RGB_JITTER_HUE="${RGB_JITTER_HUE:-0.16}"
-RGB_GRAY_P="${RGB_GRAY_P:-0.0}"
+RGB_GRAY_P="${RGB_GRAY_P:-0.5}"
 RGB_BLUR_P="${RGB_BLUR_P:-0.0}"
 RGB_BLUR_KERNEL="${RGB_BLUR_KERNEL:-5}"
 RGB_BLUR_SIGMA_MIN="${RGB_BLUR_SIGMA_MIN:-0.1}"
@@ -154,7 +170,7 @@ KEEP_PRETRAINED_HEAD="${KEEP_PRETRAINED_HEAD:-0}"
 PRETRAINED_STRICT="${PRETRAINED_STRICT:-0}"
 PRETRAINED_TAG_MODE="${PRETRAINED_TAG_MODE:-relative_to_anchor}"
 PRETRAINED_TAG_LAST_K="${PRETRAINED_TAG_LAST_K:-3}"
-PRETRAINED_TAG_ANCHOR="${PRETRAINED_TAG_ANCHOR:-rgb_J_as_test_cam001431512812_p1_24runs}"
+PRETRAINED_TAG_ANCHOR="${PRETRAINED_TAG_ANCHOR:-rgb_J_as_test_cam001431512812_p1_26runs}"
 
 # ------------------------------
 # 8) Class imbalance options
@@ -324,6 +340,120 @@ run_train() {
   echo "Finished ${label}"
 }
 
+
+run_test_for_mode_checkpoint() {
+  local tier_mode="$1"
+  local num_classes="$2"
+  local ft_mode="$3"
+  local ckpt_name="$4"
+  local search_root="${SAVE_ROOT}/${tier_mode}/${ft_mode}"
+  local ckpt_tag="${ckpt_name%.pth}"
+  local results_dir="${TEST_RESULTS_ROOT}/${tier_mode}/${ft_mode}"
+  local results_csv="${results_dir}/${ckpt_tag}_test_results.csv"
+
+  if [[ ! -d "${search_root}" ]]; then
+    if [[ "${ALLOW_MISSING_TEST_WEIGHTS}" == "1" ]]; then
+      echo "[Warn] Skip test: missing fine-tune directory ${search_root}"
+      return 0
+    fi
+    echo "[Error] Missing fine-tune directory for test: ${search_root}" >&2
+    exit 1
+  fi
+
+  mapfile -t TEST_WEIGHTS < <(find "${search_root}" -type f -name "${ckpt_name}" | sort)
+  if [[ "${#TEST_WEIGHTS[@]}" -eq 0 ]]; then
+    if [[ "${ALLOW_MISSING_TEST_WEIGHTS}" == "1" ]]; then
+      echo "[Warn] Skip test: no ${ckpt_name} found under ${search_root}"
+      return 0
+    fi
+    echo "[Error] No ${ckpt_name} found under ${search_root}" >&2
+    exit 1
+  fi
+
+  mkdir -p "${results_dir}"
+  read -r -a TEST_MANIFEST_ARRAY <<< "${TEST_MANIFESTS}"
+
+  local cmd=(
+    "${PYTHON_BIN}" -u "${SCRIPT_PATH}"
+    --run_mode test
+    --dataset_root "${DATASET_ROOT}"
+    --label_map_json "${LABEL_MAP_JSON}"
+    --test_manifest "${TEST_MANIFEST_ARRAY[@]}"
+    --test_weight_paths "${TEST_WEIGHTS[@]}"
+    --test_results_csv "${results_csv}"
+    --save_path "${results_dir}"
+    --use_modality "${USE_MODALITY}"
+    --tier_mode "${tier_mode}"
+    --n_frames "${N_FRAMES}"
+    --rgb_camera_id "${CAMERA_ID}"
+    --num_classes "${num_classes}"
+    --model_depth "${MODEL_DEPTH}"
+    --rgb_size "${RGB_SIZE}"
+    --depth_size "${DEPTH_SIZE}"
+    --rgb_mean "${RGB_MEAN[@]}"
+    --rgb_std "${RGB_STD[@]}"
+    --num_workers_test "${NUM_WORKERS_TEST}"
+    --prefetch_factor_test "${PREFETCH_FACTOR_TEST}"
+    --batch_size "${BATCH_SIZE}"
+    --seed "${SEED}"
+  )
+
+  if [[ "${L2_NORMALIZE_BEFORE_FC}" == "1" ]]; then
+    cmd+=(--l2_normalize_before_fc)
+  fi
+  if [[ "${ENABLE_AMP}" == "1" ]]; then
+    cmd+=(--enable_amp)
+  fi
+
+  echo "======================================"
+  echo "Start test: tier=${tier_mode} mode=${ft_mode} checkpoint=${ckpt_name}"
+  echo "Search root      = ${search_root}"
+  echo "Num test weights = ${#TEST_WEIGHTS[@]}"
+  echo "Test manifests   = ${TEST_MANIFESTS}"
+  echo "Results CSV      = ${results_csv}"
+  echo "======================================"
+  print_command "${cmd[@]}"
+
+  if [[ "${DRY_RUN}" == "1" ]]; then
+    echo "[DryRun] test command constructed; testing skipped."
+    return 0
+  fi
+
+  "${cmd[@]}"
+  echo "Finished test: tier=${tier_mode} mode=${ft_mode} checkpoint=${ckpt_name}"
+}
+
+run_post_finetune_tests() {
+  local tier_mode="$1"
+  local num_classes="$2"
+
+  if [[ "${RUN_TEST_AFTER_FINETUNE}" != "1" ]]; then
+    echo "Post-finetuning tests disabled: RUN_TEST_AFTER_FINETUNE=${RUN_TEST_AFTER_FINETUNE}"
+    return 0
+  fi
+
+  for ft_mode in ${TEST_FINETUNE_MODES}; do
+    case "${ft_mode}" in
+      scratch_full)
+        [[ "${RUN_SCRATCH_BASELINE}" == "1" ]] || { echo "[Skip] scratch_full was not trained."; continue; }
+        ;;
+      head_only)
+        [[ "${RUN_HEAD_ONLY}" == "1" ]] || { echo "[Skip] head_only was not trained."; continue; }
+        ;;
+      full)
+        [[ "${RUN_FULL}" == "1" ]] || { echo "[Skip] full was not trained."; continue; }
+        ;;
+      *)
+        echo "[Error] Unsupported TEST_FINETUNE_MODES entry: ${ft_mode}" >&2
+        exit 2
+        ;;
+    esac
+
+    for ckpt_name in ${TEST_CHECKPOINT_NAMES}; do
+      run_test_for_mode_checkpoint "${tier_mode}" "${num_classes}" "${ft_mode}" "${ckpt_name}"
+    done
+  done
+}
 if [[ "${DRY_RUN}" != "1" ]]; then
   "${PYTHON_BIN}" -c "import sys; print(sys.executable); import utils_; import loss; import backbone; print('imports ok')"
 fi
@@ -348,7 +478,7 @@ for tier_mode in ${TIER_LIST}; do
 
   mapfile -t CKPTS < <(find "${tier_pretrain_parent}" -type f -name "${CHECKPOINT_NAME}" | sort)
   num_ckpts=${#CKPTS[@]}
-  printf "%s\n" "${CKPTS[@]}" > "${checkpoint_list_txt}"
+  printf "%s\n" ${CKPTS[@]+"${CKPTS[@]}"} > "${checkpoint_list_txt}"
 
   if [[ "${num_ckpts}" -eq 0 ]]; then
     echo "[Error] No ${CHECKPOINT_NAME} files found under: ${tier_pretrain_parent}" >&2
@@ -393,7 +523,9 @@ for tier_mode in ${TIER_LIST}; do
       --finetune_mode full \
       "${FULL_LR_ARGS[@]}"
   fi
+  run_post_finetune_tests "${tier_mode}" "${num_classes}"
 done
 
 echo "All finetuning experiments finished."
 echo "Output root: ${OUTPUT_ROOT}"
+

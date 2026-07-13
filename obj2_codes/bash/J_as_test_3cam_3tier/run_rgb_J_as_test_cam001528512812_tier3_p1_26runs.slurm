@@ -1,59 +1,69 @@
-﻿#!/bin/bash
-#SBATCH --job-name=rgb_J_cam001431_p1
+#!/bin/bash
+#SBATCH --job-name=obj3_rgb_J_cam001528_tier3
+#SBATCH --partition=gpu,gpu-h100,gpu-h100-nvl
+#SBATCH --qos=gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
-#SBATCH --time=3-00:00:00
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
+#SBATCH --mem=80G
+#SBATCH --gres=gpu:1
+#SBATCH --mail-user=jzhang319@sheffield.ac.uk
+#SBATCH --mail-type=ALL
+#SBATCH --time=08:00:00
+#SBATCH --output=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/train/out/slurm-%x-%A_%a.out
+#SBATCH --error=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/train/out/slurm-%x-%A_%a.err
+#SBATCH --array=0-25%4
 
 set -euo pipefail
 
 # ============================================================
-# RGB SupLoss ablation for J_as_test, camera 001431512812
+# RGB SupLoss ablation for J_as_test, camera 001528512812
 #
 # Runs:
-#   3 tiers x 8 ablation configs = 24 training runs
+#   1 tier x 26 ablation configs = 26 training runs
 #
-# Ablations:
-#   1) suploss only                    -> contrastive_only
-#   2) suploss + rel (prem0.2)         -> contrastive_rel
-#   3) suploss + rel (prem0.5)         -> contrastive_rel
-#   4) suploss + rel (prem0.8)         -> contrastive_rel
-#   5) suploss + proto                 -> contrastive_proto
-#   6) suploss + rel (prem0.2) + proto -> contrastive_proto_rel
-#   7) suploss + rel (prem0.5) + proto -> contrastive_proto_rel
-#   8) suploss + rel (prem0.8) + proto -> contrastive_proto_rel
+# Ablations per tier:
+#   1) suploss only                         -> contrastive_only
+#   2) suploss + rel                        -> contrastive_rel, 3 prem x 4 proto_ema = 12 runs
+#   3) suploss + proto                      -> contrastive_proto
+#   4) suploss + rel + proto                -> contrastive_proto_rel, 3 prem x 4 proto_ema = 12 runs
+#
+# Sweeps:
+#   prem / preview_ema_momentum: 0.2, 0.5, 0.8
+#   proto_ema_momentum:         0.99, 0.9, 0.7, 0.5
 #
 # Note:
-#   The current dataloader falls back to record["001431512812_rgb"]
+#   The current dataloader falls back to record["001528512812_rgb"]
 #   when record["rgb"] is absent, so no training-code change is needed
 #   for this camera.
 # ============================================================
 
 # ------------------------------
-# 0) Optional environment setup
+# 0) Runtime / environment
 # ------------------------------
-# Uncomment / edit these lines on your cluster if needed.
-# module purge
-# module load cuda/12.6
-# source ~/anaconda3/etc/profile.d/conda.sh
-# conda activate Pytorch
+PYTHON_BIN="${PYTHON_BIN:-python}"
+ANACONDA_MODULE="${ANACONDA_MODULE:-Anaconda3/2022.05}"
+CUDNN_MODULE="${CUDNN_MODULE:-cuDNN/8.9.2.26-CUDA-12.1.1}"
+CONDA_ENV_NAME="${CONDA_ENV_NAME:-pytorch}"
+SKIP_ENV_SETUP="${SKIP_ENV_SETUP:-0}"
+
+if [[ "${SKIP_ENV_SETUP}" != "1" ]]; then
+  module load "${ANACONDA_MODULE}"
+  module load "${CUDNN_MODULE}"
+  source activate "${CONDA_ENV_NAME}"
+fi
 
 # ------------------------------
 # 1) Project / data paths
 # ------------------------------
 # Override any variable at submit time if your SLURM node uses Linux mount paths, e.g.:
-#   sbatch --export=ALL,PROJECT_ROOT=/path/to/obj2_codes,DATASET_ROOT=/path/to/Stage_2_Mapstyle_Dataset run_rgb_J_as_test_cam001431512812_p1_12runs.slurm
-PROJECT_ROOT="${PROJECT_ROOT:-D:/Junxi_data/Objective3_thermal_crimp/obj2_codes}"
+#   sbatch --export=ALL,PROJECT_ROOT=/path/to/obj2_codes,DATASET_ROOT=/path/to/Stage_2_Mapstyle_Dataset run_rgb_J_as_test_cam001528512812_tier3_p1_26runs.slurm
+PROJECT_ROOT="${PROJECT_ROOT:-/mnt/parscratch/users/mes19jz/objective3/obj2_codes}"
 PY_SCRIPT="${PY_SCRIPT:-${PROJECT_ROOT}/train/MoCo_main_supcon_mapstyle_varproto_debug_topk_adamw.py}"
-DATASET_ROOT="${DATASET_ROOT:-C:/Junxi_data_for_training_speedup/Stage_2_Mapstyle_Dataset}"
+DATASET_ROOT="${DATASET_ROOT:-/mnt/parscratch/users/mes19jz/datasets/thermal_crimp/Stage_2_Mapstyle_Dataset}"
 TRAIN_MANIFEST_NAME="${TRAIN_MANIFEST_NAME:-J_as_test/train_manifest.jsonl}"
 LABEL_MAP_JSON="${LABEL_MAP_JSON:-${DATASET_ROOT}/label_map.json}"
-OUT_ROOT="${OUT_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001431512812_p1_24runs}"
-PYTHON_BIN="${PYTHON_BIN:-python}"
+OUT_ROOT="${OUT_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001528512812_p1_26runs}"
 
 # ------------------------------
 # 2) SLURM / launch parameters
@@ -69,13 +79,13 @@ fi
 # ------------------------------
 # 3) Dataset / label / clip parameters
 # ------------------------------
-CAMERA_ID="${CAMERA_ID:-001431512812}"
-TIER_LIST="${TIER_LIST:-tier1 tier2 tier3}"
+CAMERA_ID="${CAMERA_ID:-001528512812}"
+TIER_LIST="${TIER_LIST:-tier3}"
 N_FRAMES="${N_FRAMES:-16}"
 
-# J_as_test/train_rgb_camera_stats.json, camera 001431512812, scaled to [0,1].
-RGB_MEAN="${RGB_MEAN:-0.5088 0.4894 0.4864}"
-RGB_STD="${RGB_STD:-0.2168 0.2162 0.2221}"
+# J_as_test/train_rgb_camera_stats.json, camera 001528512812, scaled to [0,1].
+RGB_MEAN="${RGB_MEAN:-0.5776 0.5690 0.5624}"
+RGB_STD="${RGB_STD:-0.2199 0.2274 0.2225}"
 
 # ------------------------------
 # 4) RGB augmentation parameters
@@ -91,7 +101,7 @@ RGB_JITTER_BRIGHTNESS="${RGB_JITTER_BRIGHTNESS:-0.24}"
 RGB_JITTER_CONTRAST="${RGB_JITTER_CONTRAST:-0.24}"
 RGB_JITTER_SATURATION="${RGB_JITTER_SATURATION:-0.24}"
 RGB_JITTER_HUE="${RGB_JITTER_HUE:-0.16}"
-RGB_GRAY_P="${RGB_GRAY_P:-0.2}"
+RGB_GRAY_P="${RGB_GRAY_P:-0.5}"
 RGB_BLUR_P="${RGB_BLUR_P:-0.5}"
 RGB_BLUR_KERNEL="${RGB_BLUR_KERNEL:-5}"
 RGB_BLUR_SIGMA="${RGB_BLUR_SIGMA:-0.1 1.0}"
@@ -99,13 +109,13 @@ RGB_BLUR_SIGMA="${RGB_BLUR_SIGMA:-0.1 1.0}"
 # ------------------------------
 # 5) DataLoader parameters
 # ------------------------------
-BATCH_SIZE="${BATCH_SIZE:-16}"
+BATCH_SIZE="${BATCH_SIZE:-64}"
 NUM_WORKERS="${NUM_WORKERS:-8}"
 PREFETCH_FACTOR="${PREFETCH_FACTOR:-}"
 PIN_MEMORY_ARG="${PIN_MEMORY_ARG:-}"
 VERIFY_PATHS_ON_INIT_ARG="${VERIFY_PATHS_ON_INIT_ARG:---verify_paths_on_init}"
 
-PROTO_REFRESH_BATCH_SIZE="${PROTO_REFRESH_BATCH_SIZE:-16}"
+PROTO_REFRESH_BATCH_SIZE="${PROTO_REFRESH_BATCH_SIZE:-64}"
 PROTO_REFRESH_NUM_WORKERS="${PROTO_REFRESH_NUM_WORKERS:-8}"
 PROTO_REFRESH_PREFETCH_FACTOR="${PROTO_REFRESH_PREFETCH_FACTOR:-}"
 PROTO_REFRESH_PIN_MEMORY_ARG="${PROTO_REFRESH_PIN_MEMORY_ARG:-}"
@@ -116,7 +126,7 @@ PROTO_REFRESH_VERIFY_PATHS_ON_INIT_ARG="${PROTO_REFRESH_VERIFY_PATHS_ON_INIT_ARG
 # ------------------------------
 MODEL_DEPTH="${MODEL_DEPTH:-18}"
 PROJ_DIM="${PROJ_DIM:-128}"
-K_QUEUE="${K_QUEUE:-3200}"
+K_QUEUE="${K_QUEUE:-1344}"
 TEMPERATURE="${TEMPERATURE:-0.07}"
 USE_MLP_ARG="${USE_MLP_ARG:---mlp}"
 CONTRASTIVE_LOSS="${CONTRASTIVE_LOSS:-suploss}"
@@ -144,13 +154,14 @@ PROTO_KMEANS_MAX_ITER="${PROTO_KMEANS_MAX_ITER:-300}"
 # ------------------------------
 LAMBDA_REL="${LAMBDA_REL:-1.0}"
 PROTO_EMA_MOMENTUM="${PROTO_EMA_MOMENTUM:-0.99}"
+PROTO_EMA_MOMENTUM_LIST="${PROTO_EMA_MOMENTUM_LIST:-0.99 0.9 0.7 0.5}"
 PREVIEW_EMA_MOMENTUM="${PREVIEW_EMA_MOMENTUM:-0.5}"
 REL_PREVIEW_EMA_MOMENTUM_LIST="${REL_PREVIEW_EMA_MOMENTUM_LIST:-0.2 0.5 0.8}"
 REL_SAME_MARGIN="${REL_SAME_MARGIN:-0.01}"
 REL_DIFF_MARGIN="${REL_DIFF_MARGIN:-0.01}"
 REL_SAME_WEIGHT="${REL_SAME_WEIGHT:-1.0}"
 REL_DIFF_WEIGHT="${REL_DIFF_WEIGHT:-1.0}"
-REL_TOPK_DIFF_CLASSES="${REL_TOPK_DIFF_CLASSES:-3}"
+REL_TOPK_DIFF_CLASSES="${REL_TOPK_DIFF_CLASSES:-0}"
 
 # ------------------------------
 # 9) Loss-stage schedule parameters
@@ -214,6 +225,7 @@ echo "Output root:   ${OUT_ROOT}"
 echo "Tiers:         ${TIER_LIST}"
 echo "Ablations:     ${ABLATION_MODES}"
 echo "Rel prem list: ${REL_PREVIEW_EMA_MOMENTUM_LIST}"
+echo "Proto EMA list: ${PROTO_EMA_MOMENTUM_LIST}"
 echo "DDP:           ${USE_DDP}"
 echo "============================================================"
 
@@ -222,6 +234,7 @@ run_one() {
   local ablation_mode="$2"
   local run_name="$3"
   local preview_ema_momentum="${4:-${PREVIEW_EMA_MOMENTUM}}"
+  local proto_ema_momentum="${5:-${PROTO_EMA_MOMENTUM}}"
   local run_dir="${OUT_ROOT}/${tier_mode}/${run_name}"
 
   mkdir -p "${run_dir}"
@@ -292,7 +305,7 @@ run_one() {
     ${PROTO_REFRESH_PIN_MEMORY_ARG}
     ${PROTO_REFRESH_VERIFY_PATHS_ON_INIT_ARG}
     --lambda_rel "${LAMBDA_REL}"
-    --proto_ema_momentum "${PROTO_EMA_MOMENTUM}"
+    --proto_ema_momentum "${proto_ema_momentum}"
     --preview_ema_momentum "${preview_ema_momentum}"
     --rel_same_margin "${REL_SAME_MARGIN}"
     --rel_diff_margin "${REL_DIFF_MARGIN}"
@@ -334,12 +347,12 @@ run_one() {
     --debug_param_fallback_last_n "${DEBUG_PARAM_FALLBACK_LAST_N}"
     ${DEBUG_WRITE_JSONL_ARG}
     --debug_jsonl_name "${DEBUG_JSONL_NAME}"
-    "${optional_args[@]}"
+    ${optional_args[@]+"${optional_args[@]}"}
   )
 
   echo
   echo "============================================================"
-  echo "[Run] tier=${tier_mode} ablation=${ablation_mode} prem=${preview_ema_momentum} save=${run_dir}"
+  echo "[Run] tier=${tier_mode} ablation=${ablation_mode} prem=${preview_ema_momentum} proto_ema=${proto_ema_momentum} save=${run_dir}"
   echo "============================================================"
 
   if [[ "${USE_DDP}" == "1" ]]; then
@@ -353,24 +366,70 @@ run_one() {
   fi
 }
 
-for tier_mode in ${TIER_LIST}; do
-  run_one "${tier_mode}" "contrastive_only" "suploss_only_p${DEFAULT_NUM_PROTOTYPES}" "${PREVIEW_EMA_MOMENTUM}"
+declare -a TASK_TIERS=()
+declare -a TASK_ABLATIONS=()
+declare -a TASK_NAMES=()
+declare -a TASK_PREMS=()
+declare -a TASK_PEMAS=()
 
-  for prem in ${REL_PREVIEW_EMA_MOMENTUM_LIST}; do
-    prem_tag="${prem//./}"
-    run_one "${tier_mode}" "contrastive_rel" "suploss_rel_p${DEFAULT_NUM_PROTOTYPES}_prem${prem_tag}" "${prem}"
+add_task() {
+  TASK_TIERS+=("$1")
+  TASK_ABLATIONS+=("$2")
+  TASK_NAMES+=("$3")
+  TASK_PREMS+=("$4")
+  TASK_PEMAS+=("$5")
+}
+
+for tier_mode in ${TIER_LIST}; do
+  add_task "${tier_mode}" "contrastive_only" "suploss_only_p${DEFAULT_NUM_PROTOTYPES}" "${PREVIEW_EMA_MOMENTUM}" "${PROTO_EMA_MOMENTUM}"
+
+  for pema in ${PROTO_EMA_MOMENTUM_LIST}; do
+    pema_tag="${pema//./}"
+    for prem in ${REL_PREVIEW_EMA_MOMENTUM_LIST}; do
+      prem_tag="${prem//./}"
+      add_task "${tier_mode}" "contrastive_rel" "suploss_rel_p${DEFAULT_NUM_PROTOTYPES}_prem${prem_tag}_pema${pema_tag}" "${prem}" "${pema}"
+    done
   done
 
-  run_one "${tier_mode}" "contrastive_proto" "suploss_proto_p${DEFAULT_NUM_PROTOTYPES}" "${PREVIEW_EMA_MOMENTUM}"
+  add_task "${tier_mode}" "contrastive_proto" "suploss_proto_p${DEFAULT_NUM_PROTOTYPES}" "${PREVIEW_EMA_MOMENTUM}" "${PROTO_EMA_MOMENTUM}"
 
-  for prem in ${REL_PREVIEW_EMA_MOMENTUM_LIST}; do
-    prem_tag="${prem//./}"
-    run_one "${tier_mode}" "contrastive_proto_rel" "suploss_proto_rel_p${DEFAULT_NUM_PROTOTYPES}_prem${prem_tag}" "${prem}"
+  for pema in ${PROTO_EMA_MOMENTUM_LIST}; do
+    pema_tag="${pema//./}"
+    for prem in ${REL_PREVIEW_EMA_MOMENTUM_LIST}; do
+      prem_tag="${prem//./}"
+      add_task "${tier_mode}" "contrastive_proto_rel" "suploss_proto_rel_p${DEFAULT_NUM_PROTOTYPES}_prem${prem_tag}_pema${pema_tag}" "${prem}" "${pema}"
+    done
   done
 done
+
+NUM_TASKS="${#TASK_TIERS[@]}"
+TASK_ID="${SLURM_ARRAY_TASK_ID:-0}"
+
+if (( TASK_ID < 0 || TASK_ID >= NUM_TASKS )); then
+  echo "ERROR: SLURM_ARRAY_TASK_ID=${TASK_ID} is outside valid range 0..$((NUM_TASKS - 1))."
+  echo "       Check #SBATCH --array and TIER_LIST/ablation sweep settings."
+  exit 1
+fi
+
 echo
-echo "All runs finished successfully."
+ echo "============================================================"
+echo "Array task: ${TASK_ID}/$((NUM_TASKS - 1))"
+echo "Selected: tier=${TASK_TIERS[$TASK_ID]} ablation=${TASK_ABLATIONS[$TASK_ID]} run=${TASK_NAMES[$TASK_ID]} prem=${TASK_PREMS[$TASK_ID]} pema=${TASK_PEMAS[$TASK_ID]}"
+echo "============================================================"
+
+run_one \
+  "${TASK_TIERS[$TASK_ID]}" \
+  "${TASK_ABLATIONS[$TASK_ID]}" \
+  "${TASK_NAMES[$TASK_ID]}" \
+  "${TASK_PREMS[$TASK_ID]}" \
+  "${TASK_PEMAS[$TASK_ID]}"
+
+echo
+echo "Selected array task finished successfully."
 echo "Output root: ${OUT_ROOT}"
+
+
+
 
 
 
