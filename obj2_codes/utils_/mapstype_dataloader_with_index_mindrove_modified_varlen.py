@@ -1079,7 +1079,8 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         åˆå§‹åŒ–é˜¶æ®µè¿‡æ»¤æŽ‰è·¯å¾„ç¼ºå¤±çš„æ ·æœ¬ï¼Œå°½é‡è´´è¿‘æ—§ loader çš„ skip è¡Œä¸ºã€‚
         å¯¹ MindRoveï¼š
         - è·¯å¾„ä¸å­˜åœ¨ -> è¿‡æ»¤
-        - è‹¥ missing_policy == "skip"ï¼Œä¸”è¯·æ±‚çš„æ‰‹åœ¨ manifest ä¸­æ ‡è®°ç¼ºå¤± -> è¿‡æ»¤
+        - the current Stage-2 manifest does not require mindrove_has_left/right
+        - stream keys and tensor shapes are validated when mindrove.pt is loaded
         """
         valid = []
         for rec in records:
@@ -1104,11 +1105,6 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
                 mr_rel = rec.get("mindrove", None)
                 if mr_rel is None or not (self.dataset_root / mr_rel).is_file():
                     ok = False
-                elif self.cfg.missing_policy == "skip":
-                    if "left" in self.cfg.mindrove_hands and not bool(rec.get("mindrove_has_left", False)):
-                        ok = False
-                    if "right" in self.cfg.mindrove_hands and not bool(rec.get("mindrove_has_right", False)):
-                        ok = False
 
             if ok:
                 valid.append(rec)
@@ -1200,27 +1196,56 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
         rec: Dict[str, Any],
     ) -> torch.Tensor:
         """
-        åŠ è½½å•è·¯ MindRove ä¿¡å·ï¼Œå¹¶æŒ‰è¯¥ signal çš„ç›®æ ‡é•¿åº¦é‡é‡‡æ ·ï¼Œè¿”å›ž [C,L_signal]
+        Load one stream from the current Stage-2 mindrove.pt schema.
+
+        EMG is stored as {hand}_emg with shape [L,8].
+        IMU is stored as separate {hand}_acc and {hand}_gyro tensors with
+        shape [L,3], and is concatenated as acc xyz followed by gyro xyz.
         """
-        has_key = f"has_{hand}"
-        data_key = f"{hand}_{signal}"
-
-        hand_exists = bool(mr_obj.get(has_key, False))
         target_len = _get_mindrove_target_len(self.cfg, signal)
+        sample_name = rec.get("sample_name", "unknown")
 
-        if not hand_exists:
+        if signal == "emg":
+            required_keys = (f"{hand}_emg",)
+        elif signal == "imu":
+            required_keys = (f"{hand}_acc", f"{hand}_gyro")
+        else:
+            raise ValueError(f"Unsupported MindRove signal: {signal}")
+
+        missing_keys = [key for key in required_keys if key not in mr_obj]
+        if missing_keys:
             if self.cfg.missing_policy == "skip":
-                raise FileNotFoundError(
-                    f"MindRove {hand} hand is missing for sample {rec.get('sample_name', 'unknown')}"
+                raise KeyError(
+                    f"MindRove key(s) {missing_keys} not found in sample {sample_name}"
                 )
             return _make_zero_mindrove_stream(signal=signal, target_len=target_len)
 
-        if data_key not in mr_obj:
-            if self.cfg.missing_policy == "skip":
-                raise KeyError(f"MindRove key '{data_key}' not found in sample {rec.get('sample_name', 'unknown')}")
-            return _make_zero_mindrove_stream(signal=signal, target_len=target_len)
+        if signal == "emg":
+            seq_lc = mr_obj[required_keys[0]]
+        else:
+            acc = mr_obj[required_keys[0]]
+            gyro = mr_obj[required_keys[1]]
+            if not torch.is_tensor(acc) or not torch.is_tensor(gyro):
+                raise TypeError(
+                    f"MindRove {hand} acc/gyro must be tensors in sample {sample_name}"
+                )
+            if acc.ndim != 2 or tuple(acc.shape[1:]) != (3,):
+                raise ValueError(
+                    f"MindRove {hand}_acc must have shape [L,3] in sample {sample_name}, "
+                    f"got {tuple(acc.shape)}"
+                )
+            if gyro.ndim != 2 or tuple(gyro.shape[1:]) != (3,):
+                raise ValueError(
+                    f"MindRove {hand}_gyro must have shape [L,3] in sample {sample_name}, "
+                    f"got {tuple(gyro.shape)}"
+                )
+            if acc.shape[0] != gyro.shape[0]:
+                raise ValueError(
+                    f"MindRove {hand} acc/gyro lengths differ in sample {sample_name}: "
+                    f"{acc.shape[0]} vs {gyro.shape[0]}"
+                )
+            seq_lc = torch.cat((acc, gyro), dim=1)
 
-        seq_lc = mr_obj[data_key]
         seq_cf = _resample_mindrove_lc_to_cf(
             seq_lc=seq_lc,
             signal=signal,
@@ -1262,10 +1287,15 @@ class PackedRGBDepthMindRoveMapDataset(Dataset):
             for signal in self.cfg.mindrove_signals:
                 key = f"{hand}_{signal}"
 
-                has_key = f"has_{hand}"
-                data_key = f"{hand}_{signal}"
-                hand_exists = bool(mr_obj.get(has_key, False))
-                stream_exists = hand_exists and (data_key in mr_obj)
+                if signal == "emg":
+                    stream_exists = f"{hand}_emg" in mr_obj
+                elif signal == "imu":
+                    stream_exists = (
+                        f"{hand}_acc" in mr_obj and
+                        f"{hand}_gyro" in mr_obj
+                    )
+                else:
+                    raise ValueError(f"Unsupported MindRove signal: {signal}")
 
                 base_streams[key] = self._load_single_mindrove_stream(
                     mr_obj=mr_obj,
@@ -1789,19 +1819,37 @@ def visualize_mindrove_original_vs_normalized(
     for hand in hands:
         for signal in signals:
             key = f"{hand}_{signal}"
-            has_key = f"has_{hand}"
-            data_key = f"{hand}_{signal}"
+            if signal == "emg":
+                data_key = f"{hand}_emg"
+                if data_key not in mr_obj:
+                    raise KeyError(
+                        f"Requested stream '{data_key}' is missing in {mindrove_pt_path}"
+                    )
+                seq_lc = mr_obj[data_key]
+            elif signal == "imu":
+                acc_key = f"{hand}_acc"
+                gyro_key = f"{hand}_gyro"
+                missing_keys = [k for k in (acc_key, gyro_key) if k not in mr_obj]
+                if missing_keys:
+                    raise KeyError(
+                        f"Requested key(s) {missing_keys} are missing in {mindrove_pt_path}"
+                    )
+                acc = mr_obj[acc_key]
+                gyro = mr_obj[gyro_key]
+                if not torch.is_tensor(acc) or not torch.is_tensor(gyro):
+                    raise TypeError(f"{acc_key}/{gyro_key} must be tensors")
+                if acc.ndim != 2 or acc.shape[1] != 3:
+                    raise ValueError(f"{acc_key} must have shape [L,3], got {tuple(acc.shape)}")
+                if gyro.ndim != 2 or gyro.shape[1] != 3:
+                    raise ValueError(f"{gyro_key} must have shape [L,3], got {tuple(gyro.shape)}")
+                if acc.shape[0] != gyro.shape[0]:
+                    raise ValueError(
+                        f"{acc_key}/{gyro_key} lengths differ: {acc.shape[0]} vs {gyro.shape[0]}"
+                    )
+                seq_lc = torch.cat((acc, gyro), dim=1)
+            else:
+                raise ValueError(f"Unsupported MindRove signal: {signal}")
 
-            hand_exists = bool(mr_obj.get(has_key, False))
-            stream_exists = hand_exists and (data_key in mr_obj)
-
-            if not stream_exists:
-                raise KeyError(
-                    f"Requested stream '{key}' is missing in {mindrove_pt_path}. "
-                    f"has_{hand}={hand_exists}, key_exists={data_key in mr_obj}"
-                )
-
-            seq_lc = mr_obj[data_key]
             seq_cf = _resample_mindrove_lc_to_cf(
                 seq_lc=seq_lc,
                 signal=signal,
