@@ -52,16 +52,16 @@ if /I "%SIGNAL%"=="imu" (
 REM ============================================================
 REM 1) Project, data, helper, and result paths
 REM ============================================================
-if not defined PROJECT_ROOT set "PROJECT_ROOT=D:\Junxi_data\Objective3_thermal_crimp\obj2_codes"
+if not defined PROJECT_ROOT set "PROJECT_ROOT=D:\junxi_data\Objective3\obj2_codes"
 if not defined PY_SCRIPT set "PY_SCRIPT=%PROJECT_ROOT%\ft_and_test\train_mapstyle_finetune_and_test.py"
-if not defined DATASET_ROOT set "DATASET_ROOT=C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
+if not defined DATASET_ROOT set "DATASET_ROOT=C:\MyFolder\mes19jz\Stage_2_Mapstyle_Dataset"
 if not defined LABEL_MAP_JSON set "LABEL_MAP_JSON=%DATASET_ROOT%\label_map.json"
 if not defined TRAIN_MANIFEST set "TRAIN_MANIFEST=%DATASET_ROOT%\J_as_test\train_manifest.jsonl"
 if not defined VAL_MANIFEST set "VAL_MANIFEST=%DATASET_ROOT%\J_as_test\test_manifest.jsonl"
 if not defined NORMALIZATION_STATS_JSON set "NORMALIZATION_STATS_JSON=%DATASET_ROOT%\J_as_test\mindrove_train_normalization_stats.json"
 
 if not defined STATS_LOADER set "STATS_LOADER=%~dp0load_mindrove_stats_for_bat.py"
-if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\mes19jz\AppData\Local\miniconda3\envs\pytorch\python.exe"
 
 REM Expected default pretraining layout:
 REM   PRETRAIN_PARENT\weights\tier1\emg\len_256\...\checkpoint_0200.pth
