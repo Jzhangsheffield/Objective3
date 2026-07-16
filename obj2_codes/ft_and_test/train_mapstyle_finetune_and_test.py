@@ -3661,9 +3661,29 @@ def run_batch_test(args, device):
         row = {
             "weight_path": weight_path,
             "weight_name": Path(weight_path).name,
+            "weight_type": Path(weight_path).stem,
             "test_manifest_used": test_manifest_used,
             "tier_mode": args.tier_mode,
             "use_modality": args.use_modality,
+            "mindrove_signal": (
+                "+".join(args.mindrove_signals)
+                if args.use_modality == "mindrove"
+                else ""
+            ),
+            "mindrove_target_len": (
+                args.mindrove_target_len
+                if args.use_modality == "mindrove"
+                else ""
+            ),
+            "finetune_mode": (
+                "scratch"
+                if "scratch_full" in {part.lower() for part in Path(weight_path).parts}
+                else "head_only"
+                if "head_only" in {part.lower() for part in Path(weight_path).parts}
+                else "full"
+                if "full" in {part.lower() for part in Path(weight_path).parts}
+                else "unknown"
+            ),
             "num_samples": num_samples,
             "test_acc": test_acc,
             "test_loss": test_loss,
