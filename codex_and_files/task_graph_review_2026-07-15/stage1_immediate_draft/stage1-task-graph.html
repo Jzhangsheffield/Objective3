@@ -1,0 +1,76 @@
+<div id="stage1-immediate-graph-fixed">
+  <div class="s1-legend text-small" aria-label="Constraint legend">
+    <span><span class="s1-must-mark" aria-hidden="true">→</span> must precede</span>
+    <span><span class="s1-immediate-mark" aria-hidden="true">⇒</span> must immediately precede</span>
+  </div>
+
+  <div class="s1-start text-small">#0 start</div>
+  <div class="s1-down" aria-hidden="true">↓</div>
+
+  <div class="s1-entry-grid" aria-label="Freely reorderable Stage 1 entry tasks">
+    <div class="s1-pair" aria-label="Node 1 must be immediately followed by node 2">
+      <div class="s1-node"><span>#1</span>unlock crimper</div>
+      <div class="s1-immediate-arrow"><span>⇒</span><small>immediate</small></div>
+      <div class="s1-node"><span>#2</span>put lock on table</div>
+    </div>
+
+    <div class="s1-node"><span>#3</span>turn on main switch</div>
+    <div class="s1-node"><span>#6</span>turn on air compressor</div>
+    <div class="s1-node"><span>#7</span>turn on water pump</div>
+    <div class="s1-node"><span>#8</span>turn on extractor fan</div>
+    <div class="s1-node"><span>#9</span>move pedal to safe location</div>
+
+    <div class="s1-pair" aria-label="Node 10 must be immediately followed by node 11">
+      <div class="s1-node"><span>#10</span>remove protection cover</div>
+      <div class="s1-immediate-arrow"><span>⇒</span><small>immediate</small></div>
+      <div class="s1-node"><span>#11</span>put cover on ground</div>
+    </div>
+  </div>
+
+  <div class="s1-join" aria-hidden="true">#2 + #3 ↓</div>
+
+  <div class="s1-chain" aria-label="Crimper activation dependency chain">
+    <div class="s1-node"><span>#4</span>turn on crimper</div>
+    <div class="s1-must-arrow" aria-hidden="true">→</div>
+    <div class="s1-node"><span>#5</span>adjust parameters</div>
+  </div>
+
+  <div class="s1-down" aria-hidden="true">↓</div>
+  <div class="s1-complete">
+    <span class="text-small">join: #5, #6, #7, #8, #9, #11</span>
+    <strong>Stage 1 complete</strong>
+  </div>
+
+  <style>
+    #stage1-immediate-graph-fixed { color:var(--foreground); }
+    #stage1-immediate-graph-fixed .s1-legend,
+    #stage1-immediate-graph-fixed .s1-chain,
+    #stage1-immediate-graph-fixed .s1-pair { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+    #stage1-immediate-graph-fixed .s1-legend { gap:24px; margin-bottom:12px; }
+    #stage1-immediate-graph-fixed .s1-entry-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    #stage1-immediate-graph-fixed .s1-node { min-width:0; padding:10px 12px; text-align:center; background:var(--secondary); color:var(--secondary-foreground); border:1px solid var(--border); border-radius:8px; }
+    #stage1-immediate-graph-fixed .s1-node span { display:block; font-weight:500; margin-bottom:3px; }
+    #stage1-immediate-graph-fixed .s1-pair { grid-column:1 / -1; }
+    #stage1-immediate-graph-fixed .s1-pair .s1-node { flex:1 1 180px; }
+    #stage1-immediate-graph-fixed .s1-immediate-arrow { color:var(--destructive); text-align:center; font-weight:500; }
+    #stage1-immediate-graph-fixed .s1-immediate-arrow span { display:block; }
+    #stage1-immediate-graph-fixed .s1-immediate-arrow small { display:block; color:var(--foreground); font-weight:400; }
+    #stage1-immediate-graph-fixed .s1-start,
+    #stage1-immediate-graph-fixed .s1-complete { width:max-content; max-width:100%; margin-inline:auto; padding:9px 14px; text-align:center; background:var(--muted); color:var(--muted-foreground); border-radius:8px; }
+    #stage1-immediate-graph-fixed .s1-complete span,
+    #stage1-immediate-graph-fixed .s1-complete strong { display:block; }
+    #stage1-immediate-graph-fixed .s1-complete strong { color:var(--foreground); font-weight:500; margin-top:3px; }
+    #stage1-immediate-graph-fixed .s1-down,
+    #stage1-immediate-graph-fixed .s1-join { text-align:center; color:var(--muted-foreground); margin:7px 0; }
+    #stage1-immediate-graph-fixed .s1-chain .s1-node { min-width:180px; }
+    #stage1-immediate-graph-fixed .s1-must-arrow,
+    #stage1-immediate-graph-fixed .s1-must-mark { color:var(--foreground); font-weight:500; }
+    #stage1-immediate-graph-fixed .s1-immediate-mark { color:var(--destructive); font-weight:500; }
+    @media (max-width:520px) {
+      #stage1-immediate-graph-fixed .s1-entry-grid { grid-template-columns:1fr; }
+      #stage1-immediate-graph-fixed .s1-pair { grid-column:auto; }
+      #stage1-immediate-graph-fixed .s1-chain { flex-direction:column; }
+      #stage1-immediate-graph-fixed .s1-must-arrow { transform:rotate(90deg); }
+    }
+  </style>
+</div>

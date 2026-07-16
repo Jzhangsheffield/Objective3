@@ -1,0 +1,283 @@
+{
+  "schema_version": "stage1-feature-history-v1",
+  "source_note": "Standalone Stage 1 draft; the original task_graph.json is unchanged.",
+  "semantics": {
+    "execution_constraints": "Used for scheduling and legality checks; must remain acyclic.",
+    "feature_history_constraints": "Used only as the model's legal historical-feature candidate mask; mutual possible relationships are allowed.",
+    "possible_previous_nodes": "A node is included when at least one valid Stage 1 execution can place it before the current node.",
+    "optional_previous_nodes": "Derived as possible_previous_nodes minus all_must_previous_nodes."
+  },
+  "atomic_sequences": [
+    {
+      "sequence_id": "unlock_and_place_lock",
+      "nodes": [1, 2]
+    },
+    {
+      "sequence_id": "remove_and_place_cover",
+      "nodes": [10, 11]
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "node_0_start",
+      "node_idx": 0,
+      "action_label_tier1": "start",
+      "action_label_tier2": "start",
+      "action_label_tier3": "start",
+      "action_id_tier1": -1,
+      "action_id_tier2": -1,
+      "action_id_tier3": -1,
+      "stage_id": -1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [],
+        "possible_previous_nodes": [],
+        "optional_previous_nodes": []
+      }
+    },
+    {
+      "node_id": "node_1_unlock_crimper",
+      "node_idx": 1,
+      "action_label_tier1": "unlock",
+      "action_label_tier2": "unlock crimper",
+      "action_label_tier3": "unlock crimper",
+      "action_id_tier1": 13,
+      "action_id_tier2": 26,
+      "action_id_tier3": 30,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 3, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [3, 6, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_2_put_lock_on_table",
+      "node_idx": 2,
+      "action_label_tier1": "put",
+      "action_label_tier2": "put lock",
+      "action_label_tier3": "put lock on table",
+      "action_id_tier1": 7,
+      "action_id_tier2": 7,
+      "action_id_tier3": 9,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [1],
+        "must_immediately_previous_node": 1
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0, 1],
+        "possible_previous_nodes": [0, 1, 3, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [3, 6, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_3_turn_on_main_switch",
+      "node_idx": 3,
+      "action_label_tier1": "turn on",
+      "action_label_tier2": "turn on main switch",
+      "action_label_tier3": "turn on main switch",
+      "action_id_tier1": 12,
+      "action_id_tier2": 24,
+      "action_id_tier3": 28,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [1, 2, 6, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_4_turn_on_crimper",
+      "node_idx": 4,
+      "action_label_tier1": "turn on",
+      "action_label_tier2": "turn on crimper",
+      "action_label_tier3": "turn on crimper",
+      "action_id_tier1": 12,
+      "action_id_tier2": 22,
+      "action_id_tier3": 26,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [2, 3],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0, 1, 2, 3],
+        "possible_previous_nodes": [0, 1, 2, 3, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [6, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_5_adjust_parameters",
+      "node_idx": 5,
+      "action_label_tier1": "adjust",
+      "action_label_tier2": "adjust parameters",
+      "action_label_tier3": "adjust parameters",
+      "action_id_tier1": 0,
+      "action_id_tier2": 0,
+      "action_id_tier3": 0,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [4],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0, 1, 2, 3, 4],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [6, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_6_turn_on_air_compressor",
+      "node_idx": 6,
+      "action_label_tier1": "turn on",
+      "action_label_tier2": "turn on air compressor",
+      "action_label_tier3": "turn on air compressor",
+      "action_id_tier1": 12,
+      "action_id_tier2": 21,
+      "action_id_tier3": 25,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 7, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_7_turn_on_water_pump",
+      "node_idx": 7,
+      "action_label_tier1": "turn on",
+      "action_label_tier2": "turn on water pump",
+      "action_label_tier3": "turn on water pump",
+      "action_id_tier1": 12,
+      "action_id_tier2": 25,
+      "action_id_tier3": 29,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 6, 8, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_8_turn_on_extractor_fan",
+      "node_idx": 8,
+      "action_label_tier1": "turn on",
+      "action_label_tier2": "turn on extractor fan",
+      "action_label_tier3": "turn on extractor fan",
+      "action_id_tier1": 12,
+      "action_id_tier2": 23,
+      "action_id_tier3": 27,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_9_move_pedal_to_safe_location",
+      "node_idx": 9,
+      "action_label_tier1": "move",
+      "action_label_tier2": "move pedal",
+      "action_label_tier3": "move pedal to safe location",
+      "action_id_tier1": 4,
+      "action_id_tier2": 4,
+      "action_id_tier3": 6,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 6, 7, 8, 10, 11]
+      }
+    },
+    {
+      "node_id": "node_10_remove_protection_cover_from_crimper",
+      "node_idx": 10,
+      "action_label_tier1": "remove",
+      "action_label_tier2": "remove protection cover",
+      "action_label_tier3": "remove protection cover from crimper",
+      "action_id_tier1": 8,
+      "action_id_tier2": 11,
+      "action_id_tier3": 15,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [0],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      }
+    },
+    {
+      "node_id": "node_11_put_protection_cover_on_ground",
+      "node_idx": 11,
+      "action_label_tier1": "put",
+      "action_label_tier2": "put protection cover",
+      "action_label_tier3": "put protection cover on ground",
+      "action_id_tier1": 7,
+      "action_id_tier2": 9,
+      "action_id_tier3": 12,
+      "stage_id": 1,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [10],
+        "must_immediately_previous_node": 10
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0, 10],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "optional_previous_nodes": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      }
+    },
+    {
+      "node_id": "node_12_stage_1_complete",
+      "node_idx": 12,
+      "action_label_tier1": "complete",
+      "action_label_tier2": "stage 1 complete",
+      "action_label_tier3": "stage 1 complete",
+      "action_id_tier1": -1,
+      "action_id_tier2": -1,
+      "action_id_tier3": -1,
+      "stage_id": -1,
+      "synthetic": true,
+      "execution_constraints": {
+        "direct_must_previous_nodes": [5, 6, 7, 8, 9, 11],
+        "must_immediately_previous_node": null
+      },
+      "feature_history_constraints": {
+        "all_must_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "possible_previous_nodes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "optional_previous_nodes": []
+      }
+    }
+  ]
+}

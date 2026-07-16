@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thermal crimp task graph draft</title>
+<style>
+  :root{--bg:#f1f5f9;--panel:#ffffff;--text:#0f172a;--muted:#475569;--border:#cbd5e1}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+  header{padding:16px 20px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
+  h1{font-size:20px;margin:0 0 10px} .controls{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted)}
+  label{display:flex;gap:7px;align-items:center} main{padding:16px} .canvas{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:auto;max-height:calc(100vh - 115px)}
+  svg{display:block;width:1800px;height:2460px} body.hide-optional .optional-edge{display:none} body.hide-must .must-edge{display:none}
+</style>
+</head>
+<body>
+<header><h1>Thermal crimp task graph — draft</h1><div class="controls">
+  <label><input id="must-toggle" type="checkbox" checked> Mandatory edges</label>
+  <label><input id="optional-toggle" type="checkbox" checked> Optional edges</label>
+</div></header>
+<main><div class="canvas"><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 2460" role="img" aria-labelledby="graph-title graph-desc">
+<title id="graph-title">Thermal crimp task graph</title>
+<desc id="graph-desc">Nodes are colored by stage. Solid arrows are mandatory previous-node relationships; dashed purple arrows are optional previous-node relationships.</desc>
+<defs>
+  <marker id="arrow-must" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#334155"/></marker>
+  <marker id="arrow-optional" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#7c3aed"/></marker>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.16"/></filter>
+</defs>
+<style>
+  .band{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1.5}.band-title{font:600 20px Arial,sans-serif;fill:#334155}
+  .must-edge{fill:none;stroke:#334155;stroke-width:2;marker-end:url(#arrow-must)}
+  .optional-edge{fill:none;stroke:#7c3aed;stroke-width:1.6;stroke-dasharray:7 6;opacity:.46;marker-end:url(#arrow-optional)}
+  .node-box{stroke-width:1.5;filter:url(#shadow)}.idx{font:700 16px Arial,sans-serif}.label{font:14px Arial,sans-serif;fill:#111827}
+  .legend{font:14px Arial,sans-serif;fill:#334155}.small{font:12px Arial,sans-serif;fill:#475569}
+</style>
+<rect class="band" x="35" y="115" width="1730" height="850" rx="18"/>
+<text class="band-title" x="58" y="147">Stage 1 · setup</text>
+<rect class="band" x="35" y="990" width="1730" height="505" rx="18"/>
+<text class="band-title" x="58" y="1022">Stage 2 · crimping</text>
+<rect class="band" x="35" y="1530" width="1730" height="675" rx="18"/>
+<text class="band-title" x="58" y="1562">Stage 3 · shutdown</text>
+<rect x="55" y="35" width="18" height="18" rx="4" fill="#e5e7eb" stroke="#374151"/>
+<text class="legend" x="81" y="49">start/end</text>
+<rect x="205" y="35" width="18" height="18" rx="4" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="legend" x="231" y="49">stage 1</text>
+<rect x="355" y="35" width="18" height="18" rx="4" fill="#dcfce7" stroke="#14532d"/>
+<text class="legend" x="381" y="49">stage 2</text>
+<rect x="505" y="35" width="18" height="18" rx="4" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="legend" x="531" y="49">stage 3</text>
+<line x1="690" y1="44" x2="745" y2="44" class="must-edge"/><text class="legend" x="755" y="49">must</text>
+<line x1="835" y1="44" x2="890" y2="44" class="optional-edge"/><text class="legend" x="900" y="49">optional</text>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 215 300.0, 145 300.0, 180 250"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 215 350.0, 145 350.0, 180 250"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 215 400.0, 145 400.0, 180 250"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 450.0, 145 450.0, 180 250"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 500.0, 145 500.0, 180 250"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 540.0, 145 540.0, 180 250"/>
+<path class="must-edge" data-edge="must" d="M 180 250 C 180 195, 580 215, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 215 310.0, 545 310.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 215 360.0, 545 360.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 215 410.0, 545 410.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 460.0, 545 460.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 510.0, 545 510.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 550.0, 545 550.0, 580 270"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 619 310.0, 141 310.0, 180 350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 215 400.0, 145 400.0, 180 350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 215 450.0, 145 450.0, 180 350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 500.0, 145 500.0, 180 350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 550.0, 145 550.0, 180 350"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 590.0, 145 590.0, 180 350"/>
+<path class="must-edge" data-edge="must" d="M 580 270 C 580 310.0, 1000 310.0, 1000 350"/>
+<path class="must-edge" data-edge="must" d="M 180 350 C 180 295, 1000 295, 1000 350"/>
+<path class="must-edge" data-edge="must" d="M 1000 350 C 1000 295, 1440 295, 1440 350"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 619 360.0, 141 360.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 219 400.0, 141 400.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 1000 350 C 1035 400.0, 145 400.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 215 500.0, 145 500.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 550.0, 145 550.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 600.0, 145 600.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 640.0, 145 640.0, 180 450"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 619 410.0, 141 410.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 219 450.0, 141 450.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 1000 350 C 1035 450.0, 145 450.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 219 500.0, 141 500.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 600.0, 145 600.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 650.0, 145 650.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 690.0, 145 690.0, 180 550"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 619 460.0, 141 460.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 219 500.0, 141 500.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 1000 350 C 1035 500.0, 145 500.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 219 550.0, 141 550.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 219 600.0, 141 600.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 700.0, 145 700.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 740.0, 145 740.0, 180 650"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 619 510.0, 141 510.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 219 550.0, 141 550.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 1000 350 C 1035 550.0, 145 550.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 219 600.0, 141 600.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 219 650.0, 141 650.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 219 700.0, 141 700.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 580 830 C 615 790.0, 145 790.0, 180 750"/>
+<path class="optional-edge" data-edge="optional" d="M 580 270 C 615 560.0, 145 560.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 180 350 C 215 600.0, 145 600.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 1000 350 C 1035 600.0, 145 600.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 180 450 C 215 650.0, 145 650.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 180 550 C 215 700.0, 145 700.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 180 650 C 215 750.0, 145 750.0, 180 850"/>
+<path class="optional-edge" data-edge="optional" d="M 180 750 C 215 800.0, 145 800.0, 180 850"/>
+<path class="must-edge" data-edge="must" d="M 180 850 C 180 795, 580 775, 580 830"/>
+<path class="must-edge" data-edge="must" d="M 1440 350 C 1440 725.0, 180 725.0, 180 1100"/>
+<path class="must-edge" data-edge="must" d="M 180 1100 C 180 1045, 420 1045, 420 1100"/>
+<path class="must-edge" data-edge="must" d="M 420 1100 C 420 1045, 660 1045, 660 1100"/>
+<path class="must-edge" data-edge="must" d="M 660 1100 C 660 1045, 900 1045, 900 1100"/>
+<path class="must-edge" data-edge="must" d="M 900 1100 C 900 1045, 1140 1045, 1140 1100"/>
+<path class="must-edge" data-edge="must" d="M 1140 1100 C 1140 1045, 1380 1045, 1380 1100"/>
+<path class="must-edge" data-edge="must" d="M 1380 1100 C 1380 1045, 1620 1045, 1620 1100"/>
+<path class="must-edge" data-edge="must" d="M 1620 1100 C 1620 1235.0, 1620 1235.0, 1620 1370"/>
+<path class="must-edge" data-edge="must" d="M 1620 1370 C 1620 1425, 1380 1425, 1380 1370"/>
+<path class="must-edge" data-edge="must" d="M 1380 1370 C 1380 1425, 1140 1425, 1140 1370"/>
+<path class="must-edge" data-edge="must" d="M 1140 1370 C 1140 1425, 900 1425, 900 1370"/>
+<path class="must-edge" data-edge="must" d="M 900 1370 C 900 1425, 660 1425, 660 1370"/>
+<path class="must-edge" data-edge="must" d="M 660 1370 C 660 1425, 420 1425, 420 1370"/>
+<path class="must-edge" data-edge="must" d="M 420 1370 C 420 1425, 180 1425, 180 1370"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 180 1515.0, 180 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1660 C 180 1605, 420 1605, 420 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 660 1515.0, 660 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 900 1515.0, 900 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 1140 1515.0, 1140 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 1380 1515.0, 1380 1660"/>
+<path class="must-edge" data-edge="must" d="M 180 1370 C 180 1515.0, 1620 1515.0, 1620 1660"/>
+<path class="must-edge" data-edge="must" d="M 1620 1660 C 1620 1795.0, 1140 1795.0, 1140 1930"/>
+<path class="must-edge" data-edge="must" d="M 1620 1660 C 1620 1795.0, 1380 1795.0, 1380 1930"/>
+<path class="must-edge" data-edge="must" d="M 1380 1930 C 1380 2035.0, 1500 2035.0, 1500 2140"/>
+<path class="optional-edge" data-edge="optional" d="M 660 1370 C 695 1860.0, 865 1860.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 900 1370 C 935 1860.0, 865 1860.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 660 1370 C 699 1860.0, 861 1860.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 420 1370 C 455 1860.0, 865 1860.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 1370 C 215 1860.0, 865 1860.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 180 1660 C 215 2005.0, 865 2005.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 660 1660 C 695 2005.0, 865 2005.0, 900 2350"/>
+<path class="optional-edge" data-edge="optional" d="M 1140 1660 C 1175 2005.0, 865 2005.0, 900 2350"/>
+<g class="task-node" data-stage="-1" data-node="0">
+<rect class="node-box" x="825.0" y="46.0" width="150" height="58" rx="12" fill="#e5e7eb" stroke="#374151"/>
+<text class="idx" x="900" y="73" text-anchor="middle" fill="#374151">#0</text>
+<text class="label" x="900" y="87" text-anchor="middle">start</text>
+<title>node_idx 0: node_0_start
+stage_id -1
+must: []
+optional: []</title></g>
+<g class="task-node" data-stage="1" data-node="1">
+<rect class="node-box" x="85.0" y="215.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="248" text-anchor="middle" fill="#1e3a8a">#1</text>
+<text class="label" x="180" y="262" text-anchor="middle">unlock crimper</text>
+<title>node_idx 1: node_1_unlock_crimper
+stage_id 1
+must: []
+optional: [3, 6, 7, 8, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="2">
+<rect class="node-box" x="485.0" y="235.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="580" y="268" text-anchor="middle" fill="#1e3a8a">#2</text>
+<text class="label" x="580" y="282" text-anchor="middle">put lock on table</text>
+<title>node_idx 2: node_2_put_lock_on_table
+stage_id 1
+must: [1]
+optional: [3, 6, 7, 8, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="3">
+<rect class="node-box" x="85.0" y="315.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="348" text-anchor="middle" fill="#1e3a8a">#3</text>
+<text class="label" x="180" y="362" text-anchor="middle">turn on main switch</text>
+<title>node_idx 3: node_3_turn_on_main_switch
+stage_id 1
+must: []
+optional: [2, 6, 7, 8, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="4">
+<rect class="node-box" x="905.0" y="315.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="1000" y="348" text-anchor="middle" fill="#1e3a8a">#4</text>
+<text class="label" x="1000" y="362" text-anchor="middle">turn on crimper</text>
+<title>node_idx 4: node_4_turn_on_crimper
+stage_id 1
+must: [2, 3]
+optional: []</title></g>
+<g class="task-node" data-stage="1" data-node="5">
+<rect class="node-box" x="1345.0" y="315.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="1440" y="348" text-anchor="middle" fill="#1e3a8a">#5</text>
+<text class="label" x="1440" y="362" text-anchor="middle">adjust parameters</text>
+<title>node_idx 5: node_5_adjust_parameters
+stage_id 1
+must: [4]
+optional: []</title></g>
+<g class="task-node" data-stage="1" data-node="6">
+<rect class="node-box" x="85.0" y="415.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="448" text-anchor="middle" fill="#1e3a8a">#6</text>
+<text class="label" x="180" y="462" text-anchor="middle">turn on air compressor</text>
+<title>node_idx 6: node_6_turn_on_air_compressor
+stage_id 1
+must: []
+optional: [2, 3, 4, 7, 8, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="7">
+<rect class="node-box" x="85.0" y="515.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="548" text-anchor="middle" fill="#1e3a8a">#7</text>
+<text class="label" x="180" y="562" text-anchor="middle">turn on water pump</text>
+<title>node_idx 7: node_7_turn_on_water_pump
+stage_id 1
+must: []
+optional: [2, 3, 4, 6, 8, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="8">
+<rect class="node-box" x="85.0" y="615.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="648" text-anchor="middle" fill="#1e3a8a">#8</text>
+<text class="label" x="180" y="662" text-anchor="middle">turn on extractor fan</text>
+<title>node_idx 8: node_8_turn_on_extractor_fan
+stage_id 1
+must: []
+optional: [2, 3, 4, 6, 7, 9, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="9">
+<rect class="node-box" x="85.0" y="715.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="741" text-anchor="middle" fill="#1e3a8a">#9</text>
+<text class="label" x="180" y="760" text-anchor="middle">move pedal to safe</text>
+<text class="label" x="180" y="777" text-anchor="middle">location</text>
+<title>node_idx 9: node_9_move_pedal_to_safe_location
+stage_id 1
+must: []
+optional: [2, 3, 4, 6, 7, 8, 11]</title></g>
+<g class="task-node" data-stage="1" data-node="10">
+<rect class="node-box" x="85.0" y="815.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="180" y="841" text-anchor="middle" fill="#1e3a8a">#10</text>
+<text class="label" x="180" y="860" text-anchor="middle">remove protection cover</text>
+<text class="label" x="180" y="877" text-anchor="middle">from crimper</text>
+<title>node_idx 10: node_10_remove_protection_cover_from_crimper
+stage_id 1
+must: []
+optional: [2, 3, 4, 6, 7, 8, 9]</title></g>
+<g class="task-node" data-stage="1" data-node="11">
+<rect class="node-box" x="485.0" y="795.0" width="190" height="70" rx="12" fill="#dbeafe" stroke="#1e3a8a"/>
+<text class="idx" x="580" y="821" text-anchor="middle" fill="#1e3a8a">#11</text>
+<text class="label" x="580" y="840" text-anchor="middle">put protection cover on</text>
+<text class="label" x="580" y="857" text-anchor="middle">ground</text>
+<title>node_idx 11: node_11_put_protection_cover_on_ground
+stage_id 1
+must: [10]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="12">
+<rect class="node-box" x="85.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="180" y="1098" text-anchor="middle" fill="#14532d">#12</text>
+<text class="label" x="180" y="1112" text-anchor="middle">take plier from table</text>
+<title>node_idx 12: node_12_take_plier_from_table
+stage_id 2
+must: [5]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="13">
+<rect class="node-box" x="325.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="420" y="1098" text-anchor="middle" fill="#14532d">#13</text>
+<text class="label" x="420" y="1112" text-anchor="middle">grip sample from table</text>
+<title>node_idx 13: node_13_grip_sample_from_table_1
+stage_id 2
+must: [12]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="14">
+<rect class="node-box" x="565.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="660" y="1091" text-anchor="middle" fill="#14532d">#14</text>
+<text class="label" x="660" y="1110" text-anchor="middle">place sample under</text>
+<text class="label" x="660" y="1127" text-anchor="middle">electrodes</text>
+<title>node_idx 14: node_14_put_sample_under_electrodes_1
+stage_id 2
+must: [13]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="15">
+<rect class="node-box" x="805.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="900" y="1098" text-anchor="middle" fill="#14532d">#15</text>
+<text class="label" x="900" y="1112" text-anchor="middle">press pedal</text>
+<title>node_idx 15: node_15_press_pedal_1
+stage_id 2
+must: [14]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="16">
+<rect class="node-box" x="1045.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1140" y="1091" text-anchor="middle" fill="#14532d">#16</text>
+<text class="label" x="1140" y="1110" text-anchor="middle">put sample on machine</text>
+<text class="label" x="1140" y="1127" text-anchor="middle">table</text>
+<title>node_idx 16: node_16_put_sample_on_machine_table_1
+stage_id 2
+must: [15]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="17">
+<rect class="node-box" x="1285.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1380" y="1091" text-anchor="middle" fill="#14532d">#17</text>
+<text class="label" x="1380" y="1110" text-anchor="middle">grip sample from machine</text>
+<text class="label" x="1380" y="1127" text-anchor="middle">table</text>
+<title>node_idx 17: node_17_grip_sample_from_machine_table_2
+stage_id 2
+must: [16]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="18">
+<rect class="node-box" x="1525.0" y="1065.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1620" y="1098" text-anchor="middle" fill="#14532d">#18</text>
+<text class="label" x="1620" y="1112" text-anchor="middle">reverse sample</text>
+<title>node_idx 18: node_18_reverse_sample
+stage_id 2
+must: [17]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="19">
+<rect class="node-box" x="1525.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1620" y="1361" text-anchor="middle" fill="#14532d">#19</text>
+<text class="label" x="1620" y="1380" text-anchor="middle">put sample on machine</text>
+<text class="label" x="1620" y="1397" text-anchor="middle">table</text>
+<title>node_idx 19: node_19_put_sample_on_machine_table_2
+stage_id 2
+must: [18]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="20">
+<rect class="node-box" x="1285.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1380" y="1361" text-anchor="middle" fill="#14532d">#20</text>
+<text class="label" x="1380" y="1380" text-anchor="middle">grip sample from machine</text>
+<text class="label" x="1380" y="1397" text-anchor="middle">table</text>
+<title>node_idx 20: node_20_grip_sample_from_machine_table_3
+stage_id 2
+must: [19]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="21">
+<rect class="node-box" x="1045.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="1140" y="1361" text-anchor="middle" fill="#14532d">#21</text>
+<text class="label" x="1140" y="1380" text-anchor="middle">place sample under</text>
+<text class="label" x="1140" y="1397" text-anchor="middle">electrodes</text>
+<title>node_idx 21: node_21_put_sample_under_electrodes_2
+stage_id 2
+must: [20]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="22">
+<rect class="node-box" x="805.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="900" y="1368" text-anchor="middle" fill="#14532d">#22</text>
+<text class="label" x="900" y="1382" text-anchor="middle">press pedal</text>
+<title>node_idx 22: node_22_press_pedal_2
+stage_id 2
+must: [21]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="23">
+<rect class="node-box" x="565.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="660" y="1368" text-anchor="middle" fill="#14532d">#23</text>
+<text class="label" x="660" y="1382" text-anchor="middle">inspect sample</text>
+<title>node_idx 23: node_23_inspect_sample
+stage_id 2
+must: [22]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="24">
+<rect class="node-box" x="325.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="420" y="1368" text-anchor="middle" fill="#14532d">#24</text>
+<text class="label" x="420" y="1382" text-anchor="middle">put sample on table</text>
+<title>node_idx 24: node_24_put_sample_on_table
+stage_id 2
+must: [23]
+optional: []</title></g>
+<g class="task-node" data-stage="2" data-node="25">
+<rect class="node-box" x="85.0" y="1335.0" width="190" height="70" rx="12" fill="#dcfce7" stroke="#14532d"/>
+<text class="idx" x="180" y="1368" text-anchor="middle" fill="#14532d">#25</text>
+<text class="label" x="180" y="1382" text-anchor="middle">put plier on table</text>
+<title>node_idx 25: node_25_put_plier_on_table
+stage_id 2
+must: [24]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="26">
+<rect class="node-box" x="85.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="180" y="1651" text-anchor="middle" fill="#7c2d12">#26</text>
+<text class="label" x="180" y="1670" text-anchor="middle">take protection cover</text>
+<text class="label" x="180" y="1687" text-anchor="middle">from ground</text>
+<title>node_idx 26: node_26_take_protection_cover_from_ground
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="27">
+<rect class="node-box" x="325.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="420" y="1651" text-anchor="middle" fill="#7c2d12">#27</text>
+<text class="label" x="420" y="1670" text-anchor="middle">put protection cover on</text>
+<text class="label" x="420" y="1687" text-anchor="middle">crimper</text>
+<title>node_idx 27: node_27_put_protection_cover_on_crimper
+stage_id 3
+must: [26]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="28">
+<rect class="node-box" x="565.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="660" y="1658" text-anchor="middle" fill="#7c2d12">#28</text>
+<text class="label" x="660" y="1672" text-anchor="middle">turn off extractor fan</text>
+<title>node_idx 28: node_28_tunr_off_extractor_fan
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="29">
+<rect class="node-box" x="805.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="900" y="1658" text-anchor="middle" fill="#7c2d12">#29</text>
+<text class="label" x="900" y="1672" text-anchor="middle">turn off water pump</text>
+<title>node_idx 29: node_29_turn_off_water_pump
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="30">
+<rect class="node-box" x="1045.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1140" y="1658" text-anchor="middle" fill="#7c2d12">#30</text>
+<text class="label" x="1140" y="1672" text-anchor="middle">turn off air compressor</text>
+<title>node_idx 30: node_30_turn_off_air_compressor
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="31">
+<rect class="node-box" x="1285.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1380" y="1651" text-anchor="middle" fill="#7c2d12">#31</text>
+<text class="label" x="1380" y="1670" text-anchor="middle">move pedal to original</text>
+<text class="label" x="1380" y="1687" text-anchor="middle">location</text>
+<title>node_idx 31: node_31_move_pedal_to_original_place
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="32">
+<rect class="node-box" x="1525.0" y="1625.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1620" y="1658" text-anchor="middle" fill="#7c2d12">#32</text>
+<text class="label" x="1620" y="1672" text-anchor="middle">turn off crimper</text>
+<title>node_idx 32: node_32_turn_off_crimper
+stage_id 3
+must: [25]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="33">
+<rect class="node-box" x="1045.0" y="1895.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1140" y="1928" text-anchor="middle" fill="#7c2d12">#33</text>
+<text class="label" x="1140" y="1942" text-anchor="middle">turn off main switch</text>
+<title>node_idx 33: node_33_turn_off_main_switch
+stage_id 3
+must: [32]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="34">
+<rect class="node-box" x="1285.0" y="1895.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1380" y="1928" text-anchor="middle" fill="#7c2d12">#34</text>
+<text class="label" x="1380" y="1942" text-anchor="middle">take lock from table</text>
+<title>node_idx 34: node_34_take_lock_from_table
+stage_id 3
+must: [32]
+optional: []</title></g>
+<g class="task-node" data-stage="3" data-node="35">
+<rect class="node-box" x="1405.0" y="2105.0" width="190" height="70" rx="12" fill="#ffedd5" stroke="#7c2d12"/>
+<text class="idx" x="1500" y="2138" text-anchor="middle" fill="#7c2d12">#35</text>
+<text class="label" x="1500" y="2152" text-anchor="middle">lock crimper</text>
+<title>node_idx 35: node_35_lock_crimper
+stage_id 3
+must: [34]
+optional: []</title></g>
+<g class="task-node" data-stage="-1" data-node="36">
+<rect class="node-box" x="825.0" y="2321.0" width="150" height="58" rx="12" fill="#e5e7eb" stroke="#374151"/>
+<text class="idx" x="900" y="2348" text-anchor="middle" fill="#374151">#36</text>
+<text class="label" x="900" y="2362" text-anchor="middle">end</text>
+<title>node_idx 36: node_36_end
+stage_id -1
+must: []
+optional: [23, 22, 23, 24, 25, 26, 28, 30]</title></g>
+</svg></div></main>
+<script>
+document.getElementById('must-toggle').addEventListener('change',e=>document.body.classList.toggle('hide-must',!e.target.checked));
+document.getElementById('optional-toggle').addEventListener('change',e=>document.body.classList.toggle('hide-optional',!e.target.checked));
+</script>
+</body></html>

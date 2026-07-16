@@ -1,0 +1,58 @@
+<div id="integrated-stage-overview">
+  <div class="ig-start">#0 start</div>
+  <div class="ig-down">↓</div>
+
+  <section class="ig-stage stage1" aria-label="Stage 1 setup">
+    <h3>Stage 1 · flexible setup with two immediate pairs</h3>
+    <div class="ig-grid">
+      <div class="ig-unit">#1 ⇒ #2<br><small>unlock + put lock</small></div>
+      <div class="ig-unit">#3<br><small>main switch on</small></div>
+      <div class="ig-unit">#6</div><div class="ig-unit">#7</div><div class="ig-unit">#8</div><div class="ig-unit">#9</div>
+      <div class="ig-unit">#10 ⇒ #11<br><small>remove + put cover</small></div>
+    </div>
+    <div class="ig-rule">#2 + #3 → #4 → #5</div>
+    <div class="ig-join">join: #5, #6, #7, #8, #9, #11</div>
+  </section>
+
+  <div class="ig-down">↓</div>
+  <section class="ig-stage stage2" aria-label="Stage 2 crimping">
+    <h3>Stage 2 · one immediate linear sequence</h3>
+    <div class="ig-rule">#12 ⇒ #13 ⇒ #14 ⇒ #15 ⇒ #16 ⇒ #17 ⇒ #18 ⇒ #19 ⇒ #20 ⇒ #21 ⇒ #22 ⇒ #23 ⇒ #24 ⇒ #25</div>
+  </section>
+
+  <div class="ig-down">↓</div>
+  <section class="ig-stage stage3" aria-label="Stage 3 shutdown">
+    <h3>Stage 3 · flexible shutdown with constrained branches</h3>
+    <div class="ig-grid">
+      <div class="ig-unit">#26 ⇒ #27<br><small>replace cover</small></div>
+      <div class="ig-unit">#28<br><small>extractor off</small></div>
+      <div class="ig-unit">#29<br><small>water pump off</small></div>
+      <div class="ig-unit">#30<br><small>compressor off</small></div>
+      <div class="ig-unit">#31<br><small>move pedal</small></div>
+      <div class="ig-unit">#32 → #33<br><small>crimper before main switch</small></div>
+      <div class="ig-unit">#32 → #34 ⇒ #35<br><small>crimper before lock pair</small></div>
+    </div>
+    <div class="ig-join">join: #27, #28, #29, #30, #31, #33, #35</div>
+  </section>
+
+  <div class="ig-down">↓</div>
+  <div class="ig-start">#36 end</div>
+
+  <style>
+    #integrated-stage-overview { color:var(--foreground); }
+    #integrated-stage-overview .ig-start { width:max-content; max-width:100%; margin-inline:auto; padding:8px 14px; text-align:center; background:var(--muted); color:var(--muted-foreground); border-radius:8px; }
+    #integrated-stage-overview .ig-down { text-align:center; margin:6px 0; color:var(--muted-foreground); }
+    #integrated-stage-overview .ig-stage { padding:10px; border-radius:9px; }
+    #integrated-stage-overview .ig-stage h3 { margin:0 0 9px; text-align:center; font-weight:500; }
+    #integrated-stage-overview .stage1 { background:color-mix(in srgb,var(--viz-series-1) 16%,transparent); }
+    #integrated-stage-overview .stage2 { background:color-mix(in srgb,var(--viz-series-2) 16%,transparent); }
+    #integrated-stage-overview .stage3 { background:color-mix(in srgb,var(--viz-series-3) 16%,transparent); }
+    #integrated-stage-overview .ig-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+    #integrated-stage-overview .ig-unit { padding:7px; text-align:center; background:var(--secondary); color:var(--secondary-foreground); border-radius:7px; }
+    #integrated-stage-overview .ig-rule,
+    #integrated-stage-overview .ig-join { margin-top:8px; text-align:center; }
+    #integrated-stage-overview .ig-rule { font-weight:500; }
+    #integrated-stage-overview .ig-join { color:var(--muted-foreground); }
+    @media (max-width:520px) { #integrated-stage-overview .ig-grid { grid-template-columns:1fr; } }
+  </style>
+</div>

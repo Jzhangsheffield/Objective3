@@ -1,0 +1,14 @@
+{
+  "node_count": 37,
+  "duplicate_reference_entries": [
+    [
+      36,
+      "optional_previous_nodes",
+      23,
+      2
+    ]
+  ],
+  "forward_optional_reference_count": 27,
+  "mutual_optional_pair_count": 15,
+  "mandatory_cycle_nodes": []
+}

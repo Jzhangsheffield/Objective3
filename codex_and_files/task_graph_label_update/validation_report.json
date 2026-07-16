@@ -1,0 +1,232 @@
+{
+  "source_task_graph": "D:\\Junxi_data\\Objective3_thermal_crimp\\task_graph\\task_graph.json",
+  "label_map": "C:\\Junxi_data_for_training_speedup\\Stage_2_Mapstyle_Dataset\\label_map.json",
+  "node_count": 37,
+  "matched_action_nodes": 31,
+  "corrected_action_nodes": 4,
+  "control_nodes": 2,
+  "nodes": [
+    {
+      "node_id": "node_0_start",
+      "parsed_tier3_from_node_id": "start",
+      "canonical_tier3_used": "start",
+      "status": "control_node"
+    },
+    {
+      "node_id": "node_1_unlock_crimper",
+      "parsed_tier3_from_node_id": "unlock crimper",
+      "canonical_tier3_used": "unlock crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_2_put_lock_on_table",
+      "parsed_tier3_from_node_id": "put lock on table",
+      "canonical_tier3_used": "put lock on table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_3_turn_on_main_switch",
+      "parsed_tier3_from_node_id": "turn on main switch",
+      "canonical_tier3_used": "turn on main switch",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_4_turn_on_crimper",
+      "parsed_tier3_from_node_id": "turn on crimper",
+      "canonical_tier3_used": "turn on crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_5_adjust_parameters",
+      "parsed_tier3_from_node_id": "adjust parameters",
+      "canonical_tier3_used": "adjust parameters",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_6_turn_on_air_compressor",
+      "parsed_tier3_from_node_id": "turn on air compressor",
+      "canonical_tier3_used": "turn on air compressor",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_7_turn_on_water_pump",
+      "parsed_tier3_from_node_id": "turn on water pump",
+      "canonical_tier3_used": "turn on water pump",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_8_turn_on_extractor_fan",
+      "parsed_tier3_from_node_id": "turn on extractor fan",
+      "canonical_tier3_used": "turn on extractor fan",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_9_move_pedal_to_safe_location",
+      "parsed_tier3_from_node_id": "move pedal to safe location",
+      "canonical_tier3_used": "move pedal to safe location",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_10_remove_protection_cover_from_crimper",
+      "parsed_tier3_from_node_id": "remove protection cover from crimper",
+      "canonical_tier3_used": "remove protection cover from crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_11_put_protection_cover_on_ground",
+      "parsed_tier3_from_node_id": "put protection cover on ground",
+      "canonical_tier3_used": "put protection cover on ground",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_12_take_plier_from_table",
+      "parsed_tier3_from_node_id": "take plier from table",
+      "canonical_tier3_used": "take plier from table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_13_grip_sample_from_table_1",
+      "parsed_tier3_from_node_id": "grip sample from table",
+      "canonical_tier3_used": "grip sample from table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_14_put_sample_under_electrodes_1",
+      "parsed_tier3_from_node_id": "put sample under electrodes",
+      "canonical_tier3_used": "place sample under electrodes",
+      "status": "corrected_to_canonical"
+    },
+    {
+      "node_id": "node_15_press_pedal_1",
+      "parsed_tier3_from_node_id": "press pedal",
+      "canonical_tier3_used": "press pedal",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_16_put_sample_on_machine_table_1",
+      "parsed_tier3_from_node_id": "put sample on machine table",
+      "canonical_tier3_used": "put sample on machine table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_17_grip_sample_from_machine_table_2",
+      "parsed_tier3_from_node_id": "grip sample from machine table",
+      "canonical_tier3_used": "grip sample from machine table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_18_reverse_sample",
+      "parsed_tier3_from_node_id": "reverse sample",
+      "canonical_tier3_used": "reverse sample",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_19_put_sample_on_machine_table_2",
+      "parsed_tier3_from_node_id": "put sample on machine table",
+      "canonical_tier3_used": "put sample on machine table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_20_grip_sample_from_machine_table_3",
+      "parsed_tier3_from_node_id": "grip sample from machine table",
+      "canonical_tier3_used": "grip sample from machine table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_21_put_sample_under_electrodes_2",
+      "parsed_tier3_from_node_id": "put sample under electrodes",
+      "canonical_tier3_used": "place sample under electrodes",
+      "status": "corrected_to_canonical"
+    },
+    {
+      "node_id": "node_22_press_pedal_2",
+      "parsed_tier3_from_node_id": "press pedal",
+      "canonical_tier3_used": "press pedal",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_23_inspect_sample",
+      "parsed_tier3_from_node_id": "inspect sample",
+      "canonical_tier3_used": "inspect sample",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_24_put_sample_on_table",
+      "parsed_tier3_from_node_id": "put sample on table",
+      "canonical_tier3_used": "put sample on table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_25_put_plier_on_table",
+      "parsed_tier3_from_node_id": "put plier on table",
+      "canonical_tier3_used": "put plier on table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_26_take_protection_cover_from_ground",
+      "parsed_tier3_from_node_id": "take protection cover from ground",
+      "canonical_tier3_used": "take protection cover from ground",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_27_put_protection_cover_on_crimper",
+      "parsed_tier3_from_node_id": "put protection cover on crimper",
+      "canonical_tier3_used": "put protection cover on crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_28_tunr_off_extractor_fan",
+      "parsed_tier3_from_node_id": "tunr off extractor fan",
+      "canonical_tier3_used": "turn off extractor fan",
+      "status": "corrected_to_canonical"
+    },
+    {
+      "node_id": "node_29_turn_off_water_pump",
+      "parsed_tier3_from_node_id": "turn off water pump",
+      "canonical_tier3_used": "turn off water pump",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_30_turn_off_air_compressor",
+      "parsed_tier3_from_node_id": "turn off air compressor",
+      "canonical_tier3_used": "turn off air compressor",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_31_move_pedal_to_original_place",
+      "parsed_tier3_from_node_id": "move pedal to original place",
+      "canonical_tier3_used": "move pedal to original location",
+      "status": "corrected_to_canonical"
+    },
+    {
+      "node_id": "node_32_turn_off_crimper",
+      "parsed_tier3_from_node_id": "turn off crimper",
+      "canonical_tier3_used": "turn off crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_33_turn_off_main_switch",
+      "parsed_tier3_from_node_id": "turn off main switch",
+      "canonical_tier3_used": "turn off main switch",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_34_take_lock_from_table",
+      "parsed_tier3_from_node_id": "take lock from table",
+      "canonical_tier3_used": "take lock from table",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_35_lock_crimper",
+      "parsed_tier3_from_node_id": "lock crimper",
+      "canonical_tier3_used": "lock crimper",
+      "status": "matched"
+    },
+    {
+      "node_id": "node_36_end",
+      "parsed_tier3_from_node_id": "end",
+      "canonical_tier3_used": "end",
+      "status": "control_node"
+    }
+  ]
+}

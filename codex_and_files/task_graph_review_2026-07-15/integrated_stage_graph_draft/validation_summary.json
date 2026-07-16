@@ -1,0 +1,10 @@
+{
+  "node_count": 37,
+  "mandatory_graph_acyclic": true,
+  "stage2_immediate_edges": 13,
+  "stage3_immediate_pairs": [
+    [26, 27],
+    [34, 35]
+  ],
+  "end_has_all_nodes_as_mandatory_history": true
+}

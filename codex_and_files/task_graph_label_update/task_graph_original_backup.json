@@ -1,0 +1,303 @@
+{
+    "nodes": [
+        {
+            "node_id": "node_0_start",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_1_unlock_crimper",
+            "node_idx": 1,
+            "action_label": "remove_lock",
+            "action_id": ,
+            "stage_id": 1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_2_put_lock_on_table",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_3_turn_on_main_switch",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_4_turn_on_crimper",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_5_adjust_parameters",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_6_turn_on_air_compressor",
+            "node_idx": 0,
+            "action_label": "turn_on_air_compressor",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_7_turn_on_water_pump",
+            "node_idx": 0,
+            "action_label": "turn_on_water_pump",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_8_turn_on_extractor_fan",
+            "node_idx": 0,
+            "action_label": "turn_on_extractor_fan",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_9_move_pedal_to_safe_location",
+            "node_idx": 0,
+            "action_label": "move_pedal_to_save_location",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_10_remove_protection_cover_from_crimper",
+            "node_idx": 0,
+            "action_label": "put_",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_11_put_protection_cover_on_ground",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_12_take_plier_from_table",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_13_grip_sample_from_table_1",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_14_put_sample_under_electrodes_1",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_15_press_pedal_1",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_16_put_sample_on_machine_table_1",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_17_grip_sample_from_machine_table_2",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_18_reverse_sample",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_19_put_sample_on_machine_table_2",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_20_grip_sample_from_machine_table_3",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_21_put_sample_under_electrodes_2",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_22_press_pedal_2",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_23_inspect_sample",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_24_put_sample_on_table",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_25_put_plier_on_table",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_26_take_protection_cover_from_ground",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_27_put_protection_cover_on_crimper",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_28_tunr_off_extractor_fan",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_29_turn_off_water_pump",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_30_turn_off_air_compressor",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_31_move_pedal_to_original_place",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_32_turn_off_crimper",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_33_turn_off_main_switch",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_34_take_lock_from_table",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_35_lock_crimper",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+        {
+            "node_id": "node_36_end",
+            "node_idx": 0,
+            "action_label": "start",
+            "action_id": -1,
+            "stage_id": -1,
+            "predecessors": []
+        },
+
+
+     
+    ]
+}

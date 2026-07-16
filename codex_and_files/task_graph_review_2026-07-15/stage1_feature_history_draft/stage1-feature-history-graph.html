@@ -1,0 +1,105 @@
+<div id="stage1-feature-history-graph">
+  <div class="s1-flow" aria-label="Stage 1 execution constraints">
+    <div class="s1-sentinel">#0 start</div>
+    <div class="s1-down" aria-hidden="true">↓</div>
+
+    <div class="s1-entry-grid">
+      <div class="s1-pair" aria-label="Node 1 must be immediately followed by node 2">
+        <div class="s1-node"><span>#1</span>unlock crimper</div>
+        <div class="s1-immediate"><b>⇒</b><small>immediate</small></div>
+        <div class="s1-node"><span>#2</span>put lock on table</div>
+      </div>
+      <div class="s1-node"><span>#3</span>turn on main switch</div>
+      <div class="s1-node"><span>#6</span>turn on air compressor</div>
+      <div class="s1-node"><span>#7</span>turn on water pump</div>
+      <div class="s1-node"><span>#8</span>turn on extractor fan</div>
+      <div class="s1-node"><span>#9</span>move pedal to safe location</div>
+      <div class="s1-pair" aria-label="Node 10 must be immediately followed by node 11">
+        <div class="s1-node"><span>#10</span>remove protection cover</div>
+        <div class="s1-immediate"><b>⇒</b><small>immediate</small></div>
+        <div class="s1-node"><span>#11</span>put cover on ground</div>
+      </div>
+    </div>
+
+    <div class="s1-gate">#2 + #3 ↓</div>
+    <div class="s1-chain">
+      <div class="s1-node"><span>#4</span>turn on crimper</div>
+      <div aria-hidden="true">→</div>
+      <div class="s1-node"><span>#5</span>adjust parameters</div>
+    </div>
+    <div class="s1-down" aria-hidden="true">↓</div>
+    <div class="s1-sentinel"><small>join: #5, #6, #7, #8, #9, #11</small><span>Stage 1 complete</span></div>
+  </div>
+
+  <div class="s1-matrix-key text-small" aria-label="Feature history matrix legend">
+    <span><b class="key-m">M</b> mandatory history</span>
+    <span><b class="key-i">I</b> immediate predecessor</span>
+    <span><b class="key-o">O</b> possible optional history</span>
+    <span><b>·</b> impossible</span>
+  </div>
+
+  <table class="s1-matrix text-small" aria-label="Current node by possible previous node feature matrix">
+    <thead>
+      <tr><th scope="col">current \ previous</th><th>#0</th><th>#1</th><th>#2</th><th>#3</th><th>#4</th><th>#5</th><th>#6</th><th>#7</th><th>#8</th><th>#9</th><th>#10</th><th>#11</th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">#1</th><td class="m">M</td><td>—</td><td>·</td><td class="o">O</td><td>·</td><td>·</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#2</th><td class="m">M</td><td class="i">I</td><td>—</td><td class="o">O</td><td>·</td><td>·</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#3</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td>—</td><td>·</td><td>·</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#4</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td>—</td><td>·</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#5</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#6</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#7</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#8</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#9</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th scope="row">#10</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td>·</td></tr>
+      <tr><th scope="row">#11</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="i">I</td><td>—</td></tr>
+      <tr><th scope="row">done</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td></tr>
+    </tbody>
+  </table>
+
+  <style>
+    #stage1-feature-history-graph { color:var(--foreground); }
+    #stage1-feature-history-graph .s1-entry-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    #stage1-feature-history-graph .s1-node { min-width:0; padding:8px 10px; text-align:center; background:var(--secondary); color:var(--secondary-foreground); border:1px solid var(--border); border-radius:8px; }
+    #stage1-feature-history-graph .s1-node span { display:block; font-weight:500; }
+    #stage1-feature-history-graph .s1-pair,
+    #stage1-feature-history-graph .s1-chain,
+    #stage1-feature-history-graph .s1-matrix-key { display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap; }
+    #stage1-feature-history-graph .s1-pair { grid-column:1 / -1; }
+    #stage1-feature-history-graph .s1-pair .s1-node { flex:1 1 170px; }
+    #stage1-feature-history-graph .s1-immediate { text-align:center; color:var(--destructive); }
+    #stage1-feature-history-graph .s1-immediate b,
+    #stage1-feature-history-graph .s1-immediate small { display:block; }
+    #stage1-feature-history-graph .s1-immediate small { color:var(--foreground); }
+    #stage1-feature-history-graph .s1-sentinel { width:max-content; max-width:100%; margin-inline:auto; padding:8px 13px; text-align:center; background:var(--muted); color:var(--muted-foreground); border-radius:8px; }
+    #stage1-feature-history-graph .s1-sentinel span,
+    #stage1-feature-history-graph .s1-sentinel small { display:block; }
+    #stage1-feature-history-graph .s1-sentinel span { color:var(--foreground); font-weight:500; }
+    #stage1-feature-history-graph .s1-down,
+    #stage1-feature-history-graph .s1-gate { text-align:center; color:var(--muted-foreground); margin:6px 0; }
+    #stage1-feature-history-graph .s1-chain .s1-node { min-width:180px; }
+    #stage1-feature-history-graph .s1-matrix-key { gap:16px; margin:18px 0 7px; }
+    #stage1-feature-history-graph .s1-matrix-key b { display:inline-block; min-width:20px; text-align:center; border-radius:4px; }
+    #stage1-feature-history-graph .key-m,
+    #stage1-feature-history-graph td.m { background:var(--primary); color:var(--primary-foreground); }
+    #stage1-feature-history-graph .key-i,
+    #stage1-feature-history-graph td.i { background:var(--destructive); color:var(--background); }
+    #stage1-feature-history-graph .key-o,
+    #stage1-feature-history-graph td.o { background:var(--accent); color:var(--accent-foreground); }
+    #stage1-feature-history-graph .s1-matrix { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:2px; text-align:center; }
+    #stage1-feature-history-graph .s1-matrix th,
+    #stage1-feature-history-graph .s1-matrix td { padding:5px 1px; }
+    #stage1-feature-history-graph .s1-matrix th { font-weight:500; color:var(--foreground); }
+    #stage1-feature-history-graph .s1-matrix th:first-child { width:15%; }
+    #stage1-feature-history-graph .s1-matrix td { background:var(--muted); color:var(--muted-foreground); border-radius:3px; }
+    #stage1-feature-history-graph .s1-matrix td.m { background:var(--primary); color:var(--primary-foreground); }
+    #stage1-feature-history-graph .s1-matrix td.i { background:var(--destructive); color:var(--background); }
+    #stage1-feature-history-graph .s1-matrix td.o { background:var(--accent); color:var(--accent-foreground); }
+    @media (max-width:520px) {
+      #stage1-feature-history-graph .s1-entry-grid { grid-template-columns:1fr; }
+      #stage1-feature-history-graph .s1-pair { grid-column:auto; }
+      #stage1-feature-history-graph .s1-chain { flex-direction:column; }
+    }
+  </style>
+</div>

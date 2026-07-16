@@ -1,0 +1,96 @@
+<div id="stage3-feature-history-graph">
+  <div class="s3-entry">#25 Stage 2 complete</div>
+  <div class="s3-down">↓</div>
+
+  <div class="s3-grid" aria-label="Freely reorderable Stage 3 branches">
+    <div class="s3-pair" aria-label="Node 26 must be immediately followed by node 27">
+      <div class="s3-node"><span>#26</span>take protection cover</div>
+      <div class="s3-immediate"><b>⇒</b><small>immediate</small></div>
+      <div class="s3-node"><span>#27</span>put cover on crimper</div>
+    </div>
+    <div class="s3-node"><span>#28</span>turn off extractor fan</div>
+    <div class="s3-node"><span>#29</span>turn off water pump</div>
+    <div class="s3-node"><span>#30</span>turn off air compressor</div>
+    <div class="s3-node"><span>#31</span>move pedal to original location</div>
+    <div class="s3-crimper-branch">
+      <div class="s3-node"><span>#32</span>turn off crimper</div>
+      <div class="s3-split">↙ must ↘</div>
+      <div class="s3-split-row">
+        <div class="s3-node"><span>#33</span>turn off main switch</div>
+        <div class="s3-pair compact" aria-label="Node 34 must be immediately followed by node 35">
+          <div class="s3-node"><span>#34</span>take lock</div>
+          <div class="s3-immediate"><b>⇒</b><small>immediate</small></div>
+          <div class="s3-node"><span>#35</span>lock crimper</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s3-down">↓ join: #27, #28, #29, #30, #31, #33, #35</div>
+  <div class="s3-entry">#36 end</div>
+
+  <div class="s3-key text-small">
+    <span><b class="m">M</b> mandatory history</span>
+    <span><b class="i">I</b> immediate predecessor</span>
+    <span><b class="o">O</b> possible optional history</span>
+    <span><b>·</b> impossible</span>
+  </div>
+
+  <table class="s3-matrix text-small" aria-label="Stage 3 current node by possible previous node matrix">
+    <thead><tr><th>current \ previous</th><th>#25</th><th>#26</th><th>#27</th><th>#28</th><th>#29</th><th>#30</th><th>#31</th><th>#32</th><th>#33</th><th>#34</th><th>#35</th></tr></thead>
+    <tbody>
+      <tr><th>#26</th><td class="m">M</td><td>—</td><td>·</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#27</th><td class="m">M</td><td class="i">I</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#28</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#29</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#30</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#31</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#32</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td>—</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#33</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="m">M</td><td>—</td><td class="o">O</td><td class="o">O</td></tr>
+      <tr><th>#34</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="m">M</td><td class="o">O</td><td>—</td><td>·</td></tr>
+      <tr><th>#35</th><td class="m">M</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="o">O</td><td class="m">M</td><td class="o">O</td><td class="i">I</td><td>—</td></tr>
+      <tr><th>#36</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td></tr>
+    </tbody>
+  </table>
+
+  <style>
+    #stage3-feature-history-graph { color:var(--foreground); }
+    #stage3-feature-history-graph .s3-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    #stage3-feature-history-graph .s3-node { min-width:0; padding:8px 10px; text-align:center; background:var(--secondary); color:var(--secondary-foreground); border:1px solid var(--border); border-radius:8px; }
+    #stage3-feature-history-graph .s3-node span { display:block; font-weight:500; }
+    #stage3-feature-history-graph .s3-pair,
+    #stage3-feature-history-graph .s3-split-row,
+    #stage3-feature-history-graph .s3-key { display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap; }
+    #stage3-feature-history-graph .s3-pair,
+    #stage3-feature-history-graph .s3-crimper-branch { grid-column:1 / -1; }
+    #stage3-feature-history-graph .s3-pair .s3-node { flex:1 1 170px; }
+    #stage3-feature-history-graph .s3-pair.compact { flex:1 1 360px; }
+    #stage3-feature-history-graph .s3-split-row > .s3-node { flex:1 1 190px; }
+    #stage3-feature-history-graph .s3-immediate { text-align:center; color:var(--destructive); }
+    #stage3-feature-history-graph .s3-immediate b,
+    #stage3-feature-history-graph .s3-immediate small { display:block; }
+    #stage3-feature-history-graph .s3-immediate small { color:var(--foreground); }
+    #stage3-feature-history-graph .s3-entry { width:max-content; max-width:100%; margin-inline:auto; padding:8px 13px; text-align:center; background:var(--muted); color:var(--muted-foreground); border-radius:8px; }
+    #stage3-feature-history-graph .s3-down,
+    #stage3-feature-history-graph .s3-split { text-align:center; color:var(--muted-foreground); margin:6px 0; }
+    #stage3-feature-history-graph .s3-key { gap:16px; margin:17px 0 7px; }
+    #stage3-feature-history-graph .s3-key b { display:inline-block; min-width:20px; text-align:center; border-radius:4px; }
+    #stage3-feature-history-graph .m { background:var(--primary); color:var(--primary-foreground); }
+    #stage3-feature-history-graph .i { background:var(--destructive); color:var(--background); }
+    #stage3-feature-history-graph .o { background:var(--accent); color:var(--accent-foreground); }
+    #stage3-feature-history-graph .s3-matrix { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:2px; text-align:center; }
+    #stage3-feature-history-graph .s3-matrix th,
+    #stage3-feature-history-graph .s3-matrix td { padding:5px 1px; }
+    #stage3-feature-history-graph .s3-matrix th { font-weight:500; }
+    #stage3-feature-history-graph .s3-matrix th:first-child { width:15%; }
+    #stage3-feature-history-graph .s3-matrix td { background:var(--muted); color:var(--muted-foreground); border-radius:3px; }
+    #stage3-feature-history-graph .s3-matrix td.m { background:var(--primary); color:var(--primary-foreground); }
+    #stage3-feature-history-graph .s3-matrix td.i { background:var(--destructive); color:var(--background); }
+    #stage3-feature-history-graph .s3-matrix td.o { background:var(--accent); color:var(--accent-foreground); }
+    @media (max-width:520px) {
+      #stage3-feature-history-graph .s3-grid { grid-template-columns:1fr; }
+      #stage3-feature-history-graph .s3-pair,
+      #stage3-feature-history-graph .s3-crimper-branch { grid-column:auto; }
+    }
+  </style>
+</div>

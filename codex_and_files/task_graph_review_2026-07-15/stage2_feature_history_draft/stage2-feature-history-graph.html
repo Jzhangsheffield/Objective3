@@ -1,0 +1,68 @@
+<div id="stage2-feature-history-graph">
+  <div class="s2-sequence" aria-label="Stage 2 immediate linear sequence">
+    <div class="s2-entry">Stage 1 complete</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#12</span>take plier</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#13</span>grip sample</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#14</span>place under electrodes</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#15</span>press pedal</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#16</span>put on machine table</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#17</span>grip from machine table</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#18</span>reverse sample</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#19</span>put on machine table</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#20</span>grip from machine table</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#21</span>place under electrodes</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#22</span>press pedal</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#23</span>inspect sample</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#24</span>put sample on table</div><div class="s2-arrow">⇒</div>
+    <div class="s2-node"><span>#25</span>put plier on table</div>
+  </div>
+
+  <div class="s2-key text-small">
+    <span><b class="m">M</b> mandatory history</span>
+    <span><b class="i">I</b> immediate predecessor</span>
+    <span><b>·</b> impossible</span>
+  </div>
+
+  <table class="s2-matrix text-small" aria-label="Stage 2 current node by possible previous node matrix">
+    <thead><tr><th>current \ previous</th><th>S1✓</th><th>#12</th><th>#13</th><th>#14</th><th>#15</th><th>#16</th><th>#17</th><th>#18</th><th>#19</th><th>#20</th><th>#21</th><th>#22</th><th>#23</th><th>#24</th><th>#25</th></tr></thead>
+    <tbody>
+      <tr><th>#12</th><td class="m">M</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#13</th><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#14</th><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#15</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#16</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#17</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#18</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#19</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#20</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#21</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#22</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td><td>·</td></tr>
+      <tr><th>#23</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td><td>·</td></tr>
+      <tr><th>#24</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td><td>·</td></tr>
+      <tr><th>#25</th><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="m">M</td><td class="i">I</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <style>
+    #stage2-feature-history-graph { color:var(--foreground); }
+    #stage2-feature-history-graph .s2-sequence { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:7px; }
+    #stage2-feature-history-graph .s2-node,
+    #stage2-feature-history-graph .s2-entry { padding:7px 9px; text-align:center; border-radius:7px; }
+    #stage2-feature-history-graph .s2-node { background:var(--secondary); color:var(--secondary-foreground); border:1px solid var(--border); }
+    #stage2-feature-history-graph .s2-entry { background:var(--muted); color:var(--muted-foreground); }
+    #stage2-feature-history-graph .s2-node span { display:block; font-weight:500; }
+    #stage2-feature-history-graph .s2-arrow { color:var(--destructive); font-weight:500; }
+    #stage2-feature-history-graph .s2-key { display:flex; justify-content:center; flex-wrap:wrap; gap:16px; margin:17px 0 7px; }
+    #stage2-feature-history-graph .s2-key b { display:inline-block; min-width:20px; text-align:center; border-radius:4px; }
+    #stage2-feature-history-graph .m { background:var(--primary); color:var(--primary-foreground); }
+    #stage2-feature-history-graph .i { background:var(--destructive); color:var(--background); }
+    #stage2-feature-history-graph .s2-matrix { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:2px; text-align:center; }
+    #stage2-feature-history-graph .s2-matrix th,
+    #stage2-feature-history-graph .s2-matrix td { padding:5px 1px; }
+    #stage2-feature-history-graph .s2-matrix th { font-weight:500; }
+    #stage2-feature-history-graph .s2-matrix th:first-child { width:15%; }
+    #stage2-feature-history-graph .s2-matrix td { background:var(--muted); color:var(--muted-foreground); border-radius:3px; }
+    #stage2-feature-history-graph .s2-matrix td.m { background:var(--primary); color:var(--primary-foreground); }
+    #stage2-feature-history-graph .s2-matrix td.i { background:var(--destructive); color:var(--background); }
+  </style>
+</div>
