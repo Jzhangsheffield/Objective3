@@ -54,9 +54,9 @@ fi
 # ------------------------------
 # 1) Project / data paths
 # ------------------------------
-PROJECT_ROOT="${PROJECT_ROOT:-D:/Junxi_data/Objective3_thermal_crimp/obj2_codes}"
+PROJECT_ROOT="${PROJECT_ROOT:-/mnt/parscratch/users/mes19jz/objective3/obj2_codes}"
 SCRIPT_PATH="${SCRIPT_PATH:-${PROJECT_ROOT}/ft_and_test/train_mapstyle_finetune_and_test.py}"
-DATASET_ROOT="${DATASET_ROOT:-C:/Junxi_data_for_training_speedup/Stage_2_Mapstyle_Dataset}"
+DATASET_ROOT="${DATASET_ROOT:-/mnt/parscratch/users/mes19jz/datasets/thermal_crimp/Stage_2_Mapstyle_Dataset}"
 LABEL_MAP_JSON="${LABEL_MAP_JSON:-${DATASET_ROOT}/label_map.json}"
 
 TRAIN_MANIFEST="${TRAIN_MANIFEST:-${DATASET_ROOT}/J_as_test/train_manifest.jsonl}"
@@ -468,30 +468,36 @@ for tier_mode in ${TIER_LIST}; do
   echo
   echo "============================================================"
   echo "Tier: ${tier_mode} | num_classes=${num_classes}"
-  echo "Pretrain parent: ${tier_pretrain_parent}"
   echo "============================================================"
 
-  if [[ ! -d "${tier_pretrain_parent}" ]]; then
-    echo "[Error] tier pretrain parent does not exist: ${tier_pretrain_parent}" >&2
-    exit 1
-  fi
+  CKPTS=()
+  if [[ "${RUN_HEAD_ONLY}" == "1" || "${RUN_FULL}" == "1" ]]; then
+    echo "Pretrain parent: ${tier_pretrain_parent}"
 
-  mapfile -t CKPTS < <(find "${tier_pretrain_parent}" -type f -name "${CHECKPOINT_NAME}" | sort)
-  num_ckpts=${#CKPTS[@]}
-  printf "%s\n" ${CKPTS[@]+"${CKPTS[@]}"} > "${checkpoint_list_txt}"
+    if [[ ! -d "${tier_pretrain_parent}" ]]; then
+      echo "[Error] tier pretrain parent does not exist: ${tier_pretrain_parent}" >&2
+      exit 1
+    fi
 
-  if [[ "${num_ckpts}" -eq 0 ]]; then
-    echo "[Error] No ${CHECKPOINT_NAME} files found under: ${tier_pretrain_parent}" >&2
-    exit 1
+    mapfile -t CKPTS < <(find "${tier_pretrain_parent}" -type f -name "${CHECKPOINT_NAME}" | sort)
+    num_ckpts=${#CKPTS[@]}
+    printf "%s\n" ${CKPTS[@]+"${CKPTS[@]}"} > "${checkpoint_list_txt}"
+
+    if [[ "${num_ckpts}" -eq 0 ]]; then
+      echo "[Error] No ${CHECKPOINT_NAME} files found under: ${tier_pretrain_parent}" >&2
+      exit 1
+    fi
+    if [[ "${num_ckpts}" -ne "${EXPECTED_NUM_CKPTS_PER_TIER}" && "${ALLOW_CKPT_COUNT_MISMATCH}" != "1" ]]; then
+      echo "[Error] Expected ${EXPECTED_NUM_CKPTS_PER_TIER} ${CHECKPOINT_NAME} files for ${tier_mode}, but found ${num_ckpts}." >&2
+      echo "        Check ${checkpoint_list_txt}, or set ALLOW_CKPT_COUNT_MISMATCH=1 intentionally." >&2
+      exit 1
+    fi
+    for i in "${!CKPTS[@]}"; do
+      printf "[%s %02d] %s\n" "${tier_mode}" "$((i + 1))" "${CKPTS[$i]}"
+    done
+  else
+    echo "[Skip] Pretrained checkpoint discovery/count validation (scratch-only run)."
   fi
-  if [[ "${num_ckpts}" -ne "${EXPECTED_NUM_CKPTS_PER_TIER}" && "${ALLOW_CKPT_COUNT_MISMATCH}" != "1" ]]; then
-    echo "[Error] Expected ${EXPECTED_NUM_CKPTS_PER_TIER} ${CHECKPOINT_NAME} files for ${tier_mode}, but found ${num_ckpts}." >&2
-    echo "        Check ${checkpoint_list_txt}, or set ALLOW_CKPT_COUNT_MISMATCH=1 intentionally." >&2
-    exit 1
-  fi
-  for i in "${!CKPTS[@]}"; do
-    printf "[%s %02d] %s\n" "${tier_mode}" "$((i + 1))" "${CKPTS[$i]}"
-  done
 
   build_common_args "${tier_mode}" "${num_classes}"
 
@@ -528,4 +534,3 @@ done
 
 echo "All finetuning experiments finished."
 echo "Output root: ${OUTPUT_ROOT}"
-

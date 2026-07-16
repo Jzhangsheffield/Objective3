@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ft_rgb_J_cam001484_tier3
+#SBATCH --job-name=ft_rgb_J_cam001528_tier3_full
 #SBATCH --partition=gpu,gpu-h100,gpu-h100-nvl
 #SBATCH --qos=gpu
 #SBATCH --nodes=1
@@ -16,10 +16,10 @@
 set -euo pipefail
 
 # ============================================================
-# RGB finetuning for J_as_test, camera 001484412812, tier3
+# RGB finetuning for J_as_test, camera 001528512812, tier3
 #
 # Pretraining source:
-#   results/rgb_J_as_test_cam001484412812_p1_26runs
+#   results/rgb_J_as_test_cam001528512812_p1_26runs
 #
 # This script runs only tier3:
 #   - find 26 checkpoint_0200.pth files under the tier3 pretraining directory
@@ -63,13 +63,13 @@ TRAIN_MANIFEST="${TRAIN_MANIFEST:-${DATASET_ROOT}/J_as_test/train_manifest.jsonl
 VAL_MANIFEST="${VAL_MANIFEST:-${DATASET_ROOT}/J_as_test/test_manifest.jsonl}"
 TEST_MANIFEST="${TEST_MANIFEST:-${DATASET_ROOT}/J_as_test/test_manifest.jsonl}"
 
-CAMERA_ID="${CAMERA_ID:-001484412812}"
-PRETRAIN_ROOT="${PRETRAIN_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001484412812_p1_26runs}"
+CAMERA_ID="${CAMERA_ID:-001528512812}"
+PRETRAIN_ROOT="${PRETRAIN_ROOT:-${PROJECT_ROOT}/results/rgb_J_as_test_cam001528512812_p1_26runs}"
 CHECKPOINT_NAME="${CHECKPOINT_NAME:-checkpoint_0200.pth}"
 EXPECTED_NUM_CKPTS_PER_TIER="${EXPECTED_NUM_CKPTS_PER_TIER:-26}"
 ALLOW_CKPT_COUNT_MISMATCH="${ALLOW_CKPT_COUNT_MISMATCH:-0}"
 
-OUTPUT_ROOT="${OUTPUT_ROOT:-${PROJECT_ROOT}/results/ft_rgb_J_as_test_cam001484412812_tier3_p1_26runs_seed${SEED:-1}}"
+OUTPUT_ROOT="${OUTPUT_ROOT:-${PROJECT_ROOT}/results/ft_rgb_J_as_test_cam001528512812_tier3_p1_26runs_seed${SEED:-1}}"
 SAVE_ROOT="${SAVE_ROOT:-${OUTPUT_ROOT}/weights}"
 DATAMAP_ROOT="${DATAMAP_ROOT:-${OUTPUT_ROOT}/datamaps}"
 CKPT_LIST_ROOT="${CKPT_LIST_ROOT:-${OUTPUT_ROOT}/checkpoint_lists}"
@@ -83,8 +83,8 @@ DRY_RUN="${DRY_RUN:-0}"
 # ------------------------------
 TIER_LIST="${TIER_LIST:-tier3}"
 RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-1}"
-RUN_HEAD_ONLY="${RUN_HEAD_ONLY:-1}"
-RUN_FULL="${RUN_FULL:-1}"
+RUN_HEAD_ONLY="${RUN_HEAD_ONLY:-0}"
+RUN_FULL="${RUN_FULL:-0}"
 # ------------------------------
 # 2b) Post-finetuning test selection
 # ------------------------------
@@ -106,8 +106,8 @@ MODEL_DEPTH="${MODEL_DEPTH:-18}"
 L2_NORMALIZE_BEFORE_FC="${L2_NORMALIZE_BEFORE_FC:-0}"
 RGB_SIZE="${RGB_SIZE:-224}"
 DEPTH_SIZE="${DEPTH_SIZE:-224}"
-RGB_MEAN=( 0.5369 0.5295 0.5208 )
-RGB_STD=( 0.2311 0.2360 0.2363 )
+RGB_MEAN=( 0.5776 0.5690 0.5624 )
+RGB_STD=( 0.2199 0.2274 0.2225 )
 
 # ------------------------------
 # 4) RGB augmentation parameters
@@ -170,7 +170,7 @@ KEEP_PRETRAINED_HEAD="${KEEP_PRETRAINED_HEAD:-0}"
 PRETRAINED_STRICT="${PRETRAINED_STRICT:-0}"
 PRETRAINED_TAG_MODE="${PRETRAINED_TAG_MODE:-relative_to_anchor}"
 PRETRAINED_TAG_LAST_K="${PRETRAINED_TAG_LAST_K:-3}"
-PRETRAINED_TAG_ANCHOR="${PRETRAINED_TAG_ANCHOR:-rgb_J_as_test_cam001484412812_p1_26runs}"
+PRETRAINED_TAG_ANCHOR="${PRETRAINED_TAG_ANCHOR:-rgb_J_as_test_cam001528512812_p1_26runs}"
 
 # ------------------------------
 # 8) Class imbalance options

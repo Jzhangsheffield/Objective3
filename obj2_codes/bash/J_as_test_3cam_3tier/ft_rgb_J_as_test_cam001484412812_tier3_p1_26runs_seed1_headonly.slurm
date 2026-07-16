@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ft_rgb_J_cam001484_tier3
+#SBATCH --job-name=ft_rgb_J_cam001484_tier3_headonly
 #SBATCH --partition=gpu,gpu-h100,gpu-h100-nvl
 #SBATCH --qos=gpu
 #SBATCH --nodes=1
@@ -82,9 +82,9 @@ DRY_RUN="${DRY_RUN:-0}"
 # 2) Run selection
 # ------------------------------
 TIER_LIST="${TIER_LIST:-tier3}"
-RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-1}"
+RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-0}"
 RUN_HEAD_ONLY="${RUN_HEAD_ONLY:-1}"
-RUN_FULL="${RUN_FULL:-1}"
+RUN_FULL="${RUN_FULL:-0}"
 # ------------------------------
 # 2b) Post-finetuning test selection
 # ------------------------------
