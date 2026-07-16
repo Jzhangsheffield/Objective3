@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ft_rgb_J_cam001484_tier2
+#SBATCH --job-name=ft_rgb_J_cam001484_tier1_headonly
 #SBATCH --partition=gpu,gpu-h100,gpu-h100-nvl
 #SBATCH --qos=gpu
 #SBATCH --nodes=1
@@ -9,20 +9,20 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mail-user=jzhang319@sheffield.ac.uk
 #SBATCH --mail-type=ALL
-#SBATCH --time=3-23:00:00
+#SBATCH --time=1-23:00:00
 #SBATCH --output=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/ft_and_test/out/slurm-%x-%j.out
 #SBATCH --error=/mnt/parscratch/users/mes19jz/objective3/obj2_codes/ft_and_test/out/slurm-%x-%j.err
 
 set -euo pipefail
 
 # ============================================================
-# RGB finetuning for J_as_test, camera 001484412812, tier2
+# RGB finetuning for J_as_test, camera 001484412812, tier1
 #
 # Pretraining source:
 #   results/rgb_J_as_test_cam001484412812_p1_26runs
 #
-# This script runs only tier2:
-#   - find 26 checkpoint_0200.pth files under the tier2 pretraining directory
+# This script runs only tier1:
+#   - find 26 checkpoint_0200.pth files under the tier1 pretraining directory
 #   - run scratch_full baseline when RUN_SCRATCH_BASELINE=1
 #   - run pretrained head_only when RUN_HEAD_ONLY=1
 #   - run pretrained full fine-tuning when RUN_FULL=1
@@ -81,10 +81,10 @@ DRY_RUN="${DRY_RUN:-0}"
 # ------------------------------
 # 2) Run selection
 # ------------------------------
-TIER_LIST="${TIER_LIST:-tier2}"
-RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-1}"
+TIER_LIST="${TIER_LIST:-tier1}"
+RUN_SCRATCH_BASELINE="${RUN_SCRATCH_BASELINE:-0}"
 RUN_HEAD_ONLY="${RUN_HEAD_ONLY:-1}"
-RUN_FULL="${RUN_FULL:-1}"
+RUN_FULL="${RUN_FULL:-0}"
 # ------------------------------
 # 2b) Post-finetuning test selection
 # ------------------------------

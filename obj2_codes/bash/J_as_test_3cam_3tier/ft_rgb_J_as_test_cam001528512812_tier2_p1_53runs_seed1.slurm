@@ -468,30 +468,36 @@ for tier_mode in ${TIER_LIST}; do
   echo
   echo "============================================================"
   echo "Tier: ${tier_mode} | num_classes=${num_classes}"
-  echo "Pretrain parent: ${tier_pretrain_parent}"
   echo "============================================================"
 
-  if [[ ! -d "${tier_pretrain_parent}" ]]; then
-    echo "[Error] tier pretrain parent does not exist: ${tier_pretrain_parent}" >&2
-    exit 1
-  fi
+  CKPTS=()
+  if [[ "${RUN_HEAD_ONLY}" == "1" || "${RUN_FULL}" == "1" ]]; then
+    echo "Pretrain parent: ${tier_pretrain_parent}"
 
-  mapfile -t CKPTS < <(find "${tier_pretrain_parent}" -type f -name "${CHECKPOINT_NAME}" | sort)
-  num_ckpts=${#CKPTS[@]}
-  printf "%s\n" ${CKPTS[@]+"${CKPTS[@]}"} > "${checkpoint_list_txt}"
+    if [[ ! -d "${tier_pretrain_parent}" ]]; then
+      echo "[Error] tier pretrain parent does not exist: ${tier_pretrain_parent}" >&2
+      exit 1
+    fi
 
-  if [[ "${num_ckpts}" -eq 0 ]]; then
-    echo "[Error] No ${CHECKPOINT_NAME} files found under: ${tier_pretrain_parent}" >&2
-    exit 1
+    mapfile -t CKPTS < <(find "${tier_pretrain_parent}" -type f -name "${CHECKPOINT_NAME}" | sort)
+    num_ckpts=${#CKPTS[@]}
+    printf "%s\n" ${CKPTS[@]+"${CKPTS[@]}"} > "${checkpoint_list_txt}"
+
+    if [[ "${num_ckpts}" -eq 0 ]]; then
+      echo "[Error] No ${CHECKPOINT_NAME} files found under: ${tier_pretrain_parent}" >&2
+      exit 1
+    fi
+    if [[ "${num_ckpts}" -ne "${EXPECTED_NUM_CKPTS_PER_TIER}" && "${ALLOW_CKPT_COUNT_MISMATCH}" != "1" ]]; then
+      echo "[Error] Expected ${EXPECTED_NUM_CKPTS_PER_TIER} ${CHECKPOINT_NAME} files for ${tier_mode}, but found ${num_ckpts}." >&2
+      echo "        Check ${checkpoint_list_txt}, or set ALLOW_CKPT_COUNT_MISMATCH=1 intentionally." >&2
+      exit 1
+    fi
+    for i in "${!CKPTS[@]}"; do
+      printf "[%s %02d] %s\n" "${tier_mode}" "$((i + 1))" "${CKPTS[$i]}"
+    done
+  else
+    echo "[Skip] Pretrained checkpoint discovery/count validation (scratch-only run)."
   fi
-  if [[ "${num_ckpts}" -ne "${EXPECTED_NUM_CKPTS_PER_TIER}" && "${ALLOW_CKPT_COUNT_MISMATCH}" != "1" ]]; then
-    echo "[Error] Expected ${EXPECTED_NUM_CKPTS_PER_TIER} ${CHECKPOINT_NAME} files for ${tier_mode}, but found ${num_ckpts}." >&2
-    echo "        Check ${checkpoint_list_txt}, or set ALLOW_CKPT_COUNT_MISMATCH=1 intentionally." >&2
-    exit 1
-  fi
-  for i in "${!CKPTS[@]}"; do
-    printf "[%s %02d] %s\n" "${tier_mode}" "$((i + 1))" "${CKPTS[$i]}"
-  done
 
   build_common_args "${tier_mode}" "${num_classes}"
 
@@ -528,4 +534,3 @@ done
 
 echo "All finetuning experiments finished."
 echo "Output root: ${OUTPUT_ROOT}"
-
