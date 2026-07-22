@@ -17,7 +17,14 @@ from graph_history.backbone import generate_model
 from graph_history.constants import DEFAULT_CAMERA_ID, NUM_TIER3_CLASSES
 from graph_history.data import RGBClipDataset
 from graph_history.metrics import classification_metrics
-from graph_history.utils import ensure_dir, save_checkpoint, seed_everything, select_device, write_json
+from graph_history.utils import (
+    ensure_dir,
+    ensure_new_output_dir,
+    save_checkpoint,
+    seed_everything,
+    select_device,
+    write_json,
+)
 
 
 def train_epoch(model, loader, optimizer, scaler, device, amp: bool):
@@ -96,11 +103,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 
     seed_everything(args.seed)
     device = select_device(args.device)
-    output_dir = ensure_dir(args.output_dir)
+    output_dir = ensure_new_output_dir(args.output_dir, overwrite=args.overwrite)
     train_manifest = Path(args.protocol_root) / args.train_scope / "train.jsonl"
     train_dataset = RGBClipDataset(
         args.dataset_root, train_manifest, args.camera_id, train=True
@@ -140,6 +148,15 @@ def main() -> None:
         )
         metrics = evaluate(model, loader, device, eval_root, split_name)
         print(f"{split_name}: accuracy={metrics['accuracy']:.4f} macro_f1={metrics['macro_f1']:.4f}")
+    write_json(
+        output_dir / "completed.json",
+        {
+            "model": "e2e_tier3_scratch",
+            "checkpoint": str(checkpoint_path),
+            "train_scope": args.train_scope,
+            "tested_splits": ["test_normal", "test_fault", "test_all"],
+        },
+    )
 
 
 if __name__ == "__main__":

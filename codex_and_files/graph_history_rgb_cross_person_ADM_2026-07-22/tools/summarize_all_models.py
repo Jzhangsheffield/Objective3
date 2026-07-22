@@ -57,9 +57,12 @@ def parse_location(path: Path, outputs_root: Path) -> dict[str, str] | None:
     if "history_models" in parts:
         index = parts.index("history_models")
         try:
+            feature_source = parts[index + 1]
+            representation_scope = feature_source.removeprefix("retrained_")
             return {
                 "participant": participant,
                 "seed": seed_part.removeprefix("seed_"),
+                "representation_scope": representation_scope,
                 "train_scope": parts[index + 2],
                 "model": parts[index + 3],
                 "family": "history_feature",
@@ -72,6 +75,7 @@ def parse_location(path: Path, outputs_root: Path) -> dict[str, str] | None:
             return {
                 "participant": participant,
                 "seed": seed_part.removeprefix("seed_"),
+                "representation_scope": parts[index + 1],
                 "train_scope": parts[index + 1],
                 "model": parts[index + 2],
                 "family": "e2e_video",
@@ -82,7 +86,12 @@ def parse_location(path: Path, outputs_root: Path) -> dict[str, str] | None:
 
 
 def collect_rows(
-    outputs_root: Path, participants: set[str], seeds: set[str] | None
+    outputs_root: Path,
+    participants: set[str],
+    seeds: set[str] | None,
+    train_scopes: set[str] | None = None,
+    representation_scopes: set[str] | None = None,
+    matched_scope_only: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(outputs_root.rglob("*_metrics.json")):
@@ -90,6 +99,15 @@ def collect_rows(
         if location is None or location["participant"] not in participants:
             continue
         if seeds is not None and location["seed"] not in seeds:
+            continue
+        if train_scopes is not None and location["train_scope"] not in train_scopes:
+            continue
+        if (
+            representation_scopes is not None
+            and location["representation_scope"] not in representation_scopes
+        ):
+            continue
+        if matched_scope_only and location["representation_scope"] != location["train_scope"]:
             continue
         with path.open("r", encoding="utf-8") as handle:
             metrics = json.load(handle)
@@ -120,7 +138,12 @@ def collect_rows(
 
 
 def collect_stage_rows(
-    outputs_root: Path, participants: set[str], seeds: set[str] | None
+    outputs_root: Path,
+    participants: set[str],
+    seeds: set[str] | None,
+    train_scopes: set[str] | None = None,
+    representation_scopes: set[str] | None = None,
+    matched_scope_only: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(outputs_root.rglob("*_metrics.json")):
@@ -128,6 +151,15 @@ def collect_stage_rows(
         if location is None or location["participant"] not in participants:
             continue
         if seeds is not None and location["seed"] not in seeds:
+            continue
+        if train_scopes is not None and location["train_scope"] not in train_scopes:
+            continue
+        if (
+            representation_scopes is not None
+            and location["representation_scope"] not in representation_scopes
+        ):
+            continue
+        if matched_scope_only and location["representation_scope"] != location["train_scope"]:
             continue
         with path.open("r", encoding="utf-8") as handle:
             metrics = json.load(handle)
@@ -165,7 +197,14 @@ def collect_stage_rows(
 
 def build_pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     lookup = {
-        (row["participant"], row["seed"], row["train_scope"], row["split"], row["model"]): row
+        (
+            row["participant"],
+            row["seed"],
+            row["representation_scope"],
+            row["train_scope"],
+            row["split"],
+            row["model"],
+        ): row
         for row in rows
     }
     output: list[dict[str, Any]] = []
@@ -177,6 +216,7 @@ def build_pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 (
                     row["participant"],
                     row["seed"],
+                    row["representation_scope"],
                     row["train_scope"],
                     row["split"],
                     reference_model,
@@ -187,6 +227,7 @@ def build_pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             delta_row: dict[str, Any] = {
                 "participant": row["participant"],
                 "seed": row["seed"],
+                "representation_scope": row["representation_scope"],
                 "train_scope": row["train_scope"],
                 "model": row["model"],
                 "reference_model": reference_model,
@@ -215,24 +256,34 @@ def std_or_none(values: list[float]) -> float | None:
 
 
 def aggregate_across_people(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    by_person: dict[tuple[str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    by_person: dict[tuple[str, str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
-        by_person[(row["participant"], row["train_scope"], row["model"], row["split"])].append(row)
-    person_means: dict[tuple[str, str, str, str], dict[str, float | None]] = {}
+        by_person[
+            (
+                row["participant"],
+                row["representation_scope"],
+                row["train_scope"],
+                row["model"],
+                row["split"],
+            )
+        ].append(row)
+    person_means: dict[tuple[str, str, str, str, str], dict[str, float | None]] = {}
     for key, group in by_person.items():
         person_means[key] = {
             field: mean_or_none([float(row[field]) for row in group if row[field] is not None])
             for field in METRIC_FIELDS
         }
-    experiment_keys = sorted({(key[1], key[2], key[3]) for key in person_means})
+    experiment_keys = sorted({(key[1], key[2], key[3], key[4]) for key in person_means})
     output: list[dict[str, Any]] = []
-    for train_scope, model, split in experiment_keys:
+    for representation_scope, train_scope, model, split in experiment_keys:
         people = sorted(
             participant
-            for participant, scope, current_model, current_split in person_means
-            if (scope, current_model, current_split) == (train_scope, model, split)
+            for participant, representation, scope, current_model, current_split in person_means
+            if (representation, scope, current_model, current_split)
+            == (representation_scope, train_scope, model, split)
         )
         row: dict[str, Any] = {
+            "representation_scope": representation_scope,
             "train_scope": train_scope,
             "model": model,
             "split": split,
@@ -241,9 +292,10 @@ def aggregate_across_people(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         for field in METRIC_FIELDS:
             values = [
-                person_means[(person, train_scope, model, split)][field]
+                person_means[(person, representation_scope, train_scope, model, split)][field]
                 for person in people
-                if person_means[(person, train_scope, model, split)][field] is not None
+                if person_means[(person, representation_scope, train_scope, model, split)][field]
+                is not None
             ]
             row[f"mean_{field}"] = mean_or_none([float(value) for value in values])
             row[f"std_{field}"] = std_or_none([float(value) for value in values])
@@ -265,18 +317,19 @@ def aggregate_stages_across_people(rows: list[dict[str, Any]]) -> list[dict[str,
 
 
 def aggregate_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    by_person: dict[tuple[str, str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    by_person: dict[tuple[str, str, str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_person[
             (
                 row["participant"],
+                row["representation_scope"],
                 row["train_scope"],
                 row["model"],
                 row["reference_model"],
                 row["split"],
             )
         ].append(row)
-    person_means: dict[tuple[str, str, str, str, str], dict[str, float | None]] = {}
+    person_means: dict[tuple[str, str, str, str, str, str], dict[str, float | None]] = {}
     for key, group in by_person.items():
         person_means[key] = {
             field: mean_or_none(
@@ -284,16 +337,17 @@ def aggregate_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             )
             for field in METRIC_FIELDS
         }
-    experiment_keys = sorted({(key[1], key[2], key[3], key[4]) for key in person_means})
+    experiment_keys = sorted({(key[1], key[2], key[3], key[4], key[5]) for key in person_means})
     output: list[dict[str, Any]] = []
-    for train_scope, model, reference_model, split in experiment_keys:
+    for representation_scope, train_scope, model, reference_model, split in experiment_keys:
         people = sorted(
             participant
-            for participant, scope, current_model, reference, current_split in person_means
-            if (scope, current_model, reference, current_split)
-            == (train_scope, model, reference_model, split)
+            for participant, representation, scope, current_model, reference, current_split in person_means
+            if (representation, scope, current_model, reference, current_split)
+            == (representation_scope, train_scope, model, reference_model, split)
         )
         row: dict[str, Any] = {
+            "representation_scope": representation_scope,
             "train_scope": train_scope,
             "model": model,
             "reference_model": reference_model,
@@ -303,10 +357,88 @@ def aggregate_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         for field in METRIC_FIELDS:
             values = [
-                person_means[(person, train_scope, model, reference_model, split)][field]
+                person_means[
+                    (person, representation_scope, train_scope, model, reference_model, split)
+                ][field]
                 for person in people
-                if person_means[(person, train_scope, model, reference_model, split)][field]
+                if person_means[
+                    (person, representation_scope, train_scope, model, reference_model, split)
+                ][field]
                 is not None
+            ]
+            row[f"mean_delta_{field}"] = mean_or_none([float(value) for value in values])
+            row[f"std_delta_{field}"] = std_or_none([float(value) for value in values])
+        output.append(row)
+    return output
+
+
+def build_training_scope_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Compare complete all-runs and normal-only pipelines for the same fold/model/split."""
+    matched = [row for row in rows if row["representation_scope"] == row["train_scope"]]
+    lookup = {
+        (row["participant"], row["seed"], row["train_scope"], row["model"], row["split"]): row
+        for row in matched
+    }
+    output: list[dict[str, Any]] = []
+    for row in matched:
+        if row["train_scope"] != "all_runs":
+            continue
+        normal = lookup.get(
+            (row["participant"], row["seed"], "normal_only", row["model"], row["split"])
+        )
+        if normal is None:
+            continue
+        delta: dict[str, Any] = {
+            "participant": row["participant"],
+            "seed": row["seed"],
+            "model": row["model"],
+            "split": row["split"],
+            "comparison": "all_runs_minus_normal_only",
+        }
+        comparable = False
+        for field in METRIC_FIELDS:
+            if row[field] is None or normal[field] is None:
+                delta[f"delta_{field}"] = None
+            else:
+                delta[f"delta_{field}"] = float(row[field]) - float(normal[field])
+                comparable = True
+        if comparable:
+            output.append(delta)
+    return output
+
+
+def aggregate_training_scope_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[(row["participant"], row["model"], row["split"])].append(row)
+    person_means = {
+        key: {
+            field: mean_or_none(
+                [float(row[f"delta_{field}"]) for row in group if row[f"delta_{field}"] is not None]
+            )
+            for field in METRIC_FIELDS
+        }
+        for key, group in grouped.items()
+    }
+    output: list[dict[str, Any]] = []
+    for model, split in sorted({(key[1], key[2]) for key in person_means}):
+        people = sorted(
+            participant
+            for participant, current_model, current_split in person_means
+            if (current_model, current_split) == (model, split)
+        )
+        row: dict[str, Any] = {
+            "model": model,
+            "split": split,
+            "comparison": "all_runs_minus_normal_only",
+            "participant_count": len(people),
+            "participants": ",".join(people),
+        }
+        for field in METRIC_FIELDS:
+            values = [
+                person_means[(person, model, split)][field]
+                for person in people
+                if person_means[(person, model, split)][field] is not None
             ]
             row[f"mean_delta_{field}"] = mean_or_none([float(value) for value in values])
             row[f"std_delta_{field}"] = std_or_none([float(value) for value in values])
@@ -322,11 +454,17 @@ def main() -> None:
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--participants", nargs="+", default=["A", "D", "M"])
     parser.add_argument("--seeds", nargs="+", default=None)
+    parser.add_argument("--train-scopes", nargs="+", default=None)
+    parser.add_argument("--representation-scopes", nargs="+", default=None)
+    parser.add_argument("--matched-scope-only", action="store_true")
     args = parser.parse_args()
     rows = collect_rows(
         Path(args.outputs_root),
         set(args.participants),
         set(args.seeds) if args.seeds else None,
+        set(args.train_scopes) if args.train_scopes else None,
+        set(args.representation_scopes) if args.representation_scopes else None,
+        args.matched_scope_only,
     )
     if not rows:
         raise FileNotFoundError(f"No unified metric files found under {args.outputs_root}")
@@ -334,11 +472,16 @@ def main() -> None:
         Path(args.outputs_root),
         set(args.participants),
         set(args.seeds) if args.seeds else None,
+        set(args.train_scopes) if args.train_scopes else None,
+        set(args.representation_scopes) if args.representation_scopes else None,
+        args.matched_scope_only,
     )
     deltas = build_pairwise_deltas(rows)
     aggregate = aggregate_across_people(rows)
     delta_aggregate = aggregate_deltas(deltas)
     stage_aggregate = aggregate_stages_across_people(stage_rows)
+    training_scope_deltas = build_training_scope_deltas(rows)
+    training_scope_delta_aggregate = aggregate_training_scope_deltas(training_scope_deltas)
     output_dir = Path(args.output_dir)
     write_csv(output_dir / "all_model_metrics.csv", rows)
     write_csv(output_dir / "all_model_pairwise_deltas.csv", deltas)
@@ -347,6 +490,11 @@ def main() -> None:
     write_csv(output_dir / "all_model_per_stage_metrics.csv", stage_rows)
     write_csv(
         output_dir / "all_model_per_stage_cross_person_aggregate.csv", stage_aggregate
+    )
+    write_csv(output_dir / "all_model_training_scope_deltas.csv", training_scope_deltas)
+    write_csv(
+        output_dir / "all_model_training_scope_delta_aggregate.csv",
+        training_scope_delta_aggregate,
     )
     print(
         f"models={sorted(set(row['model'] for row in rows))} rows={len(rows)} "

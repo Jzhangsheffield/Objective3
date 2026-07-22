@@ -37,5 +37,19 @@
     "node_weight_decay": 0.0001,
     "overwrite_existing_results": false,
     "reuse_tier3_last_checkpoint": true
+  },
+  "complete_all_runs_pipeline": {
+    "train_scope": "all_runs",
+    "backbone_source": "scratch_per_fold_all_runs",
+    "extract_features_with_all_runs_backbone": true,
+    "history_models": ["m0", "m1", "m2", "m3", "m4", "m5", "m6"],
+    "e2e_baselines": [
+      "e2e_tier3_scratch",
+      "e2e_node_scratch",
+      "e2e_node_from_tier3"
+    ],
+    "test_splits": ["test_normal", "test_fault", "test_all"],
+    "overwrite_existing_results": false,
+    "compare_against_complete_normal_only_pipeline": true
   }
 }

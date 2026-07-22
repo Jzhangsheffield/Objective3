@@ -566,3 +566,217 @@ Tier3(M6) - E2E-Tier3-Scratch
 - 非覆盖保护、`completed.json`安全跳过、Windows路径展开和Slurm语法均已验证。
 - 统一汇总在测试fixture中识别到全部10个模型，并生成overall、pairwise delta和per-stage
   CSV。完整100-epoch新增训练尚未在本机启动。
+
+## 13. 完整 all-runs 训练实验（新增，且不覆盖既有实验）
+
+### 13.1 实验定义
+
+这一实验把训练人员的正常run和故障run全部用于训练，并继续对held-out参与者分别测试：
+
+```text
+all_runs/train.jsonl
+→ test_normal.jsonl
+→ test_fault.jsonl
+→ test_all.jsonl
+```
+
+以A-as-test为例，训练集由D/J/M的全部run组成，A的任何clip或run都不会进入训练。
+D-as-test和M-as-test采用相同的leave-one-subject-out规则。
+
+当前数据集中的all-runs训练规模为：
+
+| Fold | all-runs train | held-out test all |
+|---|---:|---:|
+| A-as-test | 1,464 clips / 79 runs | 431 clips / 24 runs |
+| D-as-test | 1,433 clips / 78 runs | 462 clips / 25 runs |
+| M-as-test | 1,448 clips / 79 runs | 447 clips / 24 runs |
+
+本节的“完整all-runs pipeline”不同于第5.4节已有的辅助实验：
+
+| 条件 | Tier-3 backbone训练集 | M0–M6训练集 | 用途 |
+|---|---|---|---|
+| 原normal-only主实验 | normal-only | normal-only | 原始主对照 |
+| 原all-run辅助实验 | normal-only | all-runs | 只考察历史模型训练集变化 |
+| 新完整all-runs实验 | all-runs | all-runs | backbone、特征、历史模型和E2E全部使用all-runs |
+
+汇总文件新增`representation_scope`字段，用于明确特征/backbone来自哪个训练协议，防止把
+`normal_only → all_runs`辅助条件与`all_runs → all_runs`完整条件合并为同一实验。
+
+### 13.2 新增的完整实验链
+
+每个fold依次执行：
+
+```text
+安全检查或生成protocol
+→ 从scratch训练31类all-runs Tier-3 backbone
+→ 使用该backbone重新提取512维训练/测试特征
+→ 训练all-runs M0–M6
+→ 复测all-runs E2E-Tier3-Scratch
+→ 训练all-runs E2E-Node-Scratch
+→ 使用all-runs Tier-3初始化并训练E2E-Node-From-Tier3
+→ 汇总10个模型
+→ 计算all-runs minus normal-only差值
+```
+
+三类测试集均报告35-node与31类Tier-3指标；直接Tier-3模型没有35-node输出，因此对应node
+字段为空。35-node模型的Tier-3结果仍通过35个node概率按映射求和得到，不是只映射argmax node。
+
+### 13.3 独立输出目录
+
+新实验只写入以下新路径：
+
+```text
+outputs/<P>_as_test/cam_001484412812/seed_N/
+├── backbone/all_runs/
+├── features/retrained_all_runs/
+├── history_models/retrained_all_runs/all_runs/
+│   └── m0 ... m6/
+├── e2e_baselines/all_runs/
+│   ├── e2e_tier3_scratch/
+│   ├── e2e_node_scratch/
+│   └── e2e_node_from_tier3/
+├── unified_summary_all_runs/
+└── training_scope_comparison/
+
+outputs/
+├── cross_person_summary_all_runs/
+└── training_scope_comparison/
+```
+
+原来的以下目录不会被新入口调用或覆盖：
+
+```text
+backbone/normal_only/
+features/retrained_normal_only/
+history_models/retrained_normal_only/
+e2e_baselines/normal_only/
+unified_summary_with_e2e/
+cross_person_summary_with_e2e/
+```
+
+### 13.4 防覆盖和中断保护
+
+- backbone、feature cache、M0–M6和三个E2E实验完成后都会写`completed.json`；
+- 有完成标记时再次运行会安全跳过；
+- 目标目录非空但没有完成标记时会停止，要求先人工检查；
+- 新BAT和Slurm入口均不传`--overwrite`；
+- protocol完整存在时直接复用；只存在部分文件时停止，不会混合新旧protocol；
+- `train_backbone.py`、`train_history_model.py`和`extract_features.py`现在默认拒绝覆盖已有输出。
+
+如果某个新实验确实因中断需要重跑，先人工确认并把该实验自己的不完整目录改名备份；不要删除或
+改名normal-only目录。
+
+### 13.5 Windows运行方法
+
+单个fold，例如A-as-test：
+
+```bat
+cd /d D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_all_runs_one_fold.bat
+```
+
+连续运行A/D/M：
+
+```bat
+call bat\run_all_runs_ADM.bat
+```
+
+逐步入口为：
+
+```text
+13_prepare_protocols_all_runs_safe.bat
+14_train_backbone_all_runs.bat
+15_extract_features_all_runs.bat
+16_train_all_runs_m0_m6.bat
+17_evaluate_e2e_tier3_all_runs.bat
+18_train_e2e_node_scratch_all_runs.bat
+19_train_e2e_node_from_tier3_all_runs.bat
+20_summarize_all_runs_fold.bat
+21_summarize_training_scope_comparison_fold.bat
+22_summarize_all_runs_cross_person.bat
+23_summarize_training_scope_comparison_cross_person.bat
+```
+
+### 13.6 HPC/Slurm运行方法
+
+单折提交：
+
+```bash
+bash slurm/submit_all_runs_one_fold.sh A
+```
+
+A/D/M三折提交：
+
+```bash
+bash slurm/submit_all_runs_ADM.sh
+```
+
+Slurm依赖关系为：
+
+```text
+protocol
+├── all-runs backbone
+│   ├── feature extraction → M0 → M1–M6 array
+│   ├── E2E-Tier3 evaluation
+│   └── E2E-Node-From-Tier3
+└── E2E-Node-Scratch
+
+四个模型分支完成
+→ all-runs fold summary
+→ normal-only vs all-runs fold comparison
+```
+
+三折完成后再生成all-runs跨人汇总和训练协议对比汇总。
+
+### 13.7 换电脑或HPC时需要修改的路径
+
+Windows默认只需检查`bat/config_windows.bat`中的：
+
+```bat
+set "DATASET_ROOT=C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
+set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
+```
+
+当前电脑的默认配置已经指向上述Pytorch环境。换电脑后如果用户名、Anaconda安装位置或环境名不同，
+必须修改`PYTHON_BIN`，也可以先激活正确环境后把它设为`python`。
+
+`PACKAGE_ROOT`默认由脚本所在位置自动推导，移动整个实验包后通常不用修改。若希望把新结果写到
+另一块磁盘，可在运行前设置：
+
+```bat
+set OUTPUTS_ROOT=E:\my_experiment_outputs
+```
+
+HPC主要检查`slurm/config_hpc.sh`中的`DATASET_ROOT`、环境module、conda环境，以及各Slurm文件
+顶部的日志路径。`PACKAGE_ROOT`也会由提交脚本自动推导。
+
+### 13.8 新增统计文件
+
+统一汇总工具继续生成原来的6类统计，同时增加：
+
+```text
+all_model_training_scope_deltas.csv
+all_model_training_scope_delta_aggregate.csv
+```
+
+这两个文件在`training_scope_comparison/`目录中包含实际对比结果；只筛选all-runs的汇总目录中
+由于没有normal-only配对行，相应文件可能为空。
+
+其中差值固定定义为：
+
+```text
+完整all-runs pipeline指标 - 完整normal-only pipeline指标
+```
+
+正值代表加入训练故障run后该指标提高，负值代表下降。重点应分别查看：
+
+- `test_normal`：加入故障训练数据是否损害正常流程；
+- `test_fault`：对异常流程是否真正改善；
+- `test_all`：总体部署分布上的变化；
+- A/D/M逐人结果和跨人均值，而不只看合并accuracy；
+- fault split的present class count，因为不同人的故障run并不覆盖相同类别。
+
+故障run中的漏做、多做、重复或不符合标准graph顺序均保留为真实训练信息，不会为了匹配标准
+task graph而清洗或重排。graph在这里作为结构关系输入，而不是故障数据过滤规则。

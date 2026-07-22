@@ -31,7 +31,15 @@ def main() -> None:
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--max-samples", type=int, default=-1, help="Debug only; -1 extracts all")
+    parser.add_argument("--completion-marker", default=None)
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
+
+    output_path = Path(args.output)
+    if output_path.exists() and not args.overwrite:
+        raise FileExistsError(
+            f"Feature cache already exists: {output_path}. Refusing to overwrite it."
+        )
 
     seed_everything(args.seed)
     device = select_device(args.device)
@@ -63,7 +71,6 @@ def main() -> None:
         row_cursor += count
         print(f"extracted={row_cursor}/{len(dataset)}", flush=True)
 
-    output_path = Path(args.output)
     ensure_dir(output_path.parent)
     metadata = {
         "dataset_root": str(args.dataset_root),
@@ -85,6 +92,15 @@ def main() -> None:
         output_path,
     )
     write_json(output_path.with_suffix(".metadata.json"), metadata)
+    if args.completion_marker:
+        write_json(
+            args.completion_marker,
+            {
+                "stage": "feature_extraction",
+                "final_output": str(output_path),
+                "checkpoint": str(args.checkpoint),
+            },
+        )
     print(f"Saved feature cache: {output_path}")
 
 

@@ -18,6 +18,7 @@ from graph_history.graph import TaskGraphSpec
 from graph_history.models import FeatureNodeClassifier, build_context_model
 from graph_history.utils import (
     ensure_dir,
+    ensure_new_output_dir,
     load_compatible_state,
     save_checkpoint,
     seed_everything,
@@ -62,12 +63,16 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 
     seed_everything(args.seed)
     device = select_device(args.device)
     graph = TaskGraphSpec.load(args.task_graph, args.relation_matrix)
-    model_dir = ensure_dir(Path(args.output_root) / args.train_scope / args.model)
+    model_dir = ensure_new_output_dir(
+        Path(args.output_root) / args.train_scope / args.model,
+        overwrite=args.overwrite,
+    )
     train_manifest = Path(args.protocol_root) / args.train_scope / "train.jsonl"
     history_order = "graph_valid" if args.model == "m3" else "actual"
     train_dataset = FeatureHistoryDataset(
@@ -170,6 +175,15 @@ def main() -> None:
             f"tier3_macro_f1={metrics['tier3']['macro_f1']:.4f}",
             flush=True,
         )
+    write_json(
+        model_dir / "completed.json",
+        {
+            "model": args.model,
+            "checkpoint": str(checkpoint_path),
+            "train_scope": args.train_scope,
+            "tested_splits": ["test_normal", "test_fault", "test_all"],
+        },
+    )
 
 
 if __name__ == "__main__":

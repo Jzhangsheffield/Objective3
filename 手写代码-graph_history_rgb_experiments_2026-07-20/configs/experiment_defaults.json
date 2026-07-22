@@ -1,0 +1,10 @@
+{
+  "_comments": "代码没有真正读取这个 JSON；命令行脚本里又写了一遍默认值。因此它目前更像“实验规格说明”，不是唯一配置源。",
+  "test_participant": "J",
+  "camera_id": "001484412812",
+  "feature_dim": 512,
+  "num_nodes": 35,
+  "num_tier3_classes": 31,
+  "n_frames": 16,
+  "rgb_size": 224
+}
