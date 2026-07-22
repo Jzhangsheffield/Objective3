@@ -1,0 +1,32 @@
+{
+  "test_participants": ["A", "D", "M"],
+  "optional_strict_fourth_fold": "J",
+  "backbone_source": "scratch_per_fold_normal_only",
+  "camera_id": "001484412812",
+  "feature_dim": 512,
+  "num_nodes": 35,
+  "num_tier3_classes": 31,
+  "n_frames": 16,
+  "rgb_size": 224,
+  "rgb_mean": [0.5369, 0.5295, 0.5208],
+  "rgb_std": [0.2311, 0.2360, 0.2363],
+  "history": {
+    "d_model": 256,
+    "num_heads": 4,
+    "max_history": 35,
+    "dropout": 0.1,
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "action_loss_weight": 0.0
+  },
+  "backbone": {
+    "architecture": "resnet3d_18",
+    "epochs": 100,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "checkpoint_policy": "last_epoch_only"
+  }
+}
