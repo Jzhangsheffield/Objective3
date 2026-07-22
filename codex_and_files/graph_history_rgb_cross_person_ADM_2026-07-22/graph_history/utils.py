@@ -27,6 +27,17 @@ def ensure_dir(path: str | Path) -> Path:
     return path
 
 
+def ensure_new_output_dir(path: str | Path, overwrite: bool = False) -> Path:
+    """Create a dedicated output directory, refusing to overwrite prior experiments by default."""
+    path = Path(path)
+    if path.exists() and any(path.iterdir()) and not overwrite:
+        raise FileExistsError(
+            f"Output directory is not empty: {path}. Use --overwrite only for this dedicated new output."
+        )
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def read_json(path: str | Path) -> Any:
     with Path(path).open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -162,4 +173,3 @@ def append_csv(path: str | Path, row: dict[str, Any]) -> None:
 
 def env_or(name: str, default: str) -> str:
     return os.environ.get(name, default)
-
