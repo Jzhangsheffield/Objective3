@@ -4,6 +4,14 @@
 `001484412812` 的 M0–M6 顺序动作分类实验。它不会导入或修改旧的
 `codes_of_initial_exp_with_obj2_models`，也不会修改 `obj2_codes`。
 
+> **实验包定位（2026-07-22更新）**：本包是J-as-test先导实验包，默认复用已有J
+> Tier-3 `last.pth`，用于建立M0–M6并验证方法可行性。A、D、M三位参与者的独立
+> scratch-backbone跨人确认实验位于
+> `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22`。
+> 两个包使用相同35-node Task Graph、历史矩阵、模型定义和评价方式，但输出互不依赖、
+> 不会相互覆盖。由于backbone来源不同，当前J与A/D/M的绝对分数不宜直接比较；应优先
+> 比较每一折中M1–M6相对本折M0的提升。严格四折LOSO可在新包中额外重训J折。
+
 ## 1. 固定实验协议
 
 - 模态：RGB；相机：`001484412812`；外层测试：J-as-test。
@@ -84,6 +92,10 @@ python tools/validate_setup.py \
   --relation-matrix assets/integrated_feature_history_matrix.json \
   --checkpoint /path/to/last.pth
 ```
+
+如果在Windows直接运行`python tools\validate_setup.py`时提示找不到`graph_history`，
+请使用`call bat\00_validate_setup.bat`，或先在包根目录执行`set PYTHONPATH=%CD%`。
+这一点已在新的A/D/M跨人实验包中通过入口自动初始化修复。
 
 模型合成输入检查：
 

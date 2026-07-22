@@ -1,0 +1,38 @@
+#!/bin/bash
+# Central HPC configuration. Every value can be overridden with sbatch --export or env.
+PACKAGE_ROOT="${PACKAGE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+DATASET_ROOT="${DATASET_ROOT:-/mnt/parscratch/users/mes19jz/datasets/thermal_crimp/Stage_2_Mapstyle_Dataset}"
+TEST_PARTICIPANT="${TEST_PARTICIPANT:-A}"
+CAMERA_ID="${CAMERA_ID:-001484412812}"
+OUTPUTS_ROOT="${OUTPUTS_ROOT:-${PACKAGE_ROOT}/outputs}"
+FOLD_ROOT="${FOLD_ROOT:-${OUTPUTS_ROOT}/${TEST_PARTICIPANT}_as_test/cam_${CAMERA_ID}}"
+PROTOCOL_ROOT="${PROTOCOL_ROOT:-${FOLD_ROOT}/protocols}"
+TASK_GRAPH="${TASK_GRAPH:-${PACKAGE_ROOT}/assets/integrated_task_graph_latest.json}"
+RELATION_MATRIX="${RELATION_MATRIX:-${PACKAGE_ROOT}/assets/integrated_feature_history_matrix.json}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
+SEED="${SEED:-1}"
+RUN_ROOT="${RUN_ROOT:-${FOLD_ROOT}/seed_${SEED}}"
+BACKBONE_OUTPUT="${BACKBONE_OUTPUT:-${RUN_ROOT}/backbone/normal_only}"
+BACKBONE_CKPT="${BACKBONE_CKPT:-${BACKBONE_OUTPUT}/last.pth}"
+FEATURE_ROOT="${FEATURE_ROOT:-${RUN_ROOT}/features/retrained_normal_only}"
+MODEL_ROOT="${MODEL_ROOT:-${RUN_ROOT}/history_models/retrained_normal_only}"
+CROSS_PERSON_SUMMARY_ROOT="${CROSS_PERSON_SUMMARY_ROOT:-${OUTPUTS_ROOT}/cross_person_summary}"
+NUM_WORKERS="${NUM_WORKERS:-8}"
+TRAIN_SCOPE="${TRAIN_SCOPE:-normal_only}"
+BACKBONE_EPOCHS="${BACKBONE_EPOCHS:-100}"
+HISTORY_EPOCHS="${HISTORY_EPOCHS:-50}"
+export PACKAGE_ROOT DATASET_ROOT TEST_PARTICIPANT CAMERA_ID OUTPUTS_ROOT FOLD_ROOT PROTOCOL_ROOT
+export RUN_ROOT BACKBONE_OUTPUT BACKBONE_CKPT FEATURE_ROOT MODEL_ROOT CROSS_PERSON_SUMMARY_ROOT
+export TASK_GRAPH RELATION_MATRIX PYTHON_BIN SEED NUM_WORKERS TRAIN_SCOPE BACKBONE_EPOCHS HISTORY_EPOCHS
+export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
+
+setup_hpc_environment() {
+  if [[ "${SKIP_ENV_SETUP:-0}" != "1" ]]; then
+    module load "${ANACONDA_MODULE:-Anaconda3/2022.05}"
+    module load "${CUDNN_MODULE:-cuDNN/8.9.2.26-CUDA-12.1.1}"
+    set +u
+    source activate "${CONDA_ENV_NAME:-pytorch}"
+    set -u
+  fi
+  cd "${PACKAGE_ROOT}"
+}
