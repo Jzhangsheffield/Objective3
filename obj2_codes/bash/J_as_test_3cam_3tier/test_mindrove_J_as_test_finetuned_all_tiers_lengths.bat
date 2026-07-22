@@ -42,10 +42,10 @@ if /I not "%SIGNAL_FILTER%"=="all" if /I not "%SIGNAL_FILTER%"=="emg" if /I not 
 REM ============================================================
 REM Paths
 REM ============================================================
-if not defined PROJECT_ROOT set "PROJECT_ROOT=D:\Junxi_data\Objective3_thermal_crimp\obj2_codes"
+if not defined PROJECT_ROOT set "PROJECT_ROOT=D:\junxi_data\Objective3\obj2_codes"
 if not defined PY_SCRIPT set "PY_SCRIPT=%PROJECT_ROOT%\ft_and_test\train_mapstyle_finetune_and_test.py"
-if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
-if not defined DATASET_ROOT set "DATASET_ROOT=C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\mes19jz\AppData\Local\miniconda3\envs\pytorch\python.exe"
+if not defined DATASET_ROOT set "DATASET_ROOT=C:\MyFolder\mes19jz\Stage_2_Mapstyle_Dataset"
 if not defined LABEL_MAP_JSON set "LABEL_MAP_JSON=%DATASET_ROOT%\label_map.json"
 if not defined TEST_MANIFEST set "TEST_MANIFEST=%DATASET_ROOT%\J_as_test\test_manifest.jsonl"
 if not defined NORMALIZATION_STATS_JSON set "NORMALIZATION_STATS_JSON=%DATASET_ROOT%\J_as_test\mindrove_train_normalization_stats.json"
@@ -62,10 +62,10 @@ if not defined TEST_SAVE_PATH set "TEST_SAVE_PATH=%TEST_OUTPUT_ROOT%\runtime"
 REM ============================================================
 REM Checkpoint, length, and runtime selection
 REM ============================================================
-if not defined MATCH_BEST_VAL set "MATCH_BEST_VAL=1"
+if not defined MATCH_BEST_VAL set "MATCH_BEST_VAL=0"
 if not defined MATCH_BEST_VAL_BALANCED set "MATCH_BEST_VAL_BALANCED=0"
 if not defined MATCH_BEST_VAL_MACRO_F1 set "MATCH_BEST_VAL_MACRO_F1=0"
-if not defined MATCH_LAST set "MATCH_LAST=0"
+if not defined MATCH_LAST set "MATCH_LAST=1"
 
 if not defined EMG_LENGTHS set "EMG_LENGTHS=256 512 1024 2048"
 if not defined IMU_LENGTHS set "IMU_LENGTHS=64 128 256 512"
