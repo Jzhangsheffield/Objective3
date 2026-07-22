@@ -1,8 +1,8 @@
 @echo off
 REM Central Windows path configuration. Override any variable before calling a script.
 for %%I in ("%~dp0..") do if not defined PACKAGE_ROOT set "PACKAGE_ROOT=%%~fI"
-if not defined DATASET_ROOT set "DATASET_ROOT=C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
-if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
+if not defined DATASET_ROOT set "DATASET_ROOT=C:\MyFolder\mes19jz\Stage_2_Mapstyle_Dataset"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\mes19jz\AppData\Local\miniconda3\envs\pytorch\python.exe"
 if not defined TEST_PARTICIPANT set "TEST_PARTICIPANT=A"
 if not defined CAMERA_ID set "CAMERA_ID=001484412812"
 if not defined OUTPUTS_ROOT set "OUTPUTS_ROOT=%PACKAGE_ROOT%\outputs"
@@ -23,7 +23,7 @@ if not defined E2E_NODE_TRANSFER_OUTPUT set "E2E_NODE_TRANSFER_OUTPUT=%E2E_ROOT%
 if not defined UNIFIED_FOLD_SUMMARY_ROOT set "UNIFIED_FOLD_SUMMARY_ROOT=%RUN_ROOT%\unified_summary_with_e2e"
 if not defined UNIFIED_CROSS_SUMMARY_ROOT set "UNIFIED_CROSS_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_with_e2e"
 if not defined CROSS_PERSON_SUMMARY_ROOT set "CROSS_PERSON_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary"
-if not defined NUM_WORKERS set "NUM_WORKERS=4"
+if not defined NUM_WORKERS set "NUM_WORKERS=8"
 if not defined BACKBONE_EPOCHS set "BACKBONE_EPOCHS=100"
 if not defined HISTORY_EPOCHS set "HISTORY_EPOCHS=50"
 if not defined E2E_NODE_EPOCHS set "E2E_NODE_EPOCHS=100"
