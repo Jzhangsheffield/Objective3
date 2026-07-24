@@ -780,3 +780,171 @@ all_model_training_scope_delta_aggregate.csv
 
 故障run中的漏做、多做、重复或不符合标准graph顺序均保留为真实训练信息，不会为了匹配标准
 task graph而清洗或重排。graph在这里作为结构关系输入，而不是故障数据过滤规则。
+
+## 14. 严格四折、三 seed 补充实验（2026-07-24）
+
+### 14.1 本次补充的目的
+
+本扩展用于补齐报告中两项最重要的公平性缺口：
+
+1. A/D/M 的完整 all-runs 已有 seed 1、2、42，但严格 normal-only 原来只有 seed 1。本次只补跑
+   A/D/M 的 normal-only seed 2 和 seed 42。
+2. J 原先来自先导实验包，backbone 来源与 A/D/M 不完全一致。本次在本跨人实验包中对 J 重新执行
+   normal-only scratch 与 all-runs scratch，并使用 seed 1、2、42。
+
+补齐后的严格网格为：
+
+```text
+participant: A, D, J, M
+seed:        1, 2, 42
+scope:       normal_only, all_runs
+model:       M0-M6, E2E-Tier3-Scratch,
+             E2E-Node-Scratch, E2E-Node-From-Tier3
+split:       test_normal, test_fault, test_all
+```
+
+所有 backbone 都从 scratch 训练；不设置 validation，不使用 held-out participant 选择 checkpoint，
+并统一使用最后一个 epoch 的 `last.pth`。因此可以严格按以下键配对：
+
+```text
+participant + seed + model + split
+all-runs metric - normal-only metric
+```
+
+本扩展不会读取或覆盖旧 J 先导实验包中的权重。严格 J 结果写入当前包的 `outputs/J_as_test/`，
+从而与 A/D/M 使用相同代码、目录结构和训练策略。
+
+### 14.2 Windows：推荐的一键运行方式
+
+先进入实验包：
+
+```bat
+cd /d D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22
+```
+
+一次完成全部建议实验：
+
+```bat
+call bat\run_recommended_strict_experiments.bat
+```
+
+该入口会先确认 A/D/M 的现有 all-runs seed 1、2、42 已经完成，然后依次：
+
+```text
+补跑 A/D/M normal-only seed 2、42
+→ 训练 J normal-only 与 all-runs seed 1、2、42
+→ 生成 A/D/J/M 四折、三 seed 的 normal-only 汇总
+→ 生成 A/D/J/M 四折、三 seed 的 all-runs 汇总
+→ 生成严格配对的 all-runs - normal-only 汇总
+```
+
+如果只运行其中一部分：
+
+```bat
+REM 只补 A/D/M normal-only seed 2 和 42
+call bat\run_normal_only_multiseed_ADM.bat
+
+REM 只运行 J 的一个 seed
+set SEED=2
+call bat\run_strict_J_one_seed.bat
+
+REM 运行 J 的 seed 1、2、42
+call bat\run_strict_J_three_seeds.bat
+
+REM 全部训练完成后重新生成四折汇总
+call bat\run_fourfold_ADJM_summaries.bat
+```
+
+`run_normal_only_complete_one_fold.bat` 和 `run_strict_J_one_seed.bat` 也可以作为断点续跑入口。
+存在 `completed.json` 的步骤会安全跳过；非空但没有完成标记的目录会停止，避免覆盖中断结果。
+
+### 14.3 HPC/Slurm：推荐提交方式
+
+在 HPC 上先检查 `slurm/config_hpc.sh` 中的数据集、环境和输出配置，然后运行：
+
+```bash
+cd /mnt/parscratch/users/mes19jz/objective3/codex_and_files/graph_history_rgb_cross_person_ADM_2026-07-22
+bash slurm/submit_recommended_strict_experiments.sh
+```
+
+分步提交入口如下：
+
+```bash
+# 单个 normal-only fold 和 seed
+bash slurm/submit_normal_only_one_fold.sh A 2
+
+# A/D/M 的 normal-only seed 2、42
+bash slurm/submit_normal_only_multiseed_ADM.sh
+
+# J 的单个严格 seed
+bash slurm/submit_strict_J_one_seed.sh 2
+
+# J 的严格 seed 1、2、42
+bash slurm/submit_strict_J_three_seeds.sh
+```
+
+Slurm 会自动建立依赖关系。normal-only 的 backbone、feature、M0-M6 和三个 E2E 分支完成后才汇总；
+J 的 all-runs 链还会等待相同 seed 的 normal-only 链完成。推荐总入口最后再提交三个四折汇总任务。
+脚本输出的最后一个数字是最终 comparison job ID，可用于继续添加 `afterok` 依赖。
+
+### 14.4 新实验的完整输出路径
+
+根目录固定为：
+
+```text
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs
+```
+
+单个 participant、seed 的 normal-only 结果：
+
+```text
+outputs\<P>_as_test\cam_001484412812\seed_<S>\
+├── backbone\normal_only\last.pth
+├── features\retrained_normal_only\
+├── history_models\retrained_normal_only\normal_only\m0 ... m6\
+├── e2e_baselines\normal_only\
+│   ├── e2e_tier3_scratch\
+│   ├── e2e_node_scratch\
+│   └── e2e_node_from_tier3\
+└── unified_summary_normal_only\
+```
+
+其中 A/D/M 本次新增的 `<S>` 为 2、42；J 新增的 `<S>` 为 1、2、42。
+
+J 的 all-runs scratch 结果：
+
+```text
+outputs\J_as_test\cam_001484412812\seed_<S>\
+├── backbone\all_runs\last.pth
+├── features\retrained_all_runs\
+├── history_models\retrained_all_runs\all_runs\m0 ... m6\
+├── e2e_baselines\all_runs\
+├── unified_summary_all_runs\
+└── training_scope_comparison\
+```
+
+最终四折、三 seed 汇总路径：
+
+```text
+outputs\cross_person_summary_normal_only_ADJM_3seeds\
+outputs\cross_person_summary_all_runs_ADJM_3seeds\
+outputs\training_scope_comparison_ADJM_3seeds\
+```
+
+最重要的严格配对结果文件为：
+
+```text
+outputs\training_scope_comparison_ADJM_3seeds\
+├── all_model_training_scope_deltas.csv
+└── all_model_training_scope_delta_aggregate.csv
+```
+
+第一个文件保留 participant、seed、model、split 层面的逐项差值；第二个文件先在每个 participant
+内部对三 seed 求均值，再报告四人的均值与标准差。
+
+### 14.5 完整性保护
+
+新增四折汇总启用 `--require-complete-grid`。在写 CSV 之前，它会检查每个请求的
+participant × seed × scope 是否都具有 10 个模型和 3 个测试 split。只要缺一项，汇总会明确列出
+缺失的 participant、seed、scope、model 和 split 并停止，因此不会把不完整实验误当成严格四折结果。

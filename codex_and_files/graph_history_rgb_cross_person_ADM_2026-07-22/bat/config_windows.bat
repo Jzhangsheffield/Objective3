@@ -1,8 +1,8 @@
 @echo off
 REM Central Windows path configuration. Override any variable before calling a script.
 for %%I in ("%~dp0..") do if not defined PACKAGE_ROOT set "PACKAGE_ROOT=%%~fI"
-if not defined DATASET_ROOT set "DATASET_ROOT=C:\MyFolder\mes19jz\Stage_2_Mapstyle_Dataset"
-if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\mes19jz\AppData\Local\miniconda3\envs\pytorch\python.exe"
+if not defined DATASET_ROOT set "DATASET_ROOT=C:\Junxi_data_for_training_speedup\Stage_2_Mapstyle_Dataset"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
 if not defined TEST_PARTICIPANT set "TEST_PARTICIPANT=A"
 if not defined CAMERA_ID set "CAMERA_ID=001484412812"
 if not defined OUTPUTS_ROOT set "OUTPUTS_ROOT=%PACKAGE_ROOT%\outputs"
@@ -41,5 +41,11 @@ if not defined ALLRUN_FOLD_SUMMARY_ROOT set "ALLRUN_FOLD_SUMMARY_ROOT=%RUN_ROOT%
 if not defined ALLRUN_CROSS_SUMMARY_ROOT set "ALLRUN_CROSS_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_all_runs"
 if not defined TRAIN_SCOPE_COMPARISON_FOLD_ROOT set "TRAIN_SCOPE_COMPARISON_FOLD_ROOT=%RUN_ROOT%\training_scope_comparison"
 if not defined TRAIN_SCOPE_COMPARISON_CROSS_ROOT set "TRAIN_SCOPE_COMPARISON_CROSS_ROOT=%OUTPUTS_ROOT%\training_scope_comparison"
+if not defined NORMAL_FOLD_SUMMARY_ROOT set "NORMAL_FOLD_SUMMARY_ROOT=%RUN_ROOT%\unified_summary_normal_only"
+if not defined FOURFOLD_NORMAL_SUMMARY_ROOT set "FOURFOLD_NORMAL_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_normal_only_ADJM_3seeds"
+if not defined FOURFOLD_ALLRUN_SUMMARY_ROOT set "FOURFOLD_ALLRUN_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_all_runs_ADJM_3seeds"
+if not defined FOURFOLD_COMPARISON_ROOT set "FOURFOLD_COMPARISON_ROOT=%OUTPUTS_ROOT%\training_scope_comparison_ADJM_3seeds"
+if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1 2 42"
+if not defined RUN_SCOPE_COMPARISON set "RUN_SCOPE_COMPARISON=1"
 if not defined RUN_AUXILIARY set "RUN_AUXILIARY=0"
 set "PYTHONPATH=%PACKAGE_ROOT%;%PYTHONPATH%"

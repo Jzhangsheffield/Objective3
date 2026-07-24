@@ -28,6 +28,19 @@ REFERENCE_MODELS = (
     "e2e_node_from_tier3",
     "e2e_tier3_scratch",
 )
+STRICT_GRID_MODELS = (
+    "m0",
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5",
+    "m6",
+    "e2e_node_scratch",
+    "e2e_node_from_tier3",
+    "e2e_tier3_scratch",
+)
+STRICT_GRID_SPLITS = ("test_all", "test_normal", "test_fault")
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -193,6 +206,48 @@ def collect_stage_rows(
                 }
             )
     return rows
+
+
+def require_complete_grid(
+    rows: list[dict[str, Any]],
+    participants: set[str],
+    seeds: set[str],
+    train_scopes: set[str],
+) -> None:
+    """Fail before writing a summary when any requested paired result is absent."""
+    observed = {
+        (
+            row["participant"],
+            row["seed"],
+            row["representation_scope"],
+            row["train_scope"],
+            row["model"],
+            row["split"],
+        )
+        for row in rows
+    }
+    expected = {
+        (participant, seed, scope, scope, model, split)
+        for participant in participants
+        for seed in seeds
+        for scope in train_scopes
+        for model in STRICT_GRID_MODELS
+        for split in STRICT_GRID_SPLITS
+    }
+    missing = sorted(expected - observed)
+    if not missing:
+        return
+    preview = "\n".join(
+        "  participant={} seed={} scope={} model={} split={}".format(
+            participant, seed, train_scope, model, split
+        )
+        for participant, seed, _representation_scope, train_scope, model, split in missing[:20]
+    )
+    suffix = "\n  ..." if len(missing) > 20 else ""
+    raise FileNotFoundError(
+        "Strict result-grid check failed: "
+        f"{len(missing)} requested result rows are missing.\n{preview}{suffix}"
+    )
 
 
 def build_pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -457,23 +512,45 @@ def main() -> None:
     parser.add_argument("--train-scopes", nargs="+", default=None)
     parser.add_argument("--representation-scopes", nargs="+", default=None)
     parser.add_argument("--matched-scope-only", action="store_true")
+    parser.add_argument(
+        "--require-complete-grid",
+        action="store_true",
+        help=(
+            "Require every requested participant x seed x train scope to contain "
+            "M0-M6 and all three E2E baselines on all/normal/fault test splits."
+        ),
+    )
     args = parser.parse_args()
+    participant_filter = set(args.participants)
+    seed_filter = set(args.seeds) if args.seeds else None
+    train_scope_filter = set(args.train_scopes) if args.train_scopes else None
+    representation_scope_filter = (
+        set(args.representation_scopes) if args.representation_scopes else None
+    )
     rows = collect_rows(
         Path(args.outputs_root),
-        set(args.participants),
-        set(args.seeds) if args.seeds else None,
-        set(args.train_scopes) if args.train_scopes else None,
-        set(args.representation_scopes) if args.representation_scopes else None,
+        participant_filter,
+        seed_filter,
+        train_scope_filter,
+        representation_scope_filter,
         args.matched_scope_only,
     )
+    if args.require_complete_grid:
+        if seed_filter is None or train_scope_filter is None:
+            parser.error(
+                "--require-complete-grid also requires explicit --seeds and --train-scopes"
+            )
+        if not args.matched_scope_only:
+            parser.error("--require-complete-grid requires --matched-scope-only")
+        require_complete_grid(rows, participant_filter, seed_filter, train_scope_filter)
     if not rows:
         raise FileNotFoundError(f"No unified metric files found under {args.outputs_root}")
     stage_rows = collect_stage_rows(
         Path(args.outputs_root),
-        set(args.participants),
-        set(args.seeds) if args.seeds else None,
-        set(args.train_scopes) if args.train_scopes else None,
-        set(args.representation_scopes) if args.representation_scopes else None,
+        participant_filter,
+        seed_filter,
+        train_scope_filter,
+        representation_scope_filter,
         args.matched_scope_only,
     )
     deltas = build_pairwise_deltas(rows)

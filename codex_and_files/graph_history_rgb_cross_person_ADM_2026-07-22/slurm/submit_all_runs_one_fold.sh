@@ -9,7 +9,11 @@ export PACKAGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 export TEST_PARTICIPANT="$1"
 source "${SCRIPT_DIR}/config_hpc.sh"
 
-protocol_job=$(sbatch --parsable --export=ALL "${SCRIPT_DIR}/13_prepare_protocols_all_runs_safe.slurm")
+protocol_args=(--parsable --export=ALL)
+if [[ -n "${UPSTREAM_DEPENDENCY:-}" ]]; then
+  protocol_args+=(--dependency="afterok:${UPSTREAM_DEPENDENCY}")
+fi
+protocol_job=$(sbatch "${protocol_args[@]}" "${SCRIPT_DIR}/13_prepare_protocols_all_runs_safe.slurm")
 backbone_job=$(sbatch --parsable --export=ALL --dependency="afterok:${protocol_job}" "${SCRIPT_DIR}/14_train_backbone_all_runs.slurm")
 scratch_job=$(sbatch --parsable --export=ALL --dependency="afterok:${protocol_job}" "${SCRIPT_DIR}/19_train_e2e_node_scratch_all_runs.slurm")
 feature_job=$(sbatch --parsable --export=ALL --dependency="afterok:${backbone_job}" "${SCRIPT_DIR}/15_extract_features_all_runs.slurm")

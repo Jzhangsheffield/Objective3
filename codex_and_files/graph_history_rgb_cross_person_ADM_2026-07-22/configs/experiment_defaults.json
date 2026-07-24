@@ -51,5 +51,24 @@
     "test_splits": ["test_normal", "test_fault", "test_all"],
     "overwrite_existing_results": false,
     "compare_against_complete_normal_only_pipeline": true
+  },
+  "recommended_strict_multiseed_extension": {
+    "seeds": [1, 2, 42],
+    "adm_normal_only_missing_seeds": [2, 42],
+    "strict_j_fold": {
+      "test_participant": "J",
+      "train_scopes": ["normal_only", "all_runs"],
+      "backbone_source": "scratch_per_seed_per_scope",
+      "validation": false,
+      "checkpoint_policy": "last_epoch_only"
+    },
+    "fourfold_participants": ["A", "D", "J", "M"],
+    "paired_comparison_keys": [
+      "participant",
+      "seed",
+      "model",
+      "split"
+    ],
+    "overwrite_existing_results": false
   }
 }
