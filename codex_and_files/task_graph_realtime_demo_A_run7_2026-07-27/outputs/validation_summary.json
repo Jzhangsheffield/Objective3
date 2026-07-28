@@ -1,0 +1,22 @@
+{
+  "schema_version": "task-graph-realtime-demo-inference-validation-v2",
+  "participant": "A",
+  "run": "run_7",
+  "seed": 1,
+  "device": "NVIDIA GeForce RTX 4090",
+  "actions": 25,
+  "m0_correct": 19,
+  "m0_accuracy": 0.76,
+  "m3_correct": 22,
+  "m3_accuracy": 0.88,
+  "e2e_correct": 18,
+  "e2e_accuracy": 0.72,
+  "m0_existing_node_matches": 25,
+  "m3_existing_node_matches": 25,
+  "e2e_existing_node_matches": 25,
+  "max_m0_confidence_abs_diff": 0.00040096044540405273,
+  "max_m3_confidence_abs_diff": 0.000926673412322998,
+  "max_e2e_confidence_abs_diff": 0.0009310245513916016,
+  "mean_inference_ms": 440.01299200001085,
+  "all_predictions_match_existing": true
+}

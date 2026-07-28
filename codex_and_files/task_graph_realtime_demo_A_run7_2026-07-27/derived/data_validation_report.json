@@ -1,0 +1,52 @@
+{
+  "schema_version": "task-graph-realtime-demo-validation-v1",
+  "source_files": {
+    "source_metadata\\manifest.source.jsonl": {
+      "bytes": 116439,
+      "sha256": "fe7e6b52de2e3b5b101f3121b976a072d646fc1c19882d3f7bde4033ac445194"
+    },
+    "source_metadata\\run_sample_000005_frame_annotation.source.csv": {
+      "bytes": 585602,
+      "sha256": "0a65349f33213be2aba47e5e759113d6d2f53bdb3ba14a6f2f8ea15f060b9367"
+    },
+    "source_metadata\\run_sample_000005_segmentation_annotation.source.csv": {
+      "bytes": 4255,
+      "sha256": "eb60b10c2ab4cbb82ab030bee1abd06041ecb245478b160325dcd0dc687ecbba"
+    },
+    "source_metadata\\raw_trim_tracking.source.csv": {
+      "bytes": 34026,
+      "sha256": "16f9527520fbc8aebd5b27abb0b114e11ff2f68220a0ae8b47999044a04b1839"
+    }
+  },
+  "target_run_records": 1,
+  "raw_jpeg_frames": 4152,
+  "frame_annotation_rows": 4152,
+  "frame_names_match_raw_exactly": true,
+  "frame_idx_contiguous": true,
+  "original_frame_idx_contiguous": true,
+  "original_frame_idx_span": [
+    677,
+    4828
+  ],
+  "current_frame_idx_span": [
+    1,
+    4152
+  ],
+  "segmentation_rows_source": 51,
+  "segments_retained": 51,
+  "segment_rebase_matches": 51,
+  "action_segments": 25,
+  "background_segments": 26,
+  "protocol_action_rows": 25,
+  "action_label_matches": 25,
+  "action_frame_count_matches": 25,
+  "background_frames": 3025,
+  "action_frames": 1127,
+  "background_fraction": 0.7285645472061657,
+  "duration_seconds": 138.42930793762207,
+  "effective_fps": 29.986424564590695,
+  "source_manifest_stale_after_trim": true,
+  "source_manifest_reference_frame_count": 4971,
+  "current_reference_frame_count": 4152,
+  "all_checks_pass": true
+}

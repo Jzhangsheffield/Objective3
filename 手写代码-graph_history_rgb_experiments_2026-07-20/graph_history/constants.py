@@ -25,4 +25,4 @@ X：不存在或不允许的关系。
 S：自身关系。
 """
 RELATION_TO_ID = {"I": 0, "M": 1, "O": 2, "X": 3, "S": 4}
-ID_TO_RELATION = {value: key for key, value in RELATION_TO_ID.items()} #{0: 'I', 1: 'M', 2: 'O', 3: 'X', 4: 'S'}
+ID_TO_RELATION = {value: key for key, value in RELATION_TO_ID.items()}

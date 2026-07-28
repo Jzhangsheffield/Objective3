@@ -21,7 +21,7 @@ def seed_everything(seed: int) -> None:
     torch.backends.cudnn.benchmark = True
 
 
-def ensure_dir(path: str | Path) -> Any:
+def ensure_dir(path: str | Path) -> Path:
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -50,13 +50,12 @@ def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
                 rows.append(json.loads(line))
             except json.JSONDecodeError as exc:
                 raise ValueError(f"Invalid JSONL at {path}:{line_number}: {exc}") from exc
-
     return rows
 
 
 def write_jsonl(path: str | Path, rows: Iterable[dict[str, Any]]) -> None:
     path = Path(path)
-    ensure_dir(path)
+    ensure_dir(path.parent)
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
@@ -82,21 +81,24 @@ def select_device(requested: str = "auto") -> torch.device:
 
 def extract_state_dict(checkpoint: Any) -> dict[str, torch.Tensor]:
     if not isinstance(checkpoint, dict):
-        raise TypeError(f"Checkpoint must be a dictionary")
+        raise TypeError("Checkpoint must be a dictionary")
+
     for key in ("model_state_dict", "state_dict", "model", "net", "network"):
         value = checkpoint.get(key)
         if isinstance(value, dict):
             return value
-    if checkpoint and all(isinstance(k, str) for k in checkpoint):
-        tensor_values = [value for value in checkpoint.values() if torch.is_tensor(value)]
-        if tensor_values:
+
+    if checkpoint and all(isinstance(key, str) for key in checkpoint):
+        if any(torch.is_tensor(value) for value in checkpoint.values()):
             return checkpoint
-    raise ValueError(f"Unable to locate a model state_dict in checkpoint")
+
+    raise ValueError("Unable to locate a model state_dict in checkpoint")
 
 
 def strip_state_prefixes(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     prefixes = ("module.", "model.", "backbone.", "encoder.", "encoder_q.")
     cleaned: dict[str, torch.Tensor] = {}
+
     for key, value in state.items():
         new_key = key
         changed = True
@@ -104,15 +106,17 @@ def strip_state_prefixes(state: dict[str, torch.Tensor]) -> dict[str, torch.Tens
             changed = False
             for prefix in prefixes:
                 if new_key.startswith(prefix):
-                    new_key = key[len(prefix): ]
+                    new_key = new_key[len(prefix):]
                     changed = True
+                    break
         cleaned[new_key] = value
+
     return cleaned
 
 
 def load_compatible_state(model: torch.nn.Module, checkpoint_path: str | Path) -> dict[str, Any]:
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
-    state = strip_state_prefixes(checkpoint)
+    state = strip_state_prefixes(extract_state_dict(checkpoint))
     model_state = model.state_dict()
     compatible = {
         key: value
@@ -124,20 +128,26 @@ def load_compatible_state(model: torch.nn.Module, checkpoint_path: str | Path) -
         "checkpoint": str(checkpoint_path),
         "loaded_keys": len(compatible),
         "model_keys": len(model_state),
-        "missed_keys": list(message.missing_keys),
+        "missing_keys": list(message.missing_keys),
         "unexpected_keys": list(message.unexpected_keys),
     }
 
 
-def save_checkpoint(path: str | Path, model: torch.nn.Module, optimizer: torch.optim.Optimizer | None,
-                    epoch: int, args: dict[str, Any], extra: dict[str, Any] | None = None) -> None:
+def save_checkpoint(
+    path: str | Path,
+    model: torch.nn.Module,
+    optimizer: torch.optim.Optimizer | None,
+    epoch: int,
+    args: dict[str, Any],
+    extra: dict[str, Any] | None = None,
+) -> None:
     path = Path(path)
-    ensure_dir(path)
-    payload = {
+    ensure_dir(path.parent)
+    payload: dict[str, Any] = {
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict() if optimizer is not None else None,
         "epoch": int(epoch),
-        "args": args
+        "args": args,
     }
     if extra:
         payload["extra"] = extra
@@ -146,7 +156,7 @@ def save_checkpoint(path: str | Path, model: torch.nn.Module, optimizer: torch.o
 
 def append_csv(path: str | Path, row: dict[str, Any]) -> None:
     path = Path(path)
-    ensure_dir(path)
+    ensure_dir(path.parent)
     exists = path.is_file()
     with path.open("a", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(row.keys()))
@@ -157,4 +167,3 @@ def append_csv(path: str | Path, row: dict[str, Any]) -> None:
 
 def env_or(name: str, default: str) -> str:
     return os.environ.get(name, default)
-

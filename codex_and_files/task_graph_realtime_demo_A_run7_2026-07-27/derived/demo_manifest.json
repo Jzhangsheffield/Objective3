@@ -1,0 +1,93 @@
+{
+  "schema_version": "task-graph-realtime-demo-v2",
+  "created_from": {
+    "source_run_manifest_record": {
+      "sample_name": "run_sample_000005",
+      "participant": "A",
+      "source_run": "run_7",
+      "source_run_dir": "D:\\Junxi_data\\stage_2_data_for_annotation\\Dataset_thermal_crimper_stage_2_raw\\kinect\\A\\run_7",
+      "raw_dir": "raw/run_sample_000005",
+      "camera_ids": [
+        "001431512812",
+        "001484412812",
+        "001528512812"
+      ],
+      "camera_dirs": {
+        "001431512812": "raw/run_sample_000005/001431512812",
+        "001484412812": "raw/run_sample_000005/001484412812",
+        "001528512812": "raw/run_sample_000005/001528512812"
+      },
+      "frames_per_camera": {
+        "001431512812": 4970,
+        "001484412812": 4971,
+        "001528512812": 4969
+      },
+      "skipped_invalid_frames": {
+        "001431512812": 1,
+        "001484412812": 1,
+        "001528512812": 0
+      },
+      "reference_camera": "001484412812",
+      "reference_frame_count": 4971,
+      "reference_start_frame": "20260313_101203_073609.jpg",
+      "reference_end_frame": "20260313_101448_614757.jpg",
+      "mindrove_left_csv": "raw/run_sample_000005/mindrove_left.csv",
+      "mindrove_right_csv": "raw/run_sample_000005/mindrove_right.csv",
+      "segmentation_annotation_csv": "annotations/run_sample_000005_segmentation_annotation.csv",
+      "frame_annotation_csv": "annotations/run_sample_000005_frame_annotation.csv"
+    },
+    "source_files_are_snapshots": true,
+    "source_dataset_was_modified": false
+  },
+  "demo": {
+    "profile_id": "a_run7_seed1",
+    "title": "Task Graph History Demo — A / run_7",
+    "participant": "A",
+    "source_run": "run_7",
+    "run_sample_name": "run_sample_000005",
+    "camera_id": "001484412812",
+    "seed": 1,
+    "train_scope": "all_runs",
+    "playback_speed": 1.0,
+    "history_policy": "completed_action_ground_truth_node_idx",
+    "boundary_policy": "supplied_frame_annotations",
+    "prediction_timing": "after_action_segment_end",
+    "background_policy": "supplied_annotations_not_model_prediction"
+  },
+  "raw_frames_dir": "D:\\Junxi_data\\MULTISENSOR_DATA_COLLECTION_Stage2_structured_data\\Action_Segmentation_Dataset\\raw\\run_sample_000005\\001484412812",
+  "current_frame_count": 4152,
+  "current_start_frame": "20260313_101225_419908.jpg",
+  "current_end_frame": "20260313_101443_849216.jpg",
+  "original_frame_offset": 676,
+  "segments_file": "derived\\demo_segments.jsonl",
+  "validation_report": "derived\\data_validation_report.json",
+  "preprocessing": {
+    "source_image_mode": "RGB",
+    "source_image_size": [
+      1280,
+      720
+    ],
+    "mapstyle_resize": [
+      256,
+      256
+    ],
+    "mapstyle_resize_library": "PIL",
+    "mapstyle_resize_interpolation": "BILINEAR",
+    "sampled_frames": 16,
+    "sampling": "uniform_linspace_inclusive",
+    "model_resize": [
+      224,
+      224
+    ],
+    "rgb_mean": [
+      0.5369,
+      0.5295,
+      0.5208
+    ],
+    "rgb_std": [
+      0.2311,
+      0.236,
+      0.2363
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version": "task-graph-demo-playback-benchmark-v1",
+  "sample_frames": 600,
+  "jpeg_open_decode_lanczos_resize_ms_per_frame": 14.421811166685075,
+  "h264_sequential_decode_rgb_ms_per_frame": 1.0045001666488436,
+  "display_source_stage_speedup": 14.357201367918435,
+  "target_frame_budget_at_effective_fps_ms": 33.348423979191054,
+  "checksum": 55668
+}

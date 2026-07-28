@@ -70,5 +70,23 @@
       "split"
     ],
     "overwrite_existing_results": false
+  },
+  "direct_head_fusion_extension": {
+    "experiment_family": "direct_head_fusion",
+    "models": ["m1_direct", "m2_direct", "m3_direct"],
+    "train_scopes": ["normal_only", "all_runs"],
+    "reuse_existing_tier3_feature_caches": true,
+    "reuse_m0_checkpoint": false,
+    "uses_logit_delta": false,
+    "node_head_initialization": "random",
+    "fusion_initialization": "identity_current_zero_history",
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "checkpoint_policy": "last_epoch_only",
+    "validation": false,
+    "output_subdirectory": "history_models/direct_head_fusion",
+    "overwrite_existing_results": false
   }
 }

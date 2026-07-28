@@ -1,641 +1,822 @@
-# RGB Task-Graph History 多轮实验结果分析
+# RGB Task-Graph History 严格四折三Seed实验结果分析
 
-日期：2026-07-24  
-相机：`001484412812`  
-任务：35-node分类，同时将35-node概率聚合为31类Tier3结果
+首次报告日期：2026-07-24
+完整更新日期：2026-07-27
+相机：`001484412812`
+任务：35-node分类，并将35-node概率聚合为31类Tier3结果
+主要实验设计：A/D/J/M严格四折LOSO，`seed_1`、`seed_2`、`seed_42`
 
-## 1. 分析范围
+## 1. 执行摘要
 
-本报告读取并比较以下两个实验包中的实际结果文件，未重新训练模型，也未修改已有结果：
+本次更新纳入了新完成的A/D/J/M四折、三seed、normal-only与all-runs完整结果，解决了旧报告中
+normal-only seed数量不足和J折backbone来源不一致两个关键缺口。
+
+当前最重要的结果如下：
+
+1. **严格结果网格完整。**
+   共包含`4 participants × 3 seeds × 2 train scopes × 10 models × 3 splits = 720`
+   条模型级结果；normal-only与all-runs严格配对差值为360条，没有缺折、缺seed、缺模型或缺split。
+
+2. **历史信息稳定提高35-node分类。**
+   在完整all-runs的`test_all`上，M3的Node Accuracy为`84.74%`，M0为`69.81%`，
+   平均提高`14.94`个百分点；12/12个participant-seed配对全部提高。
+
+3. **M3是all-runs下最强的综合模型。**
+   M3在`test_all`同时获得最高Node Accuracy、Node Macro-F1、Tier3 Accuracy和Tier3 Macro-F1：
+   `84.74 / 83.89 / 85.63 / 84.58`。
+
+4. **收益主要来自流程node消歧，而不是简单Tier3外观识别。**
+   all-runs下M3相对M0的Stage 2 Node Accuracy提高`18.88`个百分点，而Stage 2 Tier3 Accuracy
+   只提高`1.76`个百分点。四组重复动作node之间的双向误判下降`84.7%–98.4%`。
+
+5. **all-runs训练明显改善完整pipeline。**
+   在相同participant、seed、model和split的严格配对中，M3的all-runs相对normal-only在
+   `test_all`提高`5.44`个百分点Node Accuracy和`4.65`个百分点Tier3 Accuracy；
+   四位participant的三seed均值全部为正。
+
+6. **精确实际顺序不是获得历史收益的必要条件。**
+   在all-runs下，graph-valid重排的M3相对真实顺序M2提高`0.59`个百分点Node Accuracy和
+   `0.64`个百分点Tier3 Accuracy；优势不大，但分别在9/12配对中为正。
+
+7. **relation bias有效果，但仍不是主要性能来源。**
+   M5 oracle relation和M6 soft relation相对M4均有小幅平均提升，但幅度通常小于1个百分点，
+   且没有稳定超过M3。当前证据更支持将M3作为主模型，将M4/M5/M6作为relation消融。
+
+8. **run级结果支持同一结论。**
+   将每个participant-run先在三个seed上平均后，all-runs M3相对M0的Node Accuracy在
+   103/103个测试run上全部提高；run等权平均提升`15.78`个百分点。
+
+这些结果支持以下核心解释：
+
+> 历史和task graph信息的主要价值，是把视觉上相同或相似的动作定位到正确的流程node。
+> 它对35-node流程状态识别的帮助远大于对31类Tier3外观分类的帮助。
+
+## 2. 分析范围与结果完整性
+
+### 2.1 本次使用的结果
+
+本报告的正式数值均来自以下实验包：
 
 ```text
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_experiments_2026-07-20
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 ```
 
-纳入分析的实验包括：
+纳入：
 
-1. J-as-test先导实验：normal-only history models，M0–M6，3个seed；
-2. A/D/M跨人normal-only实验：M0–M6和3个E2E对照，目前只有`seed_1`；
-3. A/D/M跨人完整all-runs实验：M0–M6和3个E2E对照，`seed_1`、`seed_2`、`seed_42`；
-4. normal-only与all-runs在相同`seed_1`下的配对比较；
-5. normal、fault和all三个测试划分；
-6. Stage 1、Stage 2和Stage 3分阶段结果；
-7. 35-node混淆矩阵和重复Tier3动作对应的node混淆。
+- held-out participant：A、D、J、M；
+- seed：1、2、42；
+- train scope：`normal_only`和`all_runs`；
+- 模型：M0–M6及3个E2E对照；
+- split：`test_normal`、`test_fault`、`test_all`；
+- overall、per-stage、prediction及严格training-scope delta结果。
 
-### 1.1 模型配置
+旧J先导实验包不再进入四折均值。它仅用于历史对照，以判断早期定性结论是否在严格J折中复现。
 
-| 模型 | 历史信息与图信息 |
-|---|---|
-| M0 | 仅当前clip的冻结RGB特征，不使用历史 |
-| M1 | 使用同run历史，但没有位置编码 |
-| M2 | 使用真实发生顺序的历史和位置编码 |
-| M3 | 使用task graph允许的顺序重排历史 |
-| M4 | candidate history attention，不使用graph relation bias |
-| M5 | 使用真实历史node标签生成oracle graph relation bias |
-| M6 | 使用冻结M0预测的历史node概率生成soft graph relation bias |
-| E2E-Tier3-Scratch | 直接从RGB端到端预测31类Tier3 |
-| E2E-Node-Scratch | 从scratch端到端预测35-node |
-| E2E-Node-From-Tier3 | 由Tier3 backbone初始化并端到端预测35-node |
+### 2.2 完整性检查
 
-### 1.2 测试规模和类别覆盖
+| 结果文件 | 行数 | 预期内容 |
+|---|---:|---|
+| `all_model_metrics.csv` | 720 | 4人 × 3seed × 2scope × 10模型 × 3split |
+| `all_model_training_scope_deltas.csv` | 360 | 4人 × 3seed × 10模型 × 3split |
+| `all_model_cross_person_aggregate.csv` | 60 | 2scope × 10模型 × 3split |
+| `all_model_training_scope_delta_aggregate.csv` | 30 | 10模型 × 3split |
+| `all_model_per_stage_metrics.csv` | 2160 | 720个结果 × 3stage |
 
-| Held-out参与者 | test normal | test fault | test all | fault node覆盖 | fault Tier3覆盖 |
+本次检查确认：
+
+- participant完整：A、D、J、M；
+- seed完整：1、2、42；
+- representation scope与train scope严格匹配；
+- 每个node模型都具有Node和Tier3指标；
+- 直接Tier3模型没有虚构Node指标；
+- 每个实验都有normal、fault和all三个测试split。
+
+### 2.3 严格LOSO设置
+
+每一折只使用另外三位参与者训练，held-out participant不进入训练或validation。所有backbone均：
+
+- 从scratch训练；
+- 不使用validation或early stopping；
+- 不根据held-out participant选择checkpoint；
+- 使用最后一个epoch的`last.pth`；
+- normal-only与all-runs分别训练独立backbone和下游模型。
+
+因此，本报告中的A/D/J/M可以合并为严格一致的四折结果。
+
+## 3. 模型与评估定义
+
+| 模型 | 输入与图信息 | 定位 |
+|---|---|---|
+| M0 | 仅当前clip的冻结RGB特征 | 无历史baseline |
+| M1 | 当前clip + 同run历史，无位置编码 | basic history attention |
+| M2 | 实际发生顺序历史 + 位置编码 | actual-order history |
+| M3 | task graph允许顺序的确定性重排历史 + 位置编码 | graph-valid order |
+| M4 | candidate history attention，无relation bias | no-relation消融 |
+| M5 | 真实历史node标签产生relation bias | oracle上限，不可部署 |
+| M6 | 冻结M0历史node概率产生soft relation bias | 可部署soft graph |
+| E2E-Tier3-Scratch | 直接从RGB预测31类Tier3 | Tier3视频baseline |
+| E2E-Node-Scratch | 从scratch直接预测35-node | Node视频baseline |
+| E2E-Node-From-Tier3 | Tier3 backbone初始化后预测35-node | transfer baseline |
+
+主要指标：
+
+- Node Accuracy / Macro-F1 / Balanced Accuracy；
+- 聚合后的Tier3 Accuracy / Macro-F1 / Balanced Accuracy；
+- per-stage结果；
+- 同participant-seed内的配对差值；
+- run级等权描述性结果。
+
+## 4. 测试数据规模与统计口径
+
+### 4.1 测试规模
+
+| Held-out participant | test normal | test fault | test all | fault node覆盖 | fault Tier3覆盖 |
 |---|---:|---:|---:|---:|---:|
-| J | 387 | 168 | 555 | 33/35 | 29/31 |
 | A | 294 | 137 | 431 | 35/35 | 31/31 |
 | D | 400 | 62 | 462 | 30/35 | 26/31 |
+| J | 387 | 168 | 555 | 33/35 | 29/31 |
 | M | 360 | 87 | 447 | 34/35 | 30/31 |
+| 合计 | 1441 | 454 | 1895 | — | — |
 
-因此，fault macro-F1在不同参与者之间不是完全同一组类别上的平均。D的fault集合尤其小，
-只有62个clip，而且缺失5个node和5个Tier3类别。分析fault结果时应同时查看accuracy、
-macro-F1和类别覆盖。
+四位participant共有103个测试run，其中76个normal run、27个fault run。
 
-## 2. 可比性和解释边界
+D的fault split只有62个clip，并缺失5个node和5个Tier3类别。不同participant的fault Macro-F1
+不是在完全相同的类别集合上计算，因此fault结论必须同时参考accuracy、macro-F1、样本数和类别覆盖。
 
-### 2.1 J与A/D/M的绝对结果不能直接视为严格四折LOSO
+### 4.2 报告中的聚合方式
 
-J先导实验使用已有Tier3 `last.pth`抽取特征，而A/D/M normal-only实验为每个fold从scratch
-重新训练backbone。J实验包还记录了两个重要限制：
+正式总体表采用：
 
-1. 现有J checkpoint训练时曾将J test manifest用作validation；
-2. 该backbone见过A/D/M的fault runs。
+1. 先在每位participant内部平均三个seed；
+2. 再对四位participant等权求均值；
+3. “±”为四位participant均值之间的样本标准差。
 
-因此，J的绝对准确率主要用于验证方法是否具有潜力，不应与A/D/M scratch backbone结果直接
-合并为严格四人LOSO均值。更可靠的是观察每个实验内部相对于M0的增益方向是否一致。
+这样不会因为J有555个clip而给J更大权重，也不会把12个participant-seed组合错误地当作12位独立受试者。
 
-### 2.2 normal-only与all-runs的多seed数量不对称
+配对计数如“12/12”为描述性稳定性指标，不等于12个独立统计样本。当前真正的外层独立单位只有
+4位participant，因此本报告不做普通clip级t-test，也不宣称统计显著性。
 
-- A/D/M normal-only：只有`seed_1`；
-- A/D/M完整all-runs：有`seed_1`、`seed_2`、`seed_42`。
+## 5. Strict normal-only结果
 
-因此，训练范围的严格公平比较只能使用同一`seed_1`。all-runs三个seed的均值和标准差可用于
-评估all-runs自身的稳定性，但不能把它与单个normal-only seed当作完全对称的多seed比较。
-
-### 2.3 指标聚合方式
-
-- J表格：直接在3个seed之间计算均值和样本标准差；
-- A/D/M all-runs跨人表格：先在每位参与者内部平均3个seed，再在A/D/M之间计算均值和样本标准差；
-- paired training-scope表格：对A、D、M各自的相同`seed_1`计算
-  `all-runs - normal-only`，再跨3位参与者取均值和样本标准差；
-- 多个seed不是新的独立参与者，因此不将9个fold-seed结果当作9个独立受试者做显著性检验。
-
-报告中的数值均转换为百分比；“+1.00”表示提高1个百分点。
-
-## 3. J-as-test先导实验
-
-### 3.1 test_all三seed结果
+### 5.1 test_all四折三seed结果
 
 | 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
 |---|---:|---:|---:|---:|
-| M0 | 75.20 ± 1.02 | 75.95 ± 0.36 | 86.79 ± 0.21 | 82.34 ± 0.46 |
-| M1 | 74.89 ± 2.71 | 73.80 ± 1.45 | 82.76 ± 1.98 | 76.72 ± 1.09 |
-| M2 | 88.77 ± 0.55 | 86.29 ± 1.11 | 89.43 ± 0.58 | 86.29 ± 0.99 |
-| **M3** | **89.97 ± 0.28** | **87.69 ± 0.98** | **90.27 ± 0.18** | 87.50 ± 1.14 |
-| M4 | 87.57 ± 1.00 | 84.56 ± 2.38 | 88.11 ± 1.25 | 84.48 ± 2.65 |
-| **M5** | 89.49 ± 1.10 | 87.64 ± 1.56 | **90.27 ± 1.00** | **87.71 ± 1.88** |
-| M6 | 87.09 ± 0.73 | 83.72 ± 2.26 | 87.93 ± 0.79 | 83.70 ± 2.60 |
+| M0 | 66.76 ± 3.86 | 68.38 ± 2.90 | 79.33 ± 5.65 | 76.21 ± 3.05 |
+| **M1** | 78.59 ± 5.53 | **78.71 ± 3.13** | 81.01 ± 4.99 | **80.84 ± 2.60** |
+| M2 | 79.30 ± 7.70 | 78.47 ± 5.65 | 81.08 ± 6.70 | 80.03 ± 4.34 |
+| M3 | 79.30 ± 6.96 | 78.48 ± 5.26 | 80.99 ± 6.00 | 79.92 ± 4.23 |
+| M4 | 79.32 ± 5.74 | 78.01 ± 4.22 | 81.25 ± 5.21 | 79.31 ± 3.66 |
+| M5 | 79.63 ± 6.65 | 78.24 ± 5.06 | 81.24 ± 6.42 | 79.39 ± 4.40 |
+| **M6** | **79.76 ± 6.38** | 78.34 ± 4.63 | 81.39 ± 5.84 | 79.49 ± 3.71 |
+| E2E-Node-Scratch | 71.77 ± 4.73 | 72.44 ± 3.30 | 78.84 ± 5.99 | 77.07 ± 2.75 |
+| E2E-Node-From-Tier3 | 74.88 ± 4.88 | 74.52 ± 3.73 | **81.82 ± 5.51** | 78.67 ± 3.62 |
+| E2E-Tier3-Scratch | — | — | 81.22 ± 4.39 | 78.07 ± 2.40 |
 
-主要观察：
+normal-only的主要现象：
 
-1. M2–M6都明显提高35-node accuracy，证明历史信息的主要价值不是简单复制当前clip分类；
-2. M3获得最高node accuracy、node macro-F1和并列最高Tier3 accuracy；
-3. M5的Tier3 macro-F1最高，且node结果与M3非常接近；
-4. M1没有位置编码，在J上整体低于M0，说明“把历史特征直接放入attention”不够；
-5. M6明显低于M3和M5，说明soft relation bias尚未达到oracle关系或graph-valid history的效果。
+1. 所有历史模型都比M0高约11.8–13.0个百分点Node Accuracy；
+2. M1–M6的总体Node Accuracy非常接近，最大差距只有1.17个百分点；
+3. M6获得最高Node Accuracy，M1获得最高Node Macro-F1和Tier3 Macro-F1；
+4. E2E-Node-From-Tier3获得最高Tier3 Accuracy，但Node Accuracy明显低于所有M1–M6；
+5. normal-only下没有足够证据把M3定义为绝对最优，因为M2–M6在不同指标上互有胜负。
 
-### 3.2 相对于M0的test_all提升
+Balanced Accuracy提供相同方向：M1的Node/Tier3 Balanced Accuracy为`80.25/82.47`，是
+normal-only `test_all`的最高值。
 
-| 模型 | Δ Node Acc | Δ Node Macro-F1 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
-|---|---:|---:|---:|---:|
-| M1 | -0.30 | -2.15 | -4.02 | -5.62 |
-| M2 | +13.57 | +10.35 | +2.64 | +3.95 |
-| **M3** | **+14.77** | **+11.74** | **+3.48** | +5.15 |
-| M4 | +12.37 | +8.61 | +1.32 | +2.13 |
-| M5 | +14.29 | +11.70 | +3.48 | **+5.37** |
-| M6 | +11.89 | +7.77 | +1.14 | +1.36 |
-
-M3与M5在三个seed中都表现出大幅node提升，并且seed标准差较小。这构成了后续A/D/M
-跨人实验的主要依据。
-
-### 3.3 J的分阶段现象
-
-| 模型 | Stage 1 Node Acc | Stage 2 Node Acc | Stage 3 Node Acc |
-|---|---:|---:|---:|
-| M0 | 80.61 | 74.06 | 77.63 |
-| M1 | 86.06 | 76.02 | **60.53** |
-| M2 | 86.06 | 90.64 | 80.26 |
-| M3 | 84.85 | **91.75** | **83.77** |
-| M4 | 81.21 | 89.70 | 80.26 |
-| M5 | **87.27** | 90.80 | **83.77** |
-| M6 | 81.21 | 89.07 | 80.26 |
-
-M1在Stage 3降到60.53%，解释了其整体失败。加入位置或task-graph结构后，M2–M6在
-Stage 2均接近或超过89%。这说明历史特征必须带有“历史中处于什么位置/关系”的信息，
-否则attention容易学习不稳定的历史捷径。
-
-## 4. A/D/M normal-only结果
-
-本节只有`seed_1`。表中“±”表示A/D/M之间的标准差，不是seed标准差。
-
-### 4.1 test_all结果
-
-| 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
-|---|---:|---:|---:|---:|
-| M0 | 63.87 ± 2.44 | 65.42 ± 2.48 | 73.29 ± 2.44 | 72.47 ± 0.71 |
-| M1 | 74.96 ± 1.78 | **76.71 ± 1.99** | 76.70 ± 1.38 | **79.54 ± 2.67** |
-| M2 | 73.96 ± 3.27 | 73.99 ± 1.99 | 76.22 ± 2.33 | 76.54 ± 0.54 |
-| M3 | 74.84 ± 1.03 | 76.13 ± 0.29 | 76.17 ± 1.05 | 78.42 ± 0.41 |
-| **M4** | **75.95 ± 1.20** | 76.03 ± 3.13 | 78.07 ± 1.31 | 78.05 ± 4.72 |
-| M5 | 74.82 ± 1.37 | 73.84 ± 1.37 | 76.56 ± 2.03 | 75.58 ± 2.46 |
-| M6 | 73.17 ± 3.23 | 72.85 ± 1.97 | 76.01 ± 1.75 | 75.22 ± 1.72 |
-| E2E-Node-Scratch | 69.12 ± 0.64 | 71.04 ± 3.02 | 75.01 ± 2.69 | 75.86 ± 2.91 |
-| E2E-Node-From-Tier3 | 73.03 ± 1.78 | 72.48 ± 0.07 | **79.82 ± 1.55** | 76.71 ± 1.75 |
-| E2E-Tier3-Scratch | — | — | 76.47 ± 3.59 | 75.14 ± 0.57 |
-
-normal-only下，历史模型相对M0仍然有明显node增益：
-
-- M1：+11.09 node accuracy；
-- M2：+10.08；
-- M3：+10.96；
-- M4：+12.08；
-- M5：+10.95；
-- M6：+9.30。
-
-但模型排序与J不同：M4的node accuracy最高，M1的macro-F1最高。这提示单个seed下的模型排序
-可能受到初始化影响，也可能说明normal-only训练对fault run泛化不稳定。
-
-尤其需要注意：
-
-- M1在test_normal上node增益很大，但test_fault增益只有约+1.43；
-- M1在test_fault的Tier3 accuracy反而比M0低约3.29；
-- M4在normal-only下是最好的node accuracy配置，但在完整all-runs中被M3超过。
-
-## 5. A/D/M完整all-runs结果
-
-每位参与者使用3个seed平均，然后在A/D/M之间汇总。“±”表示参与者间标准差。
-
-### 5.1 test_all总体结果
-
-| 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
-|---|---:|---:|---:|---:|
-| M0 | 68.11 ± 2.46 | 71.48 ± 2.50 | 80.64 ± 2.23 | 79.57 ± 1.87 |
-| M1 | 76.04 ± 3.20 | 78.16 ± 2.26 | 82.35 ± 2.58 | 82.54 ± 1.53 |
-| M2 | 81.35 ± 2.45 | 80.83 ± 1.44 | 82.37 ± 2.65 | 81.80 ± 1.26 |
-| **M3** | **82.16 ± 3.25** | **81.97 ± 1.96** | **83.33 ± 2.62** | **83.03 ± 1.23** |
-| M4 | 80.53 ± 2.95 | 79.89 ± 2.57 | 82.15 ± 2.36 | 81.22 ± 2.12 |
-| M5 | 80.81 ± 1.85 | 81.33 ± 0.49 | 82.41 ± 1.89 | 82.84 ± 0.96 |
-| M6 | 80.72 ± 4.37 | 80.19 ± 3.21 | 82.49 ± 3.23 | 81.50 ± 2.41 |
-| E2E-Node-Scratch | 71.40 ± 0.86 | 71.81 ± 1.31 | 78.18 ± 1.72 | 76.40 ± 0.41 |
-| E2E-Node-From-Tier3 | 75.45 ± 2.50 | 76.39 ± 1.26 | 82.98 ± 0.78 | 80.84 ± 1.00 |
-| E2E-Tier3-Scratch | — | — | 82.54 ± 1.62 | 80.63 ± 1.67 |
-
-M3是完整all-runs条件下最平衡的配置：
-
-- test_all四个主要指标全部第一；
-- node accuracy比M0高14.05个百分点；
-- Tier3 accuracy比M0高2.69个百分点；
-- node accuracy比E2E-Node-From-Tier3高6.71个百分点；
-- Tier3 accuracy比E2E-Node-From-Tier3高0.35个百分点；
-- Tier3 macro-F1比E2E-Node-From-Tier3高2.19个百分点。
-
-### 5.2 三个测试划分中的最佳配置
+### 5.2 三个split中的最佳模型
 
 | Split | 最佳Node Acc | 最佳Node Macro-F1 | 最佳Tier3 Acc | 最佳Tier3 Macro-F1 |
 |---|---|---|---|---|
-| normal | M3, 82.80 | M3, 82.21 | M3, 83.98 | M3, 83.23 |
-| fault | M3, 82.78 | M3, 81.10 | E2E-Node-From-Tier3, 84.77 | M5, 81.97 |
-| all | M3, 82.16 | M3, 81.97 | M3, 83.33 | M3, 83.03 |
+| normal | M1, 81.63 | M1, 82.75 | M1, 83.67 | M1, 84.89 |
+| fault | M4, 77.86 | M4, 74.02 | E2E-Node-From-Tier3, 81.88 | M4, 75.68 |
+| all | M6, 79.76 | M1, 78.71 | E2E-Node-From-Tier3, 81.82 | M1, 80.84 |
 
-fault上有一个重要例外：E2E-Node-From-Tier3的Tier3 accuracy为84.77%，比M3的83.56%
-高1.21个百分点。但M3的node accuracy仍高5.09个百分点，Tier3 macro-F1也高约0.60个百分点。
-这说明E2E transfer在fault数据上更擅长预测聚合Tier3类别，但不能同样准确地区分35个graph node。
+M1在normal-only的正常流程上表现很强，但没有保持fault上的同等优势。这说明不带位置和graph
+关系的history attention容易学习正常流程中的序列模式，却不一定能稳定迁移到异常顺序。
 
-### 5.3 相对于M0的all-runs提升
+## 6. 完整all-runs结果
 
-下表在9个participant-seed配对中直接计算模型减M0。`正向次数`表示9个配对中严格大于0的次数；
-这些配对不是9个独立受试者，因此只用于稳定性描述。
+### 6.1 test_all四折三seed结果
 
-| 模型 | Δ Node Acc | Node正向次数 | Δ Tier3 Acc | Tier3正向次数 |
+| 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
 |---|---:|---:|---:|---:|
-| M1 | +7.93 | 8/9 | +1.71 | 7/9 |
-| M2 | +13.24 | **9/9** | +1.73 | 7/9 |
-| **M3** | **+14.05** | **9/9** | **+2.69** | **9/9** |
-| M4 | +12.42 | **9/9** | +1.51 | 8/9 |
-| M5 | +12.70 | **9/9** | +1.78 | **9/9** |
-| M6 | +12.61 | **9/9** | +1.85 | 8/9 |
+| M0 | 69.81 ± 3.94 | 72.91 ± 3.51 | 83.32 ± 5.66 | 81.41 ± 3.98 |
+| M1 | 79.67 ± 7.72 | 80.93 ± 5.85 | 84.85 ± 5.44 | 84.37 ± 3.86 |
+| M2 | 84.15 ± 5.95 | 83.06 ± 4.61 | 84.99 ± 5.67 | 83.67 ± 3.87 |
+| **M3** | **84.74 ± 5.81** | **83.89 ± 4.16** | **85.63 ± 5.08** | **84.58 ± 3.25** |
+| M4 | 83.01 ± 5.51 | 81.74 ± 4.25 | 84.58 ± 5.24 | 82.76 ± 3.54 |
+| M5 | 83.78 ± 6.12 | 83.19 ± 3.75 | 84.98 ± 5.36 | 84.14 ± 2.71 |
+| M6 | 83.71 ± 6.96 | 82.65 ± 5.59 | 85.05 ± 5.76 | 83.53 ± 4.50 |
+| E2E-Node-Scratch | 74.72 ± 6.68 | 75.09 ± 6.63 | 81.92 ± 7.62 | 79.65 ± 6.50 |
+| E2E-Node-From-Tier3 | 77.74 ± 5.02 | 78.56 ± 4.45 | 85.46 ± 5.01 | 82.85 ± 4.10 |
+| E2E-Tier3-Scratch | — | — | 84.92 ± 4.95 | 82.52 ± 4.03 |
 
-M3是唯一同时满足以下条件的配置：
+M3同时获得：
 
-1. 9/9配对node accuracy全部提高；
-2. 9/9配对Tier3 accuracy全部提高；
-3. 平均node增益最大；
-4. 平均Tier3增益最大。
+- 最高Node Accuracy：84.74%；
+- 最高Node Macro-F1：83.89%；
+- 最高Tier3 Accuracy：85.63%；
+- 最高Tier3 Macro-F1：84.58%；
+- 最高Node Balanced Accuracy：84.82%；
+- 最高Tier3 Balanced Accuracy：85.65%。
 
-这比只比较最终平均准确率更有说服力。
+因此，在完整all-runs条件下，将M3作为当前主模型是有数据依据的。
 
-## 6. 真实顺序、graph-valid重排和relation bias消融
+### 6.2 三个split中的最佳模型
 
-### 6.1 M2与M3：真实精确顺序不是必要条件
+| Split | 最佳Node Acc | 最佳Node Macro-F1 | 最佳Tier3 Acc | 最佳Tier3 Macro-F1 |
+|---|---|---|---|---|
+| normal | M3, 85.62 | M3, 84.74 | M3, 86.52 | M3, 85.44 |
+| fault | M3, 84.31 | M3, 81.37 | E2E-Node-From-Tier3, 86.59 | E2E-Node-From-Tier3, 81.55 |
+| all | M3, 84.74 | M3, 83.89 | M3, 85.63 | M3, 84.58 |
 
-在完整all-runs的test_all上：
+fault split仍有例外：E2E-Node-From-Tier3的Tier3 Accuracy比M3高1.70个百分点，Tier3
+Macro-F1高0.02个百分点。但M3的Node Accuracy仍高5.06个百分点，说明两者解决的问题不同：
 
-| 比较 | Δ Node Acc | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
-|---|---:|---:|---:|
-| M3 − M2 | +0.81 | +0.96 | +1.23 |
+- E2E transfer更擅长fault clip的动作外观类别；
+- M3更擅长将动作放到正确的35-node流程位置。
 
-M3在9个participant-seed配对中：
+## 7. 历史模型相对M0的严格配对收益
 
-- node accuracy有7/9高于M2；
-- Tier3 accuracy有7/9高于M2；
-- Tier3 macro-F1有9/9高于M2。
+### 7.1 test_all结果
 
-这与研究假设一致：模型不一定需要复现同一操作者的精确历史顺序；只要历史集合满足task graph
-允许的相对关系，仍可获得有效上下文，甚至比实际观测顺序更稳定。该结果也适合解释多人协作场景：
-之前的机器准备动作可能由其他人完成，但它们仍然是当前动作的合法历史。
+下表对相同participant、seed和scope直接计算“模型 − M0”。正向次数的分母为12。
 
-### 6.2 M4、M5与M6：graph relation bias有小幅收益，但soft版本尚未成为最佳
+| Scope | 模型 | Δ Node Acc | Node正向 | Δ Node Macro-F1 | Δ Tier3 Acc | Tier3正向 | Δ Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| normal-only | M1 | +11.83 | 12/12 | +10.32 | +1.68 | 10/12 | +4.62 |
+| normal-only | M2 | +12.55 | 12/12 | +10.09 | +1.75 | 8/12 | +3.81 |
+| normal-only | M3 | +12.54 | 12/12 | +10.10 | +1.65 | 9/12 | +3.71 |
+| normal-only | M4 | +12.56 | 12/12 | +9.63 | +1.92 | 9/12 | +3.09 |
+| normal-only | M5 | +12.87 | 12/12 | +9.86 | +1.90 | 10/12 | +3.18 |
+| normal-only | M6 | **+13.00** | 12/12 | +9.96 | **+2.06** | 10/12 | +3.28 |
+| all-runs | M1 | +9.87 | 11/12 | +8.02 | +1.54 | 10/12 | +2.96 |
+| all-runs | M2 | +14.35 | 12/12 | +10.15 | +1.68 | 10/12 | +2.26 |
+| all-runs | **M3** | **+14.94** | **12/12** | **+10.98** | **+2.32** | **12/12** | **+3.17** |
+| all-runs | M4 | +13.20 | 12/12 | +8.83 | +1.27 | 11/12 | +1.35 |
+| all-runs | M5 | +13.97 | 12/12 | +10.29 | +1.66 | 12/12 | +2.73 |
+| all-runs | M6 | +13.91 | 12/12 | +9.74 | +1.73 | 11/12 | +2.12 |
 
-test_all平均结果：
+最稳健的结论是：
 
-| 比较 | Δ Node Acc | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
-|---|---:|---:|---:|
-| M5 oracle relation − M4 no relation | +0.29 | +0.26 | **+1.63** |
-| M6 soft relation − M4 no relation | +0.20 | +0.34 | +0.29 |
-| M6 soft relation − M5 oracle relation | -0.09 | +0.08 | **-1.34** |
-| M3 graph-valid history − M6 soft relation | +1.44 | +0.84 | +1.53 |
+- 历史信息对35-node分类的帮助极其稳定；
+- normal-only和all-runs中，M1–M6的Node Accuracy均大幅超过M0；
+- all-runs M3是唯一同时达到12/12 Node和12/12 Tier3正向的配置；
+- Tier3提升明显小于Node提升，再次说明历史主要解决流程位置消歧。
 
-结论是：
+### 7.2 M3相对M0的participant一致性
 
-- oracle relation bias确实提供额外信息，尤其提高Tier3 macro-F1；
-- M6的soft relation在accuracy上略高于M4，但提升很小；
-- M6没有超过M3，也没有稳定达到M5的macro-F1；
-- 当前结果还不支持“soft graph relation bias是最优模型”的结论；
-- 更稳妥的论文表述是：graph约束历史重排M3目前表现最好，oracle relation M5证明关系类型有潜力，
-  但从M0概率构造的soft relation仍需要改进。
+| Scope | Participant | M0 Node | M3 Node | Δ Node | M0 Tier3 | M3 Tier3 | Δ Tier3 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| normal-only | A | 63.96 | 76.10 | +12.14 | 76.10 | 78.42 | +2.32 |
+| normal-only | D | 64.07 | 75.47 | +11.40 | 77.85 | 77.99 | +0.14 |
+| normal-only | J | 72.19 | 89.73 | +17.54 | 87.69 | 89.97 | +2.28 |
+| normal-only | M | 66.82 | 75.91 | +9.10 | 75.69 | 77.55 | +1.86 |
+| all-runs | A | 65.27 | 79.27 | +14.00 | 78.19 | 80.74 | +2.55 |
+| all-runs | D | 69.55 | 81.53 | +11.98 | 81.17 | 83.26 | +2.09 |
+| all-runs | J | 74.89 | 92.49 | +17.60 | 91.35 | 92.55 | +1.20 |
+| all-runs | M | 69.50 | 85.68 | +16.18 | 82.55 | 85.98 | +3.43 |
 
-### 6.3 M1与M2：位置主要改善node消歧，而不是Tier3外观分类
+四位participant在两种scope下的M3 Node增益全部为正，范围为`+9.10`至`+17.60`个百分点。
 
-test_all上，M2相对M1：
-
-```text
-Node accuracy：+5.32个百分点
-Tier3 accuracy：+0.02个百分点
-Tier3 macro-F1：-0.74个百分点
-```
-
-位置编码几乎不改变Tier3 accuracy，却大幅提高35-node accuracy。这是一个非常关键的结果：
-位置/顺序主要帮助识别“当前视觉动作对应graph中的哪一个node”，而不是识别动作外观本身。
-
-## 7. Stage分析：历史收益主要来自Stage 2 node消歧
-
-### 7.1 all-runs test_all分阶段结果
-
-| 模型 | Stage 1 Node | Stage 2 Node | Stage 3 Node | Stage 2 Tier3 |
-|---|---:|---:|---:|---:|
-| M0 | 79.46 | 63.45 | 80.87 | 80.72 |
-| M1 | 81.45 | 72.78 | **87.47** | 81.47 |
-| M2 | 81.58 | 80.63 | 84.47 | 82.03 |
-| **M3** | **82.86** | **81.23** | 85.95 | **82.84** |
-| M4 | 80.67 | 79.96 | 82.98 | 82.20 |
-| M5 | 82.46 | 79.28 | 86.75 | 81.48 |
-| M6 | 81.99 | 80.07 | 82.36 | 82.51 |
-
-M3相对M0：
-
-```text
-Stage 1 node accuracy：+3.40
-Stage 2 node accuracy：+17.78
-Stage 3 node accuracy：+5.09
-Stage 2 Tier3 accuracy：+2.12
-```
-
-Stage 2的node提升达到17.78个百分点，而Tier3只提高2.12个百分点。这说明M0本来已经能识别
-大部分Tier3动作，但无法区分Stage 2线性流程中重复出现的相同动作node。历史与task graph提供的
-主要信息正是“这是该动作在流程中的第几次出现”。
-
-### 7.2 重复动作node的混淆大幅下降
-
-将A/D/M三个参与者、三个all-runs seed的test_all混淆矩阵相加，比较M0与M3在Stage 2重复动作
-node之间的双向误判次数：
-
-| 相同Tier3动作对应的两个node | M0互相误判 | M3互相误判 | 降幅 |
-|---|---:|---:|---:|
-| `place sample under electrodes`：node 14 ↔ 21 | 84 | 5 | 94.0% |
-| `press pedal`：node 15 ↔ 22 | 152 | 4 | 97.4% |
-| `put sample on machine table`：node 16 ↔ 19 | 134 | 13 | 90.3% |
-| `grip sample from machine table`：node 17 ↔ 20 | 125 | 23 | 81.6% |
-
-最大的单node recall提升包括：
-
-| Node | 动作 | M0 Recall | M3 Recall | 提升 |
-|---|---|---:|---:|---:|
-| 22 | press pedal（第二次） | 30.39 | 82.35 | +51.96 |
-| 19 | put sample on machine table（第二次） | 38.73 | 85.78 | +47.06 |
-| 15 | press pedal（第一次） | 46.58 | 84.47 | +37.90 |
-| 20 | grip sample from machine table（第二次） | 41.18 | 66.67 | +25.49 |
-| 17 | grip sample from machine table（第一次） | 48.53 | 73.53 | +25.00 |
-| 21 | place sample under electrodes（第二次） | 52.94 | 75.49 | +22.55 |
-
-这是目前最直接支持task-history方法有效性的证据：模型不是仅利用历史提高整体分类，而是在
-task graph最需要消歧的位置显著减少了同动作、不同node之间的混淆。
-
-M3仍然较困难的node包括：
-
-- node 16 `put sample on machine table`：recall 60.78%；
-- node 20 `grip sample from machine table`：66.67%；
-- node 7 `turn on water pump`：68.63%；
-- node 35 `lock crimper`：70.59%。
-
-后续可重点检查这些node的视觉相似性、clip边界和历史缺失情况。
-
-## 8. normal-only与all-runs训练范围比较
-
-下表只使用相同`seed_1`，数值为A/D/M上的
-`完整all-runs pipeline − 完整normal-only pipeline`平均差值。
+## 8. all-runs与normal-only严格训练范围比较
 
 ### 8.1 test_all配对差值
 
-| 模型 | Δ Node Acc | Δ Node Macro-F1 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
-|---|---:|---:|---:|---:|
-| M0 | +5.30 | +6.71 | +7.29 | +7.25 |
-| M1 | +0.00 | +1.25 | +5.65 | +3.50 |
-| M2 | **+8.93** | **+8.51** | +7.12 | +6.67 |
-| M3 | +8.06 | +6.89 | **+7.62** | +5.60 |
-| M4 | +5.37 | +5.59 | +4.35 | +4.81 |
-| M5 | +4.94 | +6.52 | +4.85 | +6.54 |
-| M6 | +7.32 | +6.92 | +5.90 | +5.71 |
-| E2E-Node-Scratch | +1.58 | -0.59 | +1.97 | -0.86 |
-| E2E-Node-From-Tier3 | +3.44 | +4.71 | +3.38 | +4.39 |
-| E2E-Tier3-Scratch | — | — | +5.29 | +5.21 |
+下表严格使用相同participant、seed、model和split，计算：
 
-加入训练人员的fault runs后，M0和几乎所有history模型都有明显提升。对M2、M3、M6而言，
-提升不只是fault测试集上的适配，而是整体视觉表征、node分类和Tier3分类共同改善。
+```text
+完整all-runs pipeline − 完整normal-only pipeline
+```
+
+“±”为四位participant各自三seed平均差值之间的标准差。
+
+| 模型 | Δ Node Acc | Δ Tier3 Acc | Node正向seed-fold | Tier3正向seed-fold |
+|---|---:|---:|---:|---:|
+| M0 | +3.05 ± 1.75 | +3.98 ± 2.03 | 9/12 | 11/12 |
+| M1 | +1.08 ± 3.82 | +3.84 ± 3.08 | 8/12 | 11/12 |
+| M2 | +4.85 ± 2.39 | +3.91 ± 2.22 | 9/12 | 10/12 |
+| **M3** | **+5.44 ± 3.24** | **+4.65 ± 2.85** | **10/12** | **10/12** |
+| M4 | +3.69 ± 3.30 | +3.34 ± 2.66 | 10/12 | 10/12 |
+| M5 | +4.15 ± 1.58 | +3.74 ± 2.41 | 11/12 | **12/12** |
+| M6 | +3.95 ± 3.34 | +3.66 ± 2.99 | 10/12 | 10/12 |
+| E2E-Node-Scratch | +2.96 ± 2.01 | +3.08 ± 1.97 | **12/12** | **12/12** |
+| E2E-Node-From-Tier3 | +2.86 ± 1.25 | +3.65 ± 1.03 | 11/12 | 11/12 |
+| E2E-Tier3-Scratch | — | +3.71 ± 2.49 | — | 11/12 |
+
+all-runs训练不仅改善history模型，也改善M0和三个E2E对照，说明收益的一部分来自更充分的视觉
+训练分布，而不是仅来自history attention。
+
+M3的平均提升最大：
+
+- Node Accuracy：+5.44；
+- Node Macro-F1：+5.41；
+- Tier3 Accuracy：+4.65；
+- Tier3 Macro-F1：+4.66。
 
 ### 8.2 normal与fault上的差异
 
-| 模型 | Fault Δ Node | Fault Δ Tier3 | Normal Δ Node | Normal Δ Tier3 |
+| 模型 | Normal Δ Node | Normal Δ Tier3 | Fault Δ Node | Fault Δ Tier3 |
 |---|---:|---:|---:|---:|
-| M0 | +3.47 | +7.80 | +5.43 | +6.57 |
-| M1 | +9.41 | **+14.28** | **-2.75** | +3.49 |
-| M2 | +9.58 | +7.29 | +8.16 | +6.48 |
-| M3 | +10.21 | +9.67 | +7.48 | **+7.02** |
-| M4 | +7.23 | +5.46 | +4.59 | +3.75 |
-| M5 | +7.42 | +6.10 | +3.84 | +3.93 |
-| M6 | **+11.76** | +8.24 | +6.01 | +5.00 |
-| E2E-Node-Scratch | +2.97 | +2.43 | +1.28 | +1.93 |
-| E2E-Node-From-Tier3 | +5.70 | +4.26 | +3.04 | +3.31 |
-| E2E-Tier3-Scratch | — | +6.59 | — | +4.63 |
+| M0 | +3.23 | +3.94 | +1.80 | +3.38 |
+| M1 | **-1.18** | +2.12 | **+8.43** | **+10.15** |
+| M2 | +4.04 | +3.27 | +6.62 | +4.91 |
+| **M3** | **+4.84** | **+4.15** | **+7.33** | **+6.20** |
+| M4 | +3.31 | +3.00 | +3.91 | +3.70 |
+| M5 | +3.27 | +3.18 | +6.18 | +4.76 |
+| M6 | +3.50 | +3.43 | +5.35 | +4.01 |
 
-关键结论：
+主要解释：
 
-1. all-runs训练对fault测试的帮助总体更大；
-2. M2、M3、M6在normal和fault上都提高，未显示明显的正常流程性能代价；
-3. M1是主要例外：fault性能大幅改善，但normal node accuracy下降2.75个百分点；
-4. M1的这种权衡再次说明没有位置/graph结构的历史attention容易依赖训练分布中的序列捷径；
-5. M3在normal和fault上都保持较大、较均衡的提升，是更可靠的训练配置。
+1. all-runs对fault的改善通常大于对normal的改善；
+2. M2、M3、M4、M5和M6在normal与fault上均为正；
+3. M1是唯一出现明确权衡的history模型：normal Node下降1.18，但fault Node提高8.43；
+4. M3在normal与fault上都获得较大改善，是更平衡的配置；
+5. all-runs不是简单“只拟合fault测试”，因为M3的normal Node和Tier3也分别提高4.84和4.15。
 
-### 8.3 participant一致性
+### 8.3 M3训练范围提升的participant一致性
 
-在相同`seed_1`的test_all上：
-
-- M3的node提升：A +7.42、D +6.93、M +9.84；
-- M3的Tier3提升：A +7.19、D +6.06、M +9.62；
-- M6的node提升：A +7.89、D +7.36、M +6.71；
-- M6的Tier3提升：A +5.34、D +5.19、M +7.16；
-- M2、M3、M5、M6的node提升在A/D/M三人上均为正。
-
-因此all-runs的主要提升不是由单个参与者独占。
-
-## 9. all-runs随机种子稳定性
-
-下表先在A/D/M之间平均，再计算`seed_1`、`seed_2`、`seed_42`的标准差。
-
-| 模型 | Test-all Node Acc | Seed SD | Test-all Tier3 Acc | Seed SD |
+| Participant | Δ Node Acc | Δ Node Macro-F1 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
 |---|---:|---:|---:|---:|
-| M0 | 68.11 | 2.39 | 80.64 | 1.09 |
-| M1 | 76.04 | 1.62 | 82.35 | 1.52 |
-| M2 | 81.35 | 2.15 | 82.37 | 1.30 |
-| M3 | **82.16** | 1.81 | **83.33** | 1.18 |
-| M4 | 80.53 | **0.73** | 82.15 | **0.33** |
-| M5 | 80.81 | 1.86 | 82.41 | 1.28 |
-| M6 | 80.72 | 0.97 | 82.49 | 0.84 |
-| E2E-Node-Scratch | 71.40 | 0.74 | 78.18 | 1.33 |
-| E2E-Node-From-Tier3 | 75.45 | 1.61 | 82.98 | 1.02 |
-| E2E-Tier3-Scratch | — | — | 82.54 | 1.29 |
+| A | +3.17 | +2.33 | +2.32 | +1.34 |
+| D | +6.06 | +6.54 | +5.27 | +6.40 |
+| J | +2.76 | +3.65 | +2.58 | +3.62 |
+| M | +9.77 | +9.11 | +8.43 | +7.26 |
 
-M4和M6最稳定，但平均性能低于M3。M3的seed波动约1.8个百分点node、1.2个百分点Tier3，
-属于可见但可接受的训练方差。`seed_2`对M2/M3整体较弱，`seed_42`整体较强，因此后续论文
-结果应继续报告多seed均值，而不是只使用最好的seed。
+四位participant的平均差值全部为正。M的受益最大，A和J较小，但仍保持正向。
 
-## 10. 参与者差异
+### 8.4 run级训练范围比较
 
-all-runs、3-seed平均、test_all：
+将每个participant-run的三个seed先平均，再对run等权：
 
-| 参与者 | M0 Node | M3 Node | M3−M0 | M0 Tier3 | M3 Tier3 | M3−M0 |
+| Split | Run数 | M3 Δ Node均值 | 中位数 | Node正向run | M3 Δ Tier3均值 | Tier3正向run |
 |---|---:|---:|---:|---:|---:|---:|
-| A | 65.27 | 79.27 | +14.00 | 78.19 | 80.74 | +2.55 |
-| D | 69.55 | 81.53 | +11.98 | 81.17 | 83.26 | +2.09 |
-| M | 69.50 | 85.68 | +16.18 | 82.55 | 85.98 | +3.43 |
+| normal | 76 | +5.11 | +4.08 | 54/76 | +4.46 | 53/76 |
+| fault | 27 | +6.46 | +7.14 | 21/27 | +5.68 | 20/27 |
+| all | 103 | +5.47 | +4.76 | 75/103 | +4.78 | 73/103 |
 
-A是最困难的held-out参与者，M最容易；但M3相对M0的node增益在三人上都超过11个百分点。
-这说明历史方法的收益具有跨人一致性，同时绝对性能仍受到参与者外观、操作风格和数据质量影响。
+run级结果与participant级结果方向一致，但run并非跨participant完全独立，仍应视为描述性证据。
 
-fault结果的参与者间标准差明显更大。例如M3的fault node accuracy跨人标准差约10.21个百分点。
-这与fault样本数和类别覆盖不均有关，不应仅依据fault均值宣称稳定的异常泛化能力。
+## 9. 顺序与graph relation消融
 
-## 11. E2E对照的含义
+### 9.1 M2与M3：实际顺序和graph-valid重排
 
-### 11.1 从Tier3迁移明显优于35-node从scratch
+| Scope | 比较 | Δ Node Acc | Node正向 | Δ Node Macro-F1 | Δ Tier3 Acc | Tier3正向 | Δ Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| normal-only | M3 − M2 | -0.00 | 6/12 | +0.01 | -0.10 | 5/12 | -0.11 |
+| all-runs | M3 − M2 | **+0.59** | **9/12** | +0.83 | **+0.64** | **9/12** | +0.91 |
 
-all-runs test_all：
+normal-only下M2和M3几乎完全相同；all-runs下M3有小幅、较一致的优势。因此可以得出：
 
-```text
-E2E-Node-Scratch：
-  Node Acc 71.40，Tier3 Acc 78.18
+- 模型不需要严格复现历史动作的实际精确顺序才能获得收益；
+- task graph允许的相对顺序足以保留有用历史结构；
+- 当前数据支持“graph-valid order具有轻微正则化作用”，但不支持宣称其优势非常大；
+- 该结果符合多人协作场景：历史动作可能由不同人完成，准确个人执行顺序不一定是关键。
 
-E2E-Node-From-Tier3：
-  Node Acc 75.45，Tier3 Acc 82.98
-```
+### 9.2 M1与M2：位置编码的作用
 
-Tier3预训练带来约+4.05 node accuracy和+4.80 Tier3 accuracy，说明现有Tier3视觉任务确实提供
-有价值的动作外观表征。
+| Scope | M2 − M1 Node Acc | Node正向 | Tier3 Acc | Tier3 Macro-F1 |
+|---|---:|---:|---:|---:|
+| normal-only | +0.72 | 6/12 | +0.07 | -0.81 |
+| all-runs | **+4.48** | **12/12** | +0.14 | -0.70 |
 
-### 11.2 历史M3对35-node的优势远大于对Tier3的优势
-
-M3相对E2E-Node-From-Tier3：
-
-```text
-test_all：
-  Node Acc +6.71
-  Tier3 Acc +0.35
-  Tier3 Macro-F1 +2.19
-
-test_normal：
-  Node Acc +7.46
-  Tier3 Acc +0.94
-  Tier3 Macro-F1 +2.65
-
-test_fault：
-  Node Acc +5.09
-  Tier3 Acc -1.21
-  Tier3 Macro-F1 +0.60
-```
-
-这进一步证明该方法的核心价值是node级流程定位，而不是单纯替代Tier3视频分类器。
-
-### 11.3 直接Tier3分类仍是必要对照
-
-all-runs下，E2E-Tier3-Scratch的test_all accuracy为82.54%，M3聚合Tier3为83.33%，差距只有
-0.79个百分点。若研究目标只需要31类Tier3动作，直接Tier3模型已经很有竞争力；如果需要区分
-35个task graph node、判断流程位置或为后续错误检测提供状态，M3的优势才更加明确。
-
-## 12. 总体结论
-
-### 12.1 得到较强支持的结论
-
-1. **历史信息能稳定提高35-node分类。**  
-   J上M3相对M0提高14.77个百分点；A/D/M all-runs上提高14.05个百分点，并在9/9
-   participant-seed配对中为正。
-
-2. **收益主要来自重复动作node消歧。**  
-   Stage 2 node accuracy提高17.78个百分点，多个相同Tier3动作对应node之间的互相误判下降
-   81.6%–97.4%。
-
-3. **精确实际顺序不是必要条件。**  
-   graph-valid shuffled history的M3平均优于使用真实顺序和位置编码的M2。
-
-4. **完整all-runs训练明显优于normal-only。**  
-   在严格配对的`seed_1`比较中，M3 test_all node/Tier3分别提高8.06和7.62个百分点；
-   normal和fault划分都获得提升。
-
-5. **M3是当前最可靠的综合配置。**  
-   它在all-runs的normal、all中四个主要指标均第一，在fault中node指标第一，并且相对M0
-   的方向最一致。
-
-### 12.2 得到部分支持但仍需改进的结论
-
-1. **relation bias具有潜力，但soft graph版本尚未成熟。**  
-   M5相对M4的Tier3 macro-F1提高1.63个百分点，证明oracle关系有信息；M6提升较小且没有超过M3。
-
-2. **M1不够稳定。**  
-   它在部分normal结果上很好，但J、fault和all-runs范围比较中出现明显退化或权衡。没有位置或
-   graph结构的历史attention不应作为最终方法。
-
-3. **fault性能仍受测试规模和类别缺失影响。**  
-   当前结果能说明“在故障run中的clip分类”改善，但不能等同于已经完成fault detection或
-   sequence anomaly detection。
-
-## 13. 下一步实验建议
-
-按优先级建议如下。
-
-### 13.1 补齐严格公平的normal-only多seed
-
-为A/D/M normal-only补跑`seed_2`和`seed_42`，使其与all-runs完全对称。然后重新计算：
+all-runs下位置编码在12/12配对中提高Node Accuracy，却几乎不改变Tier3 Accuracy。
+这进一步证明位置/顺序主要用于回答：
 
 ```text
-同participant + 同seed + 同model + 同split
-all-runs − normal-only
+“当前视觉动作位于task graph的哪个node？”
 ```
 
-这是当前最重要的缺口。补齐后才能把训练范围提升与随机初始化方差彻底分离。
-
-### 13.2 对J运行严格scratch LOSO
-
-使用跨人实验包对J重新训练：
-
-- normal-only scratch backbone；
-- all-runs scratch backbone；
-- 相同3个seed；
-- 不使用J作为validation；
-- 与A/D/M相同的最后epoch策略。
-
-这样才能形成严格一致的A/D/J/M四折结果。
-
-### 13.3 将M3作为当前主模型，将M2/M4/M5/M6作为消融
-
-建议当前论文结构：
+而不是回答：
 
 ```text
-Baseline：M0
-History basic：M1
-Actual ordered history：M2
-Graph-valid order invariant history：M3（当前主结果）
-No relation bias：M4
-Oracle relation bias：M5
-Predicted soft relation bias：M6
+“当前clip看起来是哪一种Tier3动作？”
 ```
 
-不要预先将M6定义为最终最佳模型；当前实验更支持M3。
+normal-only下这一优势很弱，说明当训练历史只覆盖标准正常流程时，M1也能从高度规律的历史中获得
+较好结果；加入fault run后，显式位置结构变得更重要。
 
-### 13.4 改进M6
+### 9.3 M4、M5与M6：relation bias
 
-建议依次验证：
+| Scope | 比较 | Δ Node Acc | Node正向 | Δ Tier3 Acc | Tier3正向 | Δ Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|---:|
+| normal-only | M5 − M4 | +0.31 | 6/12 | -0.01 | 5/12 | +0.09 |
+| normal-only | M6 − M4 | +0.44 | 10/12 | +0.14 | 6/12 | +0.19 |
+| all-runs | M5 − M4 | +0.77 | 6/12 | +0.39 | 6/12 | +1.38 |
+| all-runs | M6 − M4 | +0.70 | 8/12 | +0.46 | 8/12 | +0.77 |
+| all-runs | M3 − M6 | +1.03 | 8/12 | +0.59 | 8/12 | +1.05 |
 
-1. 用out-of-fold M0预测构造训练历史概率，避免同训练集预测过度自信；
-2. 对M0历史概率做temperature calibration；
-3. 对relation expectation使用top-k或置信度门控，低置信度时退回M4；
-4. 单独报告每个attention head学到的relation bias；
-5. 加入relation dropout，防止模型过度依赖错误soft relation；
-6. 比较冻结M0与联合微调M0；
-7. 检查M6在node 16、20、35上的历史概率和relation分布。
+修正后的结论是：
 
-### 13.5 做run-level统计
+1. oracle和soft relation在平均值上都优于M4，说明relation信息有价值；
+2. 提升幅度小于1个百分点，远小于“加入历史”本身相对M0的约13–15个百分点提升；
+3. M5 oracle并未在多数Node/Tier3配对中稳定击败M4，不能把它解释成强oracle上限；
+4. M6相对M4的方向更一致，但仍低于M3；
+5. M6在normal-only平均Node Accuracy最高，说明soft relation并非无效，只是尚未成为all-runs最佳模型。
 
-同一run内clip不是独立样本。建议基于每个run计算模型差值，然后进行：
+因此，论文中更稳妥的层级是：
 
-- paired bootstrap confidence interval；
+```text
+主要贡献：历史信息 + graph-valid位置结构
+次要增益：relation bias
+待改进模块：从M0概率构造的soft relation
+```
+
+## 10. Stage分析
+
+### 10.1 all-runs test_all分阶段结果
+
+| 模型 | Stage 1 Node | Stage 2 Node | Stage 3 Node | Stage 2 Tier3 |
+|---|---:|---:|---:|---:|
+| M0 | 81.57 | 65.73 | 80.28 | 84.07 |
+| M1 | 83.66 | 77.56 | **86.43** | 84.67 |
+| M2 | 83.91 | 84.18 | 83.64 | 85.32 |
+| **M3** | **84.72** | **84.61** | 84.86 | **85.83** |
+| M4 | 82.17 | 83.18 | 82.19 | 85.33 |
+| M5 | 83.96 | 83.36 | 84.91 | 85.01 |
+| M6 | 84.07 | 83.71 | 82.60 | 85.57 |
+
+M3相对M0：
+
+| Split | Stage 1 Δ Node | Stage 2 Δ Node | Stage 3 Δ Node | Stage 2 Δ Tier3 |
+|---|---:|---:|---:|---:|
+| normal | +3.66 | **+18.92** | +4.74 | +1.81 |
+| fault | +1.14 | **+19.85** | +4.12 | +2.14 |
+| all | +3.16 | **+18.88** | +4.58 | +1.76 |
+
+Stage 2在normal和fault中都获得约19个百分点Node提升，而Tier3提升仅约2个百分点。
+这不是由某一个测试划分独占，而是任务结构本身导致的稳定现象。
+
+### 10.2 重复动作node混淆
+
+聚合四位participant、三个all-runs seed的`test_all` prediction，比较M0与M3：
+
+| 相同Tier3动作对应node | M0双向误判 | M3双向误判 | 降幅 |
+|---|---:|---:|---:|
+| node 14 ↔ 21：`put sample under electrodes` | 166 | 6 | **96.4%** |
+| node 15 ↔ 22：`press pedal` | 247 | 4 | **98.4%** |
+| node 16 ↔ 19：`put sample on machine table` | 206 | 13 | **93.7%** |
+| node 17 ↔ 20：`grip sample from machine table` | 150 | 23 | **84.7%** |
+
+最大的单node recall提升：
+
+| Node | 动作 | M0 Recall | M3 Recall | 提升 |
+|---|---|---:|---:|---:|
+| 15 | press pedal（第一次） | 36.25 | 88.35 | +52.10 |
+| 22 | press pedal（第二次） | 46.80 | 87.88 | +41.08 |
+| 16 | put sample on machine table（第一次） | 36.70 | 72.73 | +36.03 |
+| 14 | put sample under electrodes（第一次） | 49.84 | 84.47 | +34.63 |
+| 19 | put sample on machine table（第二次） | 56.57 | 90.24 | +33.67 |
+| 20 | grip sample from machine table（后续位置） | 38.72 | 65.66 | +26.94 |
+| 17 | grip sample from machine table（前序位置） | 61.95 | 80.13 | +18.18 |
+| 21 | put sample under electrodes（第二次） | 67.68 | 83.16 | +15.49 |
+
+这组结果是task-history方法最直接的机制证据：模型大幅减少了“同一种Tier3动作、不同流程node”
+之间的混淆。
+
+M3仍较困难的node包括：
+
+| Node | 动作 | M3 Recall |
+|---|---|---:|
+| 34 | take lock from table | 60.00 |
+| 20 | grip sample from machine table | 65.66 |
+| 1 | unlock crimper | 72.73 |
+| 16 | put sample on machine table | 72.73 |
+| 7 | turn on water pump | 72.73 |
+| 35 | lock crimper | 74.67 |
+
+后续应优先检查这些node的clip边界、样本数量、视觉相似性以及历史缺失情况。
+
+### 10.3 run级M3相对M0
+
+每个participant-run先对三个seed平均：
+
+| Scope / Split | Run数 | Δ Node均值 | 中位数 | Node正向run | Δ Tier3均值 | Tier3正向run |
+|---|---:|---:|---:|---:|---:|---:|
+| normal-only / normal | 76 | +14.54 | +12.50 | 76/76 | +2.11 | 48/76 |
+| normal-only / fault | 27 | +9.73 | +8.33 | 23/27 | -1.01 | 7/27 |
+| normal-only / all | 103 | +13.28 | +12.00 | 99/103 | +1.29 | 55/103 |
+| all-runs / normal | 76 | +16.07 | +14.78 | **76/76** | +2.19 | 53/76 |
+| all-runs / fault | 27 | +14.96 | +13.89 | **27/27** | +1.60 | 16/27 |
+| all-runs / all | 103 | **+15.78** | +14.29 | **103/103** | +2.04 | 69/103 |
+
+all-runs M3的Node优势覆盖所有测试run，是非常强的方向一致性证据。Tier3并非每个run都提升，
+再次说明方法的主要目标应表述为node级流程定位。
+
+## 11. Participant差异
+
+### 11.1 all-runs M3结果
+
+| Participant | test normal Node | test fault Node | test all Node | test all Tier3 |
+|---|---:|---:|---:|---:|
+| A | 83.11 ± 2.51 | 71.05 ± 2.76 | 79.27 ± 2.59 | 80.74 ± 1.45 |
+| D | 80.58 ± 0.76 | 87.63 ± 2.46 | 81.53 ± 0.70 | 83.26 ± 0.98 |
+| J | 94.06 ± 1.03 | 88.89 ± 2.94 | **92.49 ± 1.53** | **92.55 ± 1.63** |
+| M | 84.72 ± 2.50 | **89.66 ± 2.30** | 85.68 ± 2.46 | 85.98 ± 2.03 |
+
+这里的“±”为该participant三个seed之间的样本标准差。
+
+主要观察：
+
+- J是最容易的held-out participant；
+- A的fault Node Accuracy只有71.05%，明显低于其他三人；
+- D的fault样本只有62个，虽然accuracy高，但不应解释为更稳定；
+- 四折总体标准差主要来自participant差异，而不是seed波动。
+
+### 11.2 M3不是每一位participant上都绝对第一
+
+all-runs三seed均值中：
+
+- A和M的最高Node Accuracy为M3；
+- D的M2/M6略高于M3约0.43个百分点；
+- J的M5/M6略高于M3约0.18个百分点；
+- 但M3在四人等权总体上获得最高综合结果。
+
+因此，应表述为“M3是四折总体最优且最平衡”，而不是“每一折每个指标都第一”。
+
+## 12. Seed稳定性
+
+下表先对四位participant平均，再计算三个seed均值的样本标准差。
+
+| Scope | 模型 | Test-all Node | Seed SD | Test-all Tier3 | Seed SD |
+|---|---|---:|---:|---:|---:|
+| normal-only | M0 | 66.76 | 0.63 | 79.33 | 1.96 |
+| normal-only | M1 | 78.59 | 0.88 | 81.01 | 1.21 |
+| normal-only | M2 | 79.30 | 0.73 | 81.08 | 0.46 |
+| normal-only | M3 | 79.30 | 0.99 | 80.99 | 0.53 |
+| normal-only | M4 | 79.32 | 0.76 | 81.25 | 0.42 |
+| normal-only | M5 | 79.63 | 1.26 | 81.24 | 0.55 |
+| normal-only | M6 | 79.76 | 1.54 | 81.39 | 0.93 |
+| all-runs | M0 | 69.81 | 1.99 | 83.32 | 0.68 |
+| all-runs | M1 | 79.67 | 1.44 | 84.85 | 0.94 |
+| all-runs | M2 | 84.15 | 1.31 | 84.99 | 0.70 |
+| all-runs | **M3** | **84.74** | **0.98** | **85.63** | **0.48** |
+| all-runs | M4 | 83.01 | 1.00 | 84.58 | **0.15** |
+| all-runs | M5 | 83.78 | 1.04 | 84.98 | 0.58 |
+| all-runs | M6 | 83.71 | **0.48** | 85.05 | 0.49 |
+
+M3的all-runs seed均值：
+
+| Seed | Node Accuracy | Tier3 Accuracy |
+|---|---:|---:|
+| 1 | 85.15 | 85.82 |
+| 2 | 83.63 | 85.09 |
+| 42 | 85.45 | 85.99 |
+
+M3的seed波动小于1个百分点Node和0.5个百分点Tier3；M6的Node最稳定，M4的Tier3最稳定，
+但二者平均性能低于M3。
+
+## 13. E2E对照
+
+### 13.1 Tier3预训练迁移
+
+all-runs `test_all`：
+
+| 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
+|---|---:|---:|---:|---:|
+| E2E-Node-Scratch | 74.72 | 75.09 | 81.92 | 79.65 |
+| E2E-Node-From-Tier3 | 77.74 | 78.56 | 85.46 | 82.85 |
+| 差值 | **+3.02** | **+3.47** | **+3.54** | **+3.20** |
+
+Tier3预训练明确改善35-node端到端模型，说明Tier3视觉表征是有效的初始化来源。
+
+### 13.2 M3与E2E-Node-From-Tier3
+
+| Split | Δ Node Acc | Δ Node Macro-F1 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
+|---|---:|---:|---:|---:|
+| normal | +7.88 | +6.11 | +0.92 | +2.31 |
+| fault | +5.06 | +3.90 | -1.70 | -0.02 |
+| all | **+7.00** | **+5.33** | +0.17 | +1.73 |
+
+M3的优势主要集中在Node空间；Tier3 Accuracy与E2E transfer非常接近。这是符合预期的：
+history/task graph增加的是流程位置证据，而不是新的当前clip视觉信息。
+
+### 13.3 M3与直接Tier3分类
+
+all-runs `test_all`：
+
+```text
+M3聚合Tier3 Accuracy：85.63
+E2E-Tier3-Scratch：   84.92
+差值：                +0.71
+
+M3聚合Tier3 Macro-F1：84.58
+E2E-Tier3-Scratch：    82.52
+差值：                 +2.05
+```
+
+如果应用只需要31类Tier3动作标签，直接Tier3模型已经非常有竞争力。如果应用需要：
+
+- 区分同一动作在流程中的不同位置；
+- 预测35个task graph node；
+- 判断是否满足前置关系；
+- 为后续漏做、多做或非法跳转检测提供状态；
+
+则M3的Node优势更重要。
+
+## 14. 严格J折与旧先导结论
+
+新J折完全使用与A/D/M一致的scratch LOSO策略。
+
+| Scope | 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| normal-only | M0 | 72.19 ± 3.04 | 72.62 ± 3.15 | 87.69 ± 3.35 | 80.78 ± 3.63 |
+| normal-only | M3 | **89.73 ± 4.08** | **85.99 ± 4.71** | **89.97 ± 3.70** | **85.60 ± 4.52** |
+| all-runs | M0 | 74.89 ± 3.35 | 77.20 ± 1.74 | 91.35 ± 0.54 | 86.92 ± 1.78 |
+| all-runs | M3 | **92.49 ± 1.53** | **89.64 ± 1.09** | **92.55 ± 1.63** | **89.22 ± 1.30** |
+
+严格J normal-only中，M3相对M0：
+
+```text
+Node Accuracy：+17.54
+Tier3 Accuracy：+2.28
+```
+
+严格J all-runs中：
+
+```text
+Node Accuracy：+17.60
+Tier3 Accuracy：+1.20
+```
+
+因此，旧J先导实验关于“历史大幅提高Node分类”的定性结论在不使用J validation、重新从scratch
+训练的严格J折中得到复现。旧先导数值不再用于正式四折均值。
+
+## 15. 修正后的总体结论
+
+### 15.1 得到强支持的结论
+
+1. **历史信息稳定提高35-node分类。**
+   M3在all-runs提高14.94个百分点Node Accuracy，12/12 participant-seed配对为正，
+   103/103测试run为正。
+
+2. **收益机制是流程位置消歧。**
+   Stage 2 Node提高18.88个百分点，而Tier3只提高1.76；重复动作node误判下降84.7%–98.4%。
+
+3. **M3是all-runs四折总体最优模型。**
+   它在test_all的Accuracy、Macro-F1和Balanced Accuracy的Node/Tier3指标上均为最高。
+
+4. **all-runs训练优于normal-only。**
+   M3严格配对提高5.44个百分点Node和4.65个百分点Tier3，四位participant均值全部为正。
+
+5. **精确实际顺序不是必要条件。**
+   M3至少不弱于M2，并在all-runs中有小幅、较一致的优势。
+
+6. **严格J折复现了旧先导结论。**
+   去除旧checkpoint和validation可比性问题后，J折仍显示约17.5个百分点Node提升。
+
+### 15.2 得到部分支持的结论
+
+1. **graph relation bias有小幅附加价值。**
+   M5/M6平均优于M4，但幅度通常小于1个百分点，且不是每个配对都提高。
+
+2. **M6具有可部署潜力，但不是当前最佳。**
+   M6在normal-only获得最高平均Node Accuracy，在all-runs具有较好seed稳定性，但总体仍低于M3。
+
+3. **M1能够利用历史，但缺少位置结构时不够平衡。**
+   M1在normal-only normal split很强；all-runs相对normal-only时出现normal Node下降、fault大幅提高的权衡。
+
+4. **Tier3改善有限。**
+   history模型的Tier3提升通常只有1–3个百分点；若只做动作外观分类，E2E Tier3仍是强baseline。
+
+### 15.3 仍不能得出的结论
+
+当前实验不能证明：
+
+- 已经完成fault detection；
+- 能直接识别漏做、多做、重复或非法顺序；
+- clip可以被视为相互独立样本进行普通显著性检验；
+- M5 oracle relation是强上限；
+- M6 soft relation已经优于所有其他graph使用方式；
+- 单相机结果能够直接推广到其他相机或新场景。
+
+## 16. 下一步实验建议
+
+旧报告中“补齐A/D/M normal-only多seed”和“重做严格J折”两项已完成。新的优先级建议如下。
+
+### 16.1 做正式run-level置信区间
+
+当前run级方向统计已经完成，但还应增加：
+
 - participant内run bootstrap；
-- normal和fault分别统计；
-- 最终在participant层面汇总。
+- 外层participant bootstrap或hierarchical bootstrap；
+- normal与fault分别报告95% confidence interval；
+- M3−M0、M3−M2、all-runs−normal-only分别计算；
+- 不将三个seed当作独立participant。
 
-不要直接把所有clip当作独立样本做普通t-test。
+### 16.2 改进M6 soft relation
 
-### 13.6 从分类扩展到流程异常识别
+建议：
 
-当前模型仍是“给定当前clip及其历史，预测当前动作/node”。如果后续目标是识别漏做、多做、
-重复或顺序错误，需要增加独立的sequence-level输出，例如：
+1. 用out-of-fold M0预测构造训练历史概率；
+2. 对M0概率做temperature calibration；
+3. 使用top-k或置信度门控；
+4. 低置信度时退回M4；
+5. 加入relation dropout；
+6. 检查各attention head学习到的I/M/O/X/S bias；
+7. 针对node 20、34、35分析历史概率与relation分布。
+
+### 16.3 将graph信息扩展为显式embedding
+
+当前M3主要利用graph-valid顺序，M5/M6主要利用relation bias。下一步可比较：
+
+- node embedding；
+- stage embedding；
+- graph distance embedding；
+- must/optional/immediate relation embedding；
+- GNN编码的node representation；
+- graph-constrained classifier或decoder。
+
+### 16.4 从clip分类扩展到sequence anomaly detection
+
+增加独立输出：
 
 - 当前node是否违反task graph；
-- 缺失的must previous node；
-- 重复动作或非法跳转；
+- 缺少哪些must previous nodes；
+- 是否发生非法重复或跳转；
 - run-level fault score；
-- graph-constrained decoding。
+- graph-constrained decoding；
+- 漏做、多做和错误顺序的独立评估。
 
-这应作为后续任务，不应与当前clip分类结果混为一谈。
+### 16.5 扩展外部有效性
 
-## 14. 推荐用于论文或阶段汇报的核心结果
+- 增加其他相机；
+- 多相机融合；
+- 新participant；
+- 不同光照或设备设置；
+- camera/domain shift；
+- 跨数据采集批次验证。
 
-如果只选最有解释力的结果，建议报告以下四项：
+## 17. 推荐用于论文或阶段汇报的核心结果
 
-1. J三seed：M3相对M0，node accuracy `+14.77`，Tier3 accuracy `+3.48`；
-2. A/D/M all-runs三seed：M3相对M0，node accuracy `+14.05`，Tier3 accuracy `+2.69`；
-3. Stage 2：M3相对M0，node accuracy `+17.78`，Tier3 accuracy仅`+2.12`；
-4. 重复动作node双向混淆下降`81.6%–97.4%`。
+建议优先报告以下五项：
 
-这四项共同说明：
+1. **严格四折三seed all-runs总体：**
+   M3 Node Accuracy `84.74 ± 5.81`，Tier3 Accuracy `85.63 ± 5.08`。
 
-> 历史与task graph信息的核心作用不是替代视觉动作识别，而是将视觉上相同或相似的动作定位到
-> 正确的流程node；graph-valid历史即使不保持实际精确顺序，仍能提供稳定且跨人的判别信息。
+2. **M3相对M0：**
+   Node Accuracy `+14.94`，Tier3 Accuracy `+2.32`；Node 12/12配对为正。
 
-## 15. 结果来源
+3. **训练范围：**
+   M3 all-runs相对normal-only，Node `+5.44`，Tier3 `+4.65`。
 
-主要汇总文件：
+4. **Stage 2机制：**
+   M3相对M0，Node `+18.88`，Tier3仅`+1.76`。
+
+5. **重复node与run级证据：**
+   重复动作node双向误判下降`84.7%–98.4%`；all-runs Node在103/103测试run上提高。
+
+推荐总结语：
+
+> 在严格四折三seed LOSO中，历史和task graph结构大幅提升35-node流程状态识别，尤其减少相同动作
+> 在不同流程位置之间的混淆。graph-valid历史不依赖实际精确执行顺序，并在完整all-runs训练中取得
+> 最佳综合性能；relation bias提供小幅附加收益，但soft relation仍有进一步改进空间。
+
+## 18. 结果来源
+
+normal-only四折三seed汇总：
 
 ```text
-J三seed：
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_experiments_2026-07-20\outputs\J_as_test\cam_001484412812\history_models\existing_last*\experiment_summary.csv
-
-A/D/M normal-only：
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22\outputs\cross_person_summary_with_e2e
-
-A/D/M all-runs：
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22\outputs\cross_person_summary_all_runs
-
-normal-only与all-runs配对比较：
-D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22\outputs\training_scope_comparison
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
+cross_person_summary_normal_only_ADJM_3seeds
 ```
 
-所有表格均由上述实际JSON/CSV结果计算。报告没有修改checkpoint、prediction、probability或原始
-summary文件。
+all-runs四折三seed汇总：
+
+```text
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
+cross_person_summary_all_runs_ADJM_3seeds
+```
+
+严格训练范围比较：
+
+```text
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
+training_scope_comparison_ADJM_3seeds
+```
+
+最重要的源文件：
+
+```text
+all_model_metrics.csv
+all_model_cross_person_aggregate.csv
+all_model_training_scope_deltas.csv
+all_model_training_scope_delta_aggregate.csv
+all_model_per_stage_metrics.csv
+all_model_per_stage_cross_person_aggregate.csv
+```
+
+混淆与run级分析来自各fold、seed、scope和model目录下的：
+
+```text
+test_results\test_normal_predictions.csv
+test_results\test_fault_predictions.csv
+test_results\test_all_predictions.csv
+```
+
+所有表格均由实际CSV结果重新计算。报告未修改checkpoint、prediction、probability、metrics或原始summary文件。

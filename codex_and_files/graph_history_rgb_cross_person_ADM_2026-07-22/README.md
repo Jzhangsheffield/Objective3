@@ -948,3 +948,175 @@ outputs\training_scope_comparison_ADJM_3seeds\
 新增四折汇总启用 `--require-complete-grid`。在写 CSV 之前，它会检查每个请求的
 participant × seed × scope 是否都具有 10 个模型和 3 个测试 split。只要缺一项，汇总会明确列出
 缺失的 participant、seed、scope、model 和 split 并停止，因此不会把不完整实验误当成严格四折结果。
+
+## 15. Direct Head Fusion补充实验（独立新增阶段，2026-07-28）
+
+完整设计和运行说明另见：
+
+```text
+DIRECT_HEAD_FUSION_EXPERIMENT.md
+```
+
+### 15.1 实验目的与模型
+
+原M1–M3冻结已经训练完成的M0，并预测35维logit delta：
+
+```text
+final logits = frozen M0 logits + learned history delta
+```
+
+本补充阶段不修改原M1–M3，而是新增：
+
+| 新模型 | 历史顺序 | 位置编码 | 分类方式 |
+|---|---|---|---|
+| `m1_direct` | actual | 否 | 融合特征直接输入可训练35-node head |
+| `m2_direct` | actual | 是 | 融合特征直接输入可训练35-node head |
+| `m3_direct` | graph-valid | 是 | 融合特征直接输入可训练35-node head |
+
+计算过程为：
+
+```text
+Tier3 backbone产生的当前/历史512维冻结特征
+        -> history attention
+        -> 当前特征与history context融合回512维
+        -> 可训练LayerNorm + Linear(512, 35)
+        -> 35-node logits
+```
+
+该阶段：
+
+- 直接复用每个participant、seed、scope已经完成的Tier3 feature cache；
+- 不重新训练RGB backbone；
+- 不加载M0 checkpoint；
+- 不使用logit delta；
+- fusion和35-node classifier从同一个50-epoch阶段联合训练；
+- 无validation、无early stopping，仍使用最后一个epoch的`last.pth`；
+- normal-only和all-runs继续使用各自独立的backbone特征缓存；
+- 测试仍为`test_normal`、`test_fault`和`test_all`；
+- 35-node概率继续聚合为31类Tier3指标。
+
+融合层初始化为`[I, 0]`，所以训练开始时融合特征严格等于当前clip的512维Tier3特征，之后再逐渐
+学习history context。35-node head为随机初始化，与现有M0在冻结Tier3特征上训练35-node head的
+设置一致。
+
+### 15.2 与原实验的隔离
+
+本阶段只写入：
+
+```text
+outputs\<P>_as_test\cam_001484412812\seed_<S>\
+history_models\direct_head_fusion\
+├── normal_only\
+│   ├── m1_direct\
+│   ├── m2_direct\
+│   └── m3_direct\
+└── all_runs\
+    ├── m1_direct\
+    ├── m2_direct\
+    └── m3_direct\
+```
+
+不会写入或覆盖：
+
+```text
+history_models\retrained_normal_only\
+history_models\retrained_all_runs\
+```
+
+每个新模型仍使用`ensure_new_output_dir`和`completed.json`保护。完成标记存在时BAT/Slurm入口会
+安全跳过；目标目录非空但没有完成标记时训练脚本会停止，除非人工明确传入`--overwrite`。
+标准入口均不传`--overwrite`。
+
+### 15.3 Windows运行
+
+先进入实验包并覆盖本机Python路径：
+
+```bat
+cd /d D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22
+set PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe
+```
+
+运行单个participant、seed的两个scope：
+
+```bat
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_direct_head_fusion_one_fold.bat
+```
+
+只运行normal-only或all-runs：
+
+```bat
+call bat\31_train_direct_head_fusion_normal_only.bat
+call bat\32_train_direct_head_fusion_all_runs.bat
+```
+
+运行A/D/J/M四折、seed 1/2/42、两个scope，并在全部完成后汇总：
+
+```bat
+call bat\run_direct_head_fusion_ADJM.bat
+```
+
+只重新执行严格汇总：
+
+```bat
+call bat\33_summarize_direct_head_fusion_ADJM_3seeds.bat
+```
+
+### 15.4 HPC/Slurm运行
+
+单个participant和seed：
+
+```bash
+# 同时提交normal-only和all-runs；每个scope是包含3个模型的array job
+bash slurm/submit_direct_head_fusion_one_fold.sh A 1 both
+
+# 也可以只提交一个scope
+bash slurm/submit_direct_head_fusion_one_fold.sh A 1 normal_only
+bash slurm/submit_direct_head_fusion_one_fold.sh A 1 all_runs
+```
+
+提交完整A/D/J/M × 3 seeds × 2 scopes实验，并自动以`afterok`依赖提交汇总：
+
+```bash
+bash slurm/submit_direct_head_fusion_ADJM.sh
+```
+
+底层训练任务为：
+
+```text
+slurm/33_train_direct_head_fusion_normal_only.slurm
+slurm/34_train_direct_head_fusion_all_runs.slurm
+```
+
+每个任务使用array `1-3`，分别对应`m1_direct`、`m2_direct`和`m3_direct`。
+
+### 15.5 严格汇总与比较
+
+完整网格包含：
+
+```text
+4 participants × 3 seeds × 2 scopes × 3 direct models × 3 splits
+= 216条direct模型结果
+```
+
+专用汇总：
+
+```text
+outputs\direct_head_fusion_summary_ADJM_3seeds\
+├── direct_head_metrics.csv
+├── direct_head_paired_deltas.csv
+├── direct_head_aggregate.csv
+└── completed.json
+```
+
+`direct_head_paired_deltas.csv`对相同participant、seed、scope和split计算：
+
+```text
+mK_direct − M0
+mK_direct − 原mK delta模型
+```
+
+其中`K`为1、2或3。`direct_head_aggregate.csv`先在每个participant内部平均三个seed，再对
+A/D/J/M等权汇总均值与样本标准差。汇总默认启用完整网格检查，缺少任何direct、M0或对应delta
+结果都会停止并报告缺失路径。

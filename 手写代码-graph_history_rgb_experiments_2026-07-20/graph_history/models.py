@@ -9,10 +9,16 @@ import torch.nn.functional as F
 from .constants import NUM_GRAPH_NODES, RELATION_TO_ID
 
 
-class FeatureNodeClassifier(nn.Module):
-    """M0: current frozen RGB feature -> 35 graph-node logits."""
 
-    def __init__(self, feature_dim: int = 512, num_nodes: int = NUM_GRAPH_NODES, dropout: float = 0.0):
+class FeatureNodeClassifier(nn.Module):
+    """M0: current frozen RGB feature -> graph-node logits."""
+
+    def __init__(
+        self,
+        feature_dim: int = 512,
+        num_nodes: int = NUM_GRAPH_NODES,
+        dropout: float = 0.0,
+    ) -> None:
         super().__init__()
         self.feature_dim = int(feature_dim)
         self.num_nodes = int(num_nodes)
@@ -44,15 +50,27 @@ class SingleQueryHistoryModel(nn.Module):
         use_position: bool = True,
     ) -> None:
         super().__init__()
+        if d_model % num_heads != 0:
+            raise ValueError(f"d_model={d_model} must be divisible by num_heads={num_heads}")
+
         self.baseline = baseline
         freeze_module(self.baseline)
         self.use_position = bool(use_position)
         self.max_history = int(max_history)
-        self.current_projection = nn.Sequential(nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model))
-        self.history_projection = nn.Sequential(nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model))
-        self.position_embedding = nn.Embedding(max_history + 1, d_model)
+
+        self.current_projection = nn.Sequential(
+            nn.Linear(feature_dim, d_model),
+            nn.LayerNorm(d_model),
+        )
+        self.history_projection = nn.Sequential(
+            nn.Linear(feature_dim, d_model),
+            nn.LayerNorm(d_model),
+        )
+        self.position_embedding = nn.Embedding(self.max_history + 1, d_model)
+
         self.null_history = nn.Parameter(torch.zeros(1, 1, d_model))
         nn.init.normal_(self.null_history, std=0.02)
+
         self.attention = nn.MultiheadAttention(
             embed_dim=d_model,
             num_heads=num_heads,
@@ -68,42 +86,55 @@ class SingleQueryHistoryModel(nn.Module):
         )
         nn.init.zeros_(self.delta_head[-1].weight)
         nn.init.zeros_(self.delta_head[-1].bias)
+
         self.history_scale_logit = nn.Parameter(torch.tensor(-2.0))
 
-    def train(self, mode: bool = True):
+    def train(self, mode: bool = True) -> "SingleQueryHistoryModel":
         super().train(mode)
         self.baseline.eval()
         return self
 
     def forward(
         self,
-        current_feature: torch.Tensor,
+        current_features: torch.Tensor,
         history_features: torch.Tensor,
         history_position_ids: torch.Tensor,
         history_padding_mask: torch.Tensor,
         **_: torch.Tensor,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        current = self.current_projection(current_feature)
+        current = self.current_projection(current_features)
         history = self.history_projection(history_features)
+
         if self.use_position and history.shape[1] > 0:
             positions = history_position_ids.clamp(min=0, max=self.max_history)
             history = history + self.position_embedding(positions)
 
         null = self.null_history.expand(current.shape[0], -1, -1)
         history = torch.cat([null, history], dim=1)
-        null_mask = torch.zeros((current.shape[0], 1), dtype=torch.bool, device=current.device)
+
+        null_mask = torch.zeros(
+            (current.shape[0], 1),
+            dtype=torch.bool,
+            device=current.device,
+        )
         key_padding_mask = torch.cat([null_mask, history_padding_mask], dim=1)
+
         context, attention_weights = self.attention(
-            current.unsqueeze(1), history, history,
+            query=current.unsqueeze(1),
+            key=history,
+            value=history,
             key_padding_mask=key_padding_mask,
             need_weights=True,
             average_attn_weights=False,
         )
         context = context.squeeze(1)
+
         delta = self.delta_head(torch.cat([current, context], dim=-1))
         scale = torch.sigmoid(self.history_scale_logit)
+
         with torch.no_grad():
-            baseline_logits = self.baseline(current_feature)
+            baseline_logits = self.baseline(current_features)
+
         logits = baseline_logits + scale * delta
         return logits, {
             "baseline_logits": baseline_logits,
@@ -113,109 +144,25 @@ class SingleQueryHistoryModel(nn.Module):
         }
 
 
-class DirectSingleQueryHistoryModel(nn.Module):
-    """Direct-head M1-M3: classify a fused current/history feature without an M0 logit delta."""
-
-    def __init__(
-        self,
-        feature_dim: int = 512,
-        d_model: int = 256,
-        num_heads: int = 4,
-        max_history: int = 35,
-        dropout: float = 0.1,
-        use_position: bool = True,
-    ) -> None:
-        super().__init__()
-        self.feature_dim = int(feature_dim)
-        self.use_position = bool(use_position)
-        self.max_history = int(max_history)
-        self.current_projection = nn.Sequential(
-            nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model)
-        )
-        self.history_projection = nn.Sequential(
-            nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model)
-        )
-        self.position_embedding = nn.Embedding(max_history + 1, d_model)
-        self.null_history = nn.Parameter(torch.zeros(1, 1, d_model))
-        nn.init.normal_(self.null_history, std=0.02)
-        self.attention = nn.MultiheadAttention(
-            embed_dim=d_model,
-            num_heads=num_heads,
-            dropout=dropout,
-            batch_first=True,
-        )
-
-        # The visual backbone is already frozen in the Tier-3 feature cache. This
-        # layer learns how to write history context back into that 512-D feature
-        # space before the trainable 35-node classifier.
-        self.fusion = nn.Linear(feature_dim + d_model, feature_dim)
-        with torch.no_grad():
-            self.fusion.weight.zero_()
-            self.fusion.bias.zero_()
-            self.fusion.weight[:, :feature_dim].copy_(torch.eye(feature_dim))
-        self.node_classifier = FeatureNodeClassifier(
-            feature_dim=feature_dim,
-            num_nodes=NUM_GRAPH_NODES,
-            dropout=0.0,
-        )
-
-    def forward(
-        self,
-        current_feature: torch.Tensor,
-        history_features: torch.Tensor,
-        history_position_ids: torch.Tensor,
-        history_padding_mask: torch.Tensor,
-        **_: torch.Tensor,
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        current_query = self.current_projection(current_feature)
-        history = self.history_projection(history_features)
-        if self.use_position and history.shape[1] > 0:
-            positions = history_position_ids.clamp(min=0, max=self.max_history)
-            history = history + self.position_embedding(positions)
-
-        null = self.null_history.expand(current_feature.shape[0], -1, -1)
-        history = torch.cat([null, history], dim=1)
-        null_mask = torch.zeros(
-            (current_feature.shape[0], 1), dtype=torch.bool, device=current_feature.device
-        )
-        key_padding_mask = torch.cat([null_mask, history_padding_mask], dim=1)
-        context, attention_weights = self.attention(
-            current_query.unsqueeze(1),
-            history,
-            history,
-            key_padding_mask=key_padding_mask,
-            need_weights=True,
-            average_attn_weights=False,
-        )
-        context = context.squeeze(1)
-        fused_feature = self.fusion(torch.cat([current_feature, context], dim=-1))
-        logits = self.node_classifier(fused_feature)
-        return logits, {
-            "fused_feature": fused_feature,
-            "history_context": context,
-            "attention": attention_weights,
-        }
-
-
 class CandidateHistoryModel(nn.Module):
     """M4-M6: 35 candidate queries with optional task-graph relation bias."""
 
     def __init__(
-        self,
-        baseline: FeatureNodeClassifier,
-        relation_ids: torch.Tensor,
-        graph_source: str,
-        feature_dim: int = 512,
-        d_model: int = 256,
-        num_heads: int = 4,
-        max_history: int = 35,
-        dropout: float = 0.1,
+            self,
+            baseline: FeatureNodeClassifier,
+            relation_ids: torch.Tensor,
+            graph_source: str,
+            feature_dim: int = 512,
+            d_model: int = 256,
+            num_heads: int = 4,
+            max_history: int = 35,
+            dropout: float = 0.1,
     ) -> None:
         super().__init__()
         if graph_source not in {"none", "oracle", "predicted"}:
             raise ValueError(f"Unsupported graph_source: {graph_source}")
         if d_model % num_heads != 0:
-            raise ValueError("d_model must be divisible by num_heads")
+            raise ValueError("d_model must be divisible ny num_heads")
         self.baseline = baseline
         freeze_module(self.baseline)
         self.graph_source = graph_source
@@ -227,8 +174,8 @@ class CandidateHistoryModel(nn.Module):
         self.history_projection = nn.Sequential(nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model))
         self.position_embedding = nn.Embedding(max_history + 1, d_model)
         self.candidate_embedding = nn.Embedding(NUM_GRAPH_NODES, d_model)
-        self.null_history = nn.Parameter(torch.zeros(1, 1, d_model))
-        nn.init.normal_(self.null_history, std=0.02)
+        self.null_history =nn.Parameter(torch.zeros(1, 1, d_model))
+        nn.init.normal_(self.null_history, std=0.01)
         nn.init.normal_(self.candidate_embedding.weight, std=0.02)
 
         self.query_projection = nn.Linear(d_model, d_model)
@@ -402,29 +349,3 @@ def build_context_model(
             dropout=dropout,
         )
     raise ValueError(f"Not a context model: {model_name}")
-
-
-def build_direct_context_model(
-    model_name: str,
-    feature_dim: int,
-    d_model: int,
-    num_heads: int,
-    max_history: int,
-    dropout: float,
-) -> DirectSingleQueryHistoryModel:
-    """Build the isolated direct-head variants without loading or freezing M0."""
-    if model_name == "m1_direct":
-        use_position = False
-    elif model_name in {"m2_direct", "m3_direct"}:
-        use_position = True
-    else:
-        raise ValueError(f"Not a direct-head context model: {model_name}")
-    return DirectSingleQueryHistoryModel(
-        feature_dim=feature_dim,
-        d_model=d_model,
-        num_heads=num_heads,
-        max_history=max_history,
-        dropout=dropout,
-        use_position=use_position,
-    )
-

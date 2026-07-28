@@ -1,0 +1,19 @@
+{
+  "schema_version": "task-graph-demo-profile-selector-v1",
+  "profiles": [
+    {
+      "profile_id": "a_run7_seed1",
+      "title": "A / run_7",
+      "subtitle": "25 actions • 02:18 • all-runs seed 1",
+      "config": "config.json",
+      "validation_summary": "outputs/validation_summary.json"
+    },
+    {
+      "profile_id": "j_run12_seed1",
+      "title": "J / run_12",
+      "subtitle": "24 actions • 01:42 • all-runs seed 1",
+      "config": "profiles/j_run12_seed1/config.json",
+      "validation_summary": "profiles/j_run12_seed1/outputs/validation_summary.json"
+    }
+  ]
+}

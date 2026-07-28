@@ -45,6 +45,9 @@ if not defined NORMAL_FOLD_SUMMARY_ROOT set "NORMAL_FOLD_SUMMARY_ROOT=%RUN_ROOT%
 if not defined FOURFOLD_NORMAL_SUMMARY_ROOT set "FOURFOLD_NORMAL_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_normal_only_ADJM_3seeds"
 if not defined FOURFOLD_ALLRUN_SUMMARY_ROOT set "FOURFOLD_ALLRUN_SUMMARY_ROOT=%OUTPUTS_ROOT%\cross_person_summary_all_runs_ADJM_3seeds"
 if not defined FOURFOLD_COMPARISON_ROOT set "FOURFOLD_COMPARISON_ROOT=%OUTPUTS_ROOT%\training_scope_comparison_ADJM_3seeds"
+REM Isolated direct-head fusion extension. It never writes under the legacy retrained_* roots.
+if not defined DIRECT_MODEL_ROOT set "DIRECT_MODEL_ROOT=%RUN_ROOT%\history_models\direct_head_fusion"
+if not defined DIRECT_FOURFOLD_SUMMARY_ROOT set "DIRECT_FOURFOLD_SUMMARY_ROOT=%OUTPUTS_ROOT%\direct_head_fusion_summary_ADJM_3seeds"
 if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1 2 42"
 if not defined RUN_SCOPE_COMPARISON set "RUN_SCOPE_COMPARISON=1"
 if not defined RUN_AUXILIARY set "RUN_AUXILIARY=0"

@@ -17,6 +17,7 @@ class TaskGraphSpec:
     task_graph_path: Path
     relation_matrix_path: Path
     graph_json: dict[str, Any]
+    relation_json: dict[str, Any]
     relation_ids: torch.Tensor
     node_to_tier3: torch.Tensor
     node_to_stage: torch.Tensor
@@ -25,7 +26,11 @@ class TaskGraphSpec:
     atomic_sequences: tuple[tuple[int, ...], ...]
 
     @classmethod
-    def load(cls, task_graph_path: str | Path, relation_matrix_path: str | Path) -> "TaskGraphSpec":
+    def load(
+        cls,
+        task_graph_path: str | Path,
+        relation_matrix_path: str | Path,
+    ) -> "TaskGraphSpec":
         task_graph_path = Path(task_graph_path)
         relation_matrix_path = Path(relation_matrix_path)
         graph_json = read_json(task_graph_path)
@@ -35,7 +40,7 @@ class TaskGraphSpec:
         expected = set(range(1, NUM_GRAPH_NODES + 1))
         if not expected.issubset(nodes):
             missing = sorted(expected - set(nodes))
-            raise ValueError(f"Task graph is missing action node: {missing}")
+            raise ValueError(f"Task graph is missing action nodes: {missing}")
 
         node_to_tier3 = torch.tensor(
             [int(nodes[idx]["action_id_tier3"]) for idx in range(1, NUM_GRAPH_NODES + 1)],
@@ -49,28 +54,51 @@ class TaskGraphSpec:
         columns = [int(value) for value in relation_json["column_node_idx"]]
         column_lookup = {node_idx: column for column, node_idx in enumerate(columns)}
         rows = {int(row["current_node_idx"]): row["values"] for row in relation_json["rows"]}
+
+        missing_columns = sorted(expected - set(column_lookup))
+        missing_rows = sorted(expected - set(rows))
+        if missing_columns or missing_rows:
+            raise ValueError(
+                "Relation matrix is incomplete: "
+                f"missing columns={missing_columns}, missing rows={missing_rows}"
+            )
+
         relation_ids = torch.empty((NUM_GRAPH_NODES, NUM_GRAPH_NODES), dtype=torch.long)
         for current_node in range(1, NUM_GRAPH_NODES + 1):
+            values = rows[current_node]
             for previous_node in range(1, NUM_GRAPH_NODES + 1):
-                code = rows[current_node][column_lookup[previous_node]]
+                column = column_lookup[previous_node]
+                if column >= len(values):
+                    raise ValueError(
+                        f"Relation row for current node {current_node} has no column for node {previous_node}"
+                    )
+                code = values[column]
                 normalized = "X" if code == "." else str(code)
                 if normalized not in RELATION_TO_ID:
                     raise ValueError(
                         f"Unsupported relation code {code!r} for ({current_node}, {previous_node})"
                     )
-                relation_ids[current_node -1, previous_node - 1] = RELATION_TO_ID[normalized]
+                relation_ids[current_node - 1, previous_node - 1] = RELATION_TO_ID[normalized]
 
         all_must_previous: dict[int, tuple[int, ...]] = {}
         immediate_previous: dict[int, int | None] = {}
         for node_idx in range(1, NUM_GRAPH_NODES + 1):
             node = nodes[node_idx]
             history = node["feature_history_constraints"]["all_must_previous_nodes"]
-            all_must_previous[node_idx] = tuple(int(value) for value in history if 1 <= int(value) <= 35)
+            all_must_previous[node_idx] = tuple(
+                int(value)
+                for value in history
+                if 1 <= int(value) <= NUM_GRAPH_NODES
+            )
             immediate = node["execution_constraints"].get("must_immediately_previous_node")
             immediate_previous[node_idx] = int(immediate) if immediate is not None else None
 
         atomic_sequences = tuple(
-            tuple(int(value) for value in item["nodes"] if 1 <= int(value) <= 35)
+            tuple(
+                int(value)
+                for value in item["nodes"]
+                if 1 <= int(value) <= NUM_GRAPH_NODES
+            )
             for item in graph_json.get("atomic_sequences", [])
         )
 
@@ -94,16 +122,17 @@ def stable_sample_seed(base_seed: int, sample_name: str) -> int:
 
 
 def randomized_graph_valid_history(
-        history_rows: list[dict[str, Any]],
-        graph: TaskGraphSpec,
-        seed: int
+    history_rows: list[dict[str, Any]],
+    graph: TaskGraphSpec,
+    seed: int,
 ) -> list[dict[str, Any]]:
     """Return one deterministic randomized topological order of observed history.
-        Only relations among observed history nodes are used.  The current target node is
-        deliberately not an input, preventing current-label leakage.  Runs containing a
-        repeated graph node fall back to actual order; the primary M3 protocol uses normal
-        runs, where nodes are unique.
-        """
+
+    Only relations among observed history nodes are used. The current target node is
+    deliberately not an input, preventing current-label leakage. Runs containing a
+    repeated graph node retain their actual order because a node-keyed mapping cannot
+    represent repeated occurrences without losing information.
+    """
     if len(history_rows) <= 1:
         return list(history_rows)
 
@@ -134,6 +163,7 @@ def randomized_graph_valid_history(
 
     successors: dict[int, set[int]] = {idx: set() for idx in range(len(blocks))}
     indegree = {idx: 0 for idx in range(len(blocks))}
+
     for current_node in observed:
         current_block = node_to_block[current_node]
         for previous_node in graph.all_must_previous[current_node]:
@@ -148,6 +178,7 @@ def randomized_graph_valid_history(
     rng = random.Random(seed)
     available = [idx for idx, degree in indegree.items() if degree == 0]
     ordered_blocks: list[int] = []
+
     while available:
         selected = rng.choice(available)
         available.remove(selected)
@@ -158,22 +189,7 @@ def randomized_graph_valid_history(
                 available.append(successor)
 
     if len(ordered_blocks) != len(blocks):
-        raise RuntimeError(f"Observed task-graph history unexpectedly contains a cycle")
+        raise RuntimeError("Observed task-graph history unexpectedly contains a cycle")
 
     ordered_nodes = [node for block_idx in ordered_blocks for node in blocks[block_idx]]
     return [row_by_node[node] for node in ordered_nodes]
-    
-
-    
-
-
-    
-
-
-
-
-        
-
-
-        
-
