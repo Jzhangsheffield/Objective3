@@ -1,55 +1,68 @@
 # RGB Task-Graph History 严格四折三Seed实验结果分析
 
 首次报告日期：2026-07-24
-完整更新日期：2026-07-27
+完整更新日期：2026-07-29
 相机：`001484412812`
 任务：35-node分类，并将35-node概率聚合为31类Tier3结果
 主要实验设计：A/D/J/M严格四折LOSO，`seed_1`、`seed_2`、`seed_42`
 
 ## 1. 执行摘要
 
-本次更新纳入了新完成的A/D/J/M四折、三seed、normal-only与all-runs完整结果，解决了旧报告中
-normal-only seed数量不足和J折backbone来源不一致两个关键缺口。
+本次更新在原有A/D/J/M四折、三seed、normal-only与all-runs严格结果之外，新增了完整的
+Direct Head Fusion实验。原M1–M3通过学习delta修正冻结M0分类头；Direct M1–M3则加载对应
+Tier3预训练backbone的冻结RGB特征，只训练history fusion和新的35-node分类头。
 
 当前最重要的结果如下：
 
 1. **严格结果网格完整。**
-   共包含`4 participants × 3 seeds × 2 train scopes × 10 models × 3 splits = 720`
-   条模型级结果；normal-only与all-runs严格配对差值为360条，没有缺折、缺seed、缺模型或缺split。
+   原实验包含`720`条模型级结果；Direct实验另包含
+   `4 participants × 3 seeds × 2 train scopes × 3 models × 3 splits = 216`条结果。
+   合计936条模型级结果，没有缺折、缺seed、缺模型或缺split。
 
-2. **历史信息稳定提高35-node分类。**
-   在完整all-runs的`test_all`上，M3的Node Accuracy为`84.74%`，M0为`69.81%`，
-   平均提高`14.94`个百分点；12/12个participant-seed配对全部提高。
+2. **Direct M2是当前最高Accuracy方案。**
+   在all-runs的`test_all`上，M2 Direct的Node Accuracy为`90.57 ± 2.66%`，
+   Tier3 Accuracy为`90.64 ± 2.64%`；相对M0分别提高`20.76`和`7.32`个百分点，
+   两项均在12/12个participant-seed配对中提高。
 
-3. **M3是all-runs下最强的综合模型。**
-   M3在`test_all`同时获得最高Node Accuracy、Node Macro-F1、Tier3 Accuracy和Tier3 Macro-F1：
-   `84.74 / 83.89 / 85.63 / 84.58`。
+3. **直接微调分类头明显优于delta修正。**
+   all-runs下，M2 Direct相对对应的M2 delta模型提高`6.41`个百分点Node Accuracy和
+   `5.65`个百分点Tier3 Accuracy；M3 Direct相对M3提高`5.31`和`4.64`个百分点。
+   M2 Direct的Node Accuracy在12/12个配对中高于M2。
 
-4. **收益主要来自流程node消歧，而不是简单Tier3外观识别。**
-   all-runs下M3相对M0的Stage 2 Node Accuracy提高`18.88`个百分点，而Stage 2 Tier3 Accuracy
-   只提高`1.76`个百分点。四组重复动作node之间的双向误判下降`84.7%–98.4%`。
+4. **位置编码是Direct方案的关键组件。**
+   all-runs下，M2 Direct相对无位置编码的M1 Direct提高`10.57`个百分点Node Accuracy和
+   `5.67`个百分点Tier3 Accuracy，12/12个配对均提高。
 
-5. **all-runs训练明显改善完整pipeline。**
-   在相同participant、seed、model和split的严格配对中，M3的all-runs相对normal-only在
-   `test_all`提高`5.44`个百分点Node Accuracy和`4.65`个百分点Tier3 Accuracy；
-   四位participant的三seed均值全部为正。
+5. **graph-valid重排没有进一步提高Direct准确率。**
+   all-runs下，M3 Direct相对M2 Direct的Node Accuracy低`0.52`个百分点、Tier3 Accuracy低
+   `0.37`个百分点；normal-only下两者基本持平。因此Direct主结果应优先采用实际顺序的M2。
 
-6. **精确实际顺序不是获得历史收益的必要条件。**
-   在all-runs下，graph-valid重排的M3相对真实顺序M2提高`0.59`个百分点Node Accuracy和
-   `0.64`个百分点Tier3 Accuracy；优势不大，但分别在9/12配对中为正。
+6. **收益仍主要来自流程node消歧。**
+   all-runs下M2 Direct相对M0的Stage 2 Node Accuracy提高`26.72`个百分点，而Stage 2
+   Tier3 Accuracy提高`8.48`个百分点。四组重复动作node的双向误判由M0的
+   `166/247/206/150`次降至`0/0/3/1`次。
 
-7. **relation bias有效果，但仍不是主要性能来源。**
+7. **Direct M2的改进具有较好的跨参与者一致性。**
+   all-runs下，A/D/J/M四折相对M2的Node Accuracy分别提高
+   `10.90 / 6.57 / 1.92 / 6.26`个百分点；相对M0则在103/103个测试run上提高。
+
+8. **all-runs对Direct模型有中等幅度收益。**
+   M2 Direct的all-runs相对normal-only提高`1.93`个百分点Node Accuracy和`1.46`个百分点
+   Tier3 Accuracy，但两项都只在7/12个seed配对中为正，稳定性弱于原M3的训练范围收益。
+
+9. **原delta实验的结论仍作为机制与消融证据保留。**
+   在原实验中，M3是最强delta模型：all-runs Node Accuracy为`84.74%`，相对M0提高
+   `14.94`个百分点；其Node指标在12/12配对和103/103个测试run上提高。
+
+10. **relation bias有效果，但仍不是主要性能来源。**
    M5 oracle relation和M6 soft relation相对M4均有小幅平均提升，但幅度通常小于1个百分点，
    且没有稳定超过M3。当前证据更支持将M3作为主模型，将M4/M5/M6作为relation消融。
-
-8. **run级结果支持同一结论。**
-   将每个participant-run先在三个seed上平均后，all-runs M3相对M0的Node Accuracy在
-   103/103个测试run上全部提高；run等权平均提升`15.78`个百分点。
 
 这些结果支持以下核心解释：
 
 > 历史和task graph信息的主要价值，是把视觉上相同或相似的动作定位到正确的流程node。
-> 它对35-node流程状态识别的帮助远大于对31类Tier3外观分类的帮助。
+> 它对35-node流程状态识别的帮助远大于对31类Tier3外观分类的帮助；在冻结视觉表征的前提下，
+> 让history fusion与新的node分类头共同学习，比只训练delta去修正旧分类头更有效。
 
 ## 2. 分析范围与结果完整性
 
@@ -67,9 +80,10 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - held-out participant：A、D、J、M；
 - seed：1、2、42；
 - train scope：`normal_only`和`all_runs`；
-- 模型：M0–M6及3个E2E对照；
+- 原模型：M0–M6及3个E2E对照；
+- Direct模型：M1 Direct、M2 Direct、M3 Direct；
 - split：`test_normal`、`test_fault`、`test_all`；
-- overall、per-stage、prediction及严格training-scope delta结果。
+- overall、per-stage、prediction、严格training-scope delta及Direct相对M0/对应delta模型的配对结果。
 
 旧J先导实验包不再进入四折均值。它仅用于历史对照，以判断早期定性结论是否在严格J折中复现。
 
@@ -82,6 +96,10 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 | `all_model_cross_person_aggregate.csv` | 60 | 2scope × 10模型 × 3split |
 | `all_model_training_scope_delta_aggregate.csv` | 30 | 10模型 × 3split |
 | `all_model_per_stage_metrics.csv` | 2160 | 720个结果 × 3stage |
+| `direct_head_metrics.csv` | 216 | 4人 × 3seed × 2scope × 3 Direct模型 × 3split |
+| `direct_head_paired_deltas.csv` | 432 | 每个Direct模型分别与M0及对应delta模型比较 |
+| `direct_head_aggregate.csv` | 36 | 2scope × 3 Direct模型 × 3split × 2 comparison |
+| 本报告统一主表 | **936** | 原720条 + Direct 216条，共13个模型设置 |
 
 本次检查确认：
 
@@ -91,6 +109,8 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - 每个node模型都具有Node和Tier3指标；
 - 直接Tier3模型没有虚构Node指标；
 - 每个实验都有normal、fault和all三个测试split。
+- 72个Direct训练单元（4人 × 3seed × 2scope × 3模型）均有完成标记、checkpoint与测试结果；
+- Direct汇总CSV与216份原始metrics JSON逐项一致，最大浮点差为`1.11×10^-16`。
 
 ### 2.3 严格LOSO设置
 
@@ -115,6 +135,9 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 | M4 | candidate history attention，无relation bias | no-relation消融 |
 | M5 | 真实历史node标签产生relation bias | oracle上限，不可部署 |
 | M6 | 冻结M0历史node概率产生soft relation bias | 可部署soft graph |
+| M1 Direct | 当前clip + 历史，无位置编码；fusion后直接35-node分类 | direct-head基础对照 |
+| M2 Direct | 实际发生顺序历史 + 位置编码；fusion后直接35-node分类 | direct-head actual-order |
+| M3 Direct | graph-valid重排历史 + 位置编码；fusion后直接35-node分类 | direct-head graph-valid |
 | E2E-Tier3-Scratch | 直接从RGB预测31类Tier3 | Tier3视频baseline |
 | E2E-Node-Scratch | 从scratch直接预测35-node | Node视频baseline |
 | E2E-Node-From-Tier3 | Tier3 backbone初始化后预测35-node | transfer baseline |
@@ -157,46 +180,49 @@ D的fault split只有62个clip，并缺失5个node和5个Tier3类别。不同par
 配对计数如“12/12”为描述性稳定性指标，不等于12个独立统计样本。当前真正的外层独立单位只有
 4位participant，因此本报告不做普通clip级t-test，也不宣称统计显著性。
 
-## 5. Strict normal-only结果
+## 5. 十三模型Strict normal-only统一结果
 
 ### 5.1 test_all四折三seed结果
 
 | 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
 |---|---:|---:|---:|---:|
 | M0 | 66.76 ± 3.86 | 68.38 ± 2.90 | 79.33 ± 5.65 | 76.21 ± 3.05 |
-| **M1** | 78.59 ± 5.53 | **78.71 ± 3.13** | 81.01 ± 4.99 | **80.84 ± 2.60** |
+| M1 | 78.59 ± 5.53 | 78.71 ± 3.13 | 81.01 ± 4.99 | 80.84 ± 2.60 |
 | M2 | 79.30 ± 7.70 | 78.47 ± 5.65 | 81.08 ± 6.70 | 80.03 ± 4.34 |
 | M3 | 79.30 ± 6.96 | 78.48 ± 5.26 | 80.99 ± 6.00 | 79.92 ± 4.23 |
 | M4 | 79.32 ± 5.74 | 78.01 ± 4.22 | 81.25 ± 5.21 | 79.31 ± 3.66 |
 | M5 | 79.63 ± 6.65 | 78.24 ± 5.06 | 81.24 ± 6.42 | 79.39 ± 4.40 |
-| **M6** | **79.76 ± 6.38** | 78.34 ± 4.63 | 81.39 ± 5.84 | 79.49 ± 3.71 |
+| M6 | 79.76 ± 6.38 | 78.34 ± 4.63 | 81.39 ± 5.84 | 79.49 ± 3.71 |
 | E2E-Node-Scratch | 71.77 ± 4.73 | 72.44 ± 3.30 | 78.84 ± 5.99 | 77.07 ± 2.75 |
-| E2E-Node-From-Tier3 | 74.88 ± 4.88 | 74.52 ± 3.73 | **81.82 ± 5.51** | 78.67 ± 3.62 |
+| E2E-Node-From-Tier3 | 74.88 ± 4.88 | 74.52 ± 3.73 | 81.82 ± 5.51 | 78.67 ± 3.62 |
 | E2E-Tier3-Scratch | — | — | 81.22 ± 4.39 | 78.07 ± 2.40 |
+| M1 Direct | 80.52 ± 4.93 | 80.86 ± 4.28 | 83.16 ± 4.80 | 82.71 ± 3.69 |
+| M2 Direct | 88.64 ± 3.50 | **85.64 ± 3.88** | 89.18 ± 3.56 | **85.11 ± 3.92** |
+| **M3 Direct** | **88.72 ± 3.97** | 85.51 ± 4.22 | **89.29 ± 3.96** | 84.94 ± 4.22 |
 
 normal-only的主要现象：
 
-1. 所有历史模型都比M0高约11.8–13.0个百分点Node Accuracy；
-2. M1–M6的总体Node Accuracy非常接近，最大差距只有1.17个百分点；
-3. M6获得最高Node Accuracy，M1获得最高Node Macro-F1和Tier3 Macro-F1；
-4. E2E-Node-From-Tier3获得最高Tier3 Accuracy，但Node Accuracy明显低于所有M1–M6；
-5. normal-only下没有足够证据把M3定义为绝对最优，因为M2–M6在不同指标上互有胜负。
+1. 原M1–M6相对M0提高约11.8–13.0个百分点Node Accuracy；
+2. Direct M2/M3进一步将Node Accuracy提高到约88.7%，相对M0提高约22个百分点；
+3. M3 Direct获得最高Node和Tier3 Accuracy，M2 Direct获得最高Node/Tier3 Macro-F1；
+4. M2 Direct与M3 Direct非常接近，Node/Tier3 Accuracy只差`0.08/0.12`个百分点；
+5. 原十模型继续作为delta与E2E消融保留，但不再代表全部实验的最高结果。
 
-Balanced Accuracy提供相同方向：M1的Node/Tier3 Balanced Accuracy为`80.25/82.47`，是
-normal-only `test_all`的最高值。
+Balanced Accuracy同样由Direct模型领先：M2 Direct的Node/Tier3 Balanced Accuracy为
+`85.94/85.39`，均高于原十模型。
 
-### 5.2 三个split中的最佳模型
+### 5.2 十三模型在三个split中的最佳模型
 
 | Split | 最佳Node Acc | 最佳Node Macro-F1 | 最佳Tier3 Acc | 最佳Tier3 Macro-F1 |
 |---|---|---|---|---|
-| normal | M1, 81.63 | M1, 82.75 | M1, 83.67 | M1, 84.89 |
-| fault | M4, 77.86 | M4, 74.02 | E2E-Node-From-Tier3, 81.88 | M4, 75.68 |
-| all | M6, 79.76 | M1, 78.71 | E2E-Node-From-Tier3, 81.82 | M1, 80.84 |
+| normal | M3 Direct, 91.05 | M3 Direct, 87.29 | M3 Direct, 91.21 | M2 Direct, 86.51 |
+| fault | M2 Direct, 83.24 | M2 Direct, 78.58 | M2 Direct, 85.05 | M2 Direct, 78.32 |
+| all | M3 Direct, 88.72 | M2 Direct, 85.64 | M3 Direct, 89.29 | M2 Direct, 85.11 |
 
-M1在normal-only的正常流程上表现很强，但没有保持fault上的同等优势。这说明不带位置和graph
-关系的history attention容易学习正常流程中的序列模式，却不一定能稳定迁移到异常顺序。
+Direct M2/M3覆盖normal-only三个split的全部最佳项。M1 Direct仍明显落后，表明提升不是单纯来自
+替换分类头，而是来自位置编码与history fusion共同作用。
 
-## 6. 完整all-runs结果
+## 6. 十三模型完整all-runs统一结果
 
 ### 6.1 test_all四折三seed结果
 
@@ -205,38 +231,40 @@ M1在normal-only的正常流程上表现很强，但没有保持fault上的同�
 | M0 | 69.81 ± 3.94 | 72.91 ± 3.51 | 83.32 ± 5.66 | 81.41 ± 3.98 |
 | M1 | 79.67 ± 7.72 | 80.93 ± 5.85 | 84.85 ± 5.44 | 84.37 ± 3.86 |
 | M2 | 84.15 ± 5.95 | 83.06 ± 4.61 | 84.99 ± 5.67 | 83.67 ± 3.87 |
-| **M3** | **84.74 ± 5.81** | **83.89 ± 4.16** | **85.63 ± 5.08** | **84.58 ± 3.25** |
+| M3 | 84.74 ± 5.81 | 83.89 ± 4.16 | 85.63 ± 5.08 | 84.58 ± 3.25 |
 | M4 | 83.01 ± 5.51 | 81.74 ± 4.25 | 84.58 ± 5.24 | 82.76 ± 3.54 |
 | M5 | 83.78 ± 6.12 | 83.19 ± 3.75 | 84.98 ± 5.36 | 84.14 ± 2.71 |
 | M6 | 83.71 ± 6.96 | 82.65 ± 5.59 | 85.05 ± 5.76 | 83.53 ± 4.50 |
 | E2E-Node-Scratch | 74.72 ± 6.68 | 75.09 ± 6.63 | 81.92 ± 7.62 | 79.65 ± 6.50 |
 | E2E-Node-From-Tier3 | 77.74 ± 5.02 | 78.56 ± 4.45 | 85.46 ± 5.01 | 82.85 ± 4.10 |
 | E2E-Tier3-Scratch | — | — | 84.92 ± 4.95 | 82.52 ± 4.03 |
+| M1 Direct | 79.99 ± 6.52 | 80.69 ± 4.10 | 84.97 ± 4.96 | 84.04 ± 2.24 |
+| **M2 Direct** | **90.57 ± 2.66** | **87.81 ± 2.79** | **90.64 ± 2.64** | 87.06 ± 3.00 |
+| M3 Direct | 90.05 ± 3.31 | 87.60 ± 3.32 | 90.27 ± 3.10 | **87.23 ± 3.05** |
 
-M3同时获得：
+十三模型统一比较中：
 
-- 最高Node Accuracy：84.74%；
-- 最高Node Macro-F1：83.89%；
-- 最高Tier3 Accuracy：85.63%；
-- 最高Tier3 Macro-F1：84.58%；
-- 最高Node Balanced Accuracy：84.82%；
-- 最高Tier3 Balanced Accuracy：85.65%。
+- M2 Direct获得最高Node Accuracy：`90.57%`；
+- M2 Direct获得最高Node Macro-F1：`87.81%`；
+- M2 Direct获得最高Tier3 Accuracy：`90.64%`；
+- M3 Direct获得最高Tier3 Macro-F1：`87.23%`；
+- M2 Direct获得最高Node Balanced Accuracy：`88.28%`；
+- M3 Direct获得最高Tier3 Balanced Accuracy：`88.04%`。
 
-因此，在完整all-runs条件下，将M3作为当前主模型是有数据依据的。
+因此，在完整all-runs条件下，应将M2 Direct作为Accuracy主模型；原M3保留为最强delta模型，
+M3 Direct保留为graph-valid顺序消融。
 
-### 6.2 三个split中的最佳模型
+### 6.2 十三模型在三个split中的最佳模型
 
 | Split | 最佳Node Acc | 最佳Node Macro-F1 | 最佳Tier3 Acc | 最佳Tier3 Macro-F1 |
 |---|---|---|---|---|
-| normal | M3, 85.62 | M3, 84.74 | M3, 86.52 | M3, 85.44 |
-| fault | M3, 84.31 | M3, 81.37 | E2E-Node-From-Tier3, 86.59 | E2E-Node-From-Tier3, 81.55 |
-| all | M3, 84.74 | M3, 83.89 | M3, 85.63 | M3, 84.58 |
+| normal | M2 Direct, 91.26 | M2 Direct, 88.19 | M2 Direct, 91.30 | M3 Direct, 87.57 |
+| fault | M3 Direct, 89.79 | M3 Direct, 86.84 | M3 Direct, 89.97 | M3 Direct, 86.17 |
+| all | M2 Direct, 90.57 | M2 Direct, 87.81 | M2 Direct, 90.64 | M3 Direct, 87.23 |
 
-fault split仍有例外：E2E-Node-From-Tier3的Tier3 Accuracy比M3高1.70个百分点，Tier3
-Macro-F1高0.02个百分点。但M3的Node Accuracy仍高5.06个百分点，说明两者解决的问题不同：
-
-- E2E transfer更擅长fault clip的动作外观类别；
-- M3更擅长将动作放到正确的35-node流程位置。
+Direct M2/M3覆盖all-runs三个split的全部最佳项。M2 Direct在normal和test_all的Accuracy上
+最好，M3 Direct在fault及部分macro/balanced指标上略优，反映实际顺序与graph-valid重排之间的
+小幅权衡。
 
 ## 7. 历史模型相对M0的严格配对收益
 
@@ -251,20 +279,27 @@ Macro-F1高0.02个百分点。但M3的Node Accuracy仍高5.06个百分点，说�
 | normal-only | M3 | +12.54 | 12/12 | +10.10 | +1.65 | 9/12 | +3.71 |
 | normal-only | M4 | +12.56 | 12/12 | +9.63 | +1.92 | 9/12 | +3.09 |
 | normal-only | M5 | +12.87 | 12/12 | +9.86 | +1.90 | 10/12 | +3.18 |
-| normal-only | M6 | **+13.00** | 12/12 | +9.96 | **+2.06** | 10/12 | +3.28 |
+| normal-only | M6 | +13.00 | 12/12 | +9.96 | +2.06 | 10/12 | +3.28 |
+| normal-only | M1 Direct | +13.76 | 12/12 | +12.47 | +3.83 | 10/12 | +6.49 |
+| normal-only | M2 Direct | +21.88 | 12/12 | **+17.26** | +9.85 | 12/12 | **+8.89** |
+| normal-only | **M3 Direct** | **+21.96** | 12/12 | +17.13 | **+9.96** | 12/12 | +8.73 |
 | all-runs | M1 | +9.87 | 11/12 | +8.02 | +1.54 | 10/12 | +2.96 |
 | all-runs | M2 | +14.35 | 12/12 | +10.15 | +1.68 | 10/12 | +2.26 |
-| all-runs | **M3** | **+14.94** | **12/12** | **+10.98** | **+2.32** | **12/12** | **+3.17** |
+| all-runs | M3 | +14.94 | 12/12 | +10.98 | +2.32 | 12/12 | +3.17 |
 | all-runs | M4 | +13.20 | 12/12 | +8.83 | +1.27 | 11/12 | +1.35 |
 | all-runs | M5 | +13.97 | 12/12 | +10.29 | +1.66 | 12/12 | +2.73 |
 | all-runs | M6 | +13.91 | 12/12 | +9.74 | +1.73 | 11/12 | +2.12 |
+| all-runs | M1 Direct | +10.19 | 12/12 | +7.78 | +1.65 | 11/12 | +2.63 |
+| all-runs | **M2 Direct** | **+20.76** | **12/12** | **+14.90** | **+7.32** | **12/12** | +5.65 |
+| all-runs | M3 Direct | +20.25 | 12/12 | +14.69 | +6.96 | 12/12 | **+5.82** |
 
 最稳健的结论是：
 
 - 历史信息对35-node分类的帮助极其稳定；
-- normal-only和all-runs中，M1–M6的Node Accuracy均大幅超过M0；
-- all-runs M3是唯一同时达到12/12 Node和12/12 Tier3正向的配置；
-- Tier3提升明显小于Node提升，再次说明历史主要解决流程位置消歧。
+- normal-only和all-runs中，原M1–M6以及Direct模型的Node Accuracy均大幅超过M0；
+- Direct M2/M3在两个scope均达到12/12 Node和12/12 Tier3 Accuracy正向；
+- M2/M3 Direct相对M0的提升明显高于对应delta模型，证明联合学习fusion与新head更有效；
+- Tier3提升仍小于Node提升，历史的首要作用仍是流程位置消歧。
 
 ### 7.2 M3相对M0的participant一致性
 
@@ -305,16 +340,22 @@ Macro-F1高0.02个百分点。但M3的Node Accuracy仍高5.06个百分点，说�
 | E2E-Node-Scratch | +2.96 ± 2.01 | +3.08 ± 1.97 | **12/12** | **12/12** |
 | E2E-Node-From-Tier3 | +2.86 ± 1.25 | +3.65 ± 1.03 | 11/12 | 11/12 |
 | E2E-Tier3-Scratch | — | +3.71 ± 2.49 | — | 11/12 |
+| M1 Direct | -0.53 ± 5.47 | +1.81 ± 5.04 | 6/12 | 7/12 |
+| M2 Direct | +1.93 ± 2.53 | +1.46 ± 2.50 | 7/12 | 7/12 |
+| M3 Direct | +1.33 ± 3.14 | +0.98 ± 2.90 | 7/12 | 6/12 |
 
 all-runs训练不仅改善history模型，也改善M0和三个E2E对照，说明收益的一部分来自更充分的视觉
 训练分布，而不是仅来自history attention。
 
-M3的平均提升最大：
+在原十模型中，M3的平均提升最大：
 
 - Node Accuracy：+5.44；
 - Node Macro-F1：+5.41；
 - Tier3 Accuracy：+4.65；
 - Tier3 Macro-F1：+4.66。
+
+Direct M2/M3的all-runs平均值也高于normal-only，但正向配对仅约一半，说明Direct模型的
+训练范围收益主要集中在部分participant/seed，不能表述为逐seed稳定提高。
 
 ### 8.2 normal与fault上的差异
 
@@ -327,14 +368,18 @@ M3的平均提升最大：
 | M4 | +3.31 | +3.00 | +3.91 | +3.70 |
 | M5 | +3.27 | +3.18 | +6.18 | +4.76 |
 | M6 | +3.50 | +3.43 | +5.35 | +4.01 |
+| M1 Direct | -1.75 | +0.79 | +2.70 | +5.03 |
+| M2 Direct | +0.71 | +0.60 | +6.51 | +4.81 |
+| M3 Direct | -0.40 | -0.37 | **+8.13** | **+6.19** |
 
 主要解释：
 
 1. all-runs对fault的改善通常大于对normal的改善；
-2. M2、M3、M4、M5和M6在normal与fault上均为正；
+2. 原M2–M6在normal与fault上均为正；
 3. M1是唯一出现明确权衡的history模型：normal Node下降1.18，但fault Node提高8.43；
 4. M3在normal与fault上都获得较大改善，是更平衡的配置；
-5. all-runs不是简单“只拟合fault测试”，因为M3的normal Node和Tier3也分别提高4.84和4.15。
+5. Direct M2/M3的收益更集中在fault；M3 Direct的fault Node提高8.13，但normal Node略降0.40；
+6. 因此，all-runs对原M3是全面收益，对Direct则更像是fault-domain适配收益。
 
 ### 8.3 M3训练范围提升的participant一致性
 
@@ -367,23 +412,28 @@ run级结果与participant级结果方向一致，但run并非跨participant完�
 |---|---|---:|---:|---:|---:|---:|---:|
 | normal-only | M3 − M2 | -0.00 | 6/12 | +0.01 | -0.10 | 5/12 | -0.11 |
 | all-runs | M3 − M2 | **+0.59** | **9/12** | +0.83 | **+0.64** | **9/12** | +0.91 |
+| normal-only | M3 Direct − M2 Direct | +0.08 | 4/12 | -0.13 | +0.12 | 3/12 | -0.16 |
+| all-runs | M3 Direct − M2 Direct | -0.52 | 4/12 | -0.21 | -0.37 | 4/12 | +0.17 |
 
-normal-only下M2和M3几乎完全相同；all-runs下M3有小幅、较一致的优势。因此可以得出：
+normal-only下原M2/M3及Direct M2/M3都非常接近。all-runs下，原delta模型使用graph-valid重排
+有小幅优势，但Direct模型使用实际顺序的M2更好。因此可以得出：
 
 - 模型不需要严格复现历史动作的实际精确顺序才能获得收益；
 - task graph允许的相对顺序足以保留有用历史结构；
-- 当前数据支持“graph-valid order具有轻微正则化作用”，但不支持宣称其优势非常大；
+- graph-valid order对delta模型可能具有轻微正则化作用，但在Direct模型中没有额外Accuracy收益；
 - 该结果符合多人协作场景：历史动作可能由不同人完成，准确个人执行顺序不一定是关键。
 
 ### 9.2 M1与M2：位置编码的作用
 
-| Scope | M2 − M1 Node Acc | Node正向 | Tier3 Acc | Tier3 Macro-F1 |
-|---|---:|---:|---:|---:|
-| normal-only | +0.72 | 6/12 | +0.07 | -0.81 |
-| all-runs | **+4.48** | **12/12** | +0.14 | -0.70 |
+| Scope | 比较 | Δ Node Acc | Node正向 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| normal-only | M2 − M1 | +0.72 | 6/12 | +0.07 | -0.81 |
+| all-runs | M2 − M1 | +4.48 | 12/12 | +0.14 | -0.70 |
+| normal-only | M2 Direct − M1 Direct | **+8.12** | **12/12** | **+6.02** | +2.40 |
+| all-runs | M2 Direct − M1 Direct | **+10.57** | **12/12** | **+5.67** | +3.02 |
 
-all-runs下位置编码在12/12配对中提高Node Accuracy，却几乎不改变Tier3 Accuracy。
-这进一步证明位置/顺序主要用于回答：
+原delta模型中，位置编码主要提高Node定位而几乎不改变Tier3 Accuracy；Direct模型中，
+位置编码同时大幅改善Node和Tier3，并在两个scope均为12/12 Node配对提高。这进一步证明：
 
 ```text
 “当前视觉动作位于task graph的哪个node？”
@@ -395,8 +445,9 @@ all-runs下位置编码在12/12配对中提高Node Accuracy，却几乎不改变
 “当前clip看起来是哪一种Tier3动作？”
 ```
 
-normal-only下这一优势很弱，说明当训练历史只覆盖标准正常流程时，M1也能从高度规律的历史中获得
-较好结果；加入fault run后，显式位置结构变得更重要。
+原delta模型在normal-only下的位置优势很弱，但Direct模型在normal-only下仍提高8.12个百分点
+Node Accuracy。因此，对Direct Head Fusion而言，显式位置结构是必要组件，而不只是all-runs
+条件下的辅助正则化。
 
 ### 9.3 M4、M5与M6：relation bias
 
@@ -431,12 +482,15 @@ normal-only下这一优势很弱，说明当训练历史只覆盖标准正常流
 | 模型 | Stage 1 Node | Stage 2 Node | Stage 3 Node | Stage 2 Tier3 |
 |---|---:|---:|---:|---:|
 | M0 | 81.57 | 65.73 | 80.28 | 84.07 |
-| M1 | 83.66 | 77.56 | **86.43** | 84.67 |
+| M1 | 83.66 | 77.56 | 86.43 | 84.67 |
 | M2 | 83.91 | 84.18 | 83.64 | 85.32 |
-| **M3** | **84.72** | **84.61** | 84.86 | **85.83** |
+| M3 | 84.72 | 84.61 | 84.86 | 85.83 |
 | M4 | 82.17 | 83.18 | 82.19 | 85.33 |
 | M5 | 83.96 | 83.36 | 84.91 | 85.01 |
 | M6 | 84.07 | 83.71 | 82.60 | 85.57 |
+| **M1 Direct** | **85.40** | 78.29 | 83.06 | 85.09 |
+| **M2 Direct** | 83.48 | **92.45** | 87.34 | **92.55** |
+| **M3 Direct** | 84.32 | 91.49 | **87.77** | 91.79 |
 
 M3相对M0：
 
@@ -449,18 +503,22 @@ M3相对M0：
 Stage 2在normal和fault中都获得约19个百分点Node提升，而Tier3提升仅约2个百分点。
 这不是由某一个测试划分独占，而是任务结构本身导致的稳定现象。
 
+M2 Direct相对M0在all-runs `test_all`的Stage 1/2/3 Node差值为
+`+1.92 / +26.72 / +7.06`个百分点，Stage 2 Tier3提高`8.48`个百分点。统一13模型表进一步说明，
+Direct新增收益也主要集中在Stage 2。
+
 ### 10.2 重复动作node混淆
 
-聚合四位participant、三个all-runs seed的`test_all` prediction，比较M0与M3：
+聚合四位participant、三个all-runs seed的`test_all` prediction，同时比较M0、原M3和M2 Direct：
 
-| 相同Tier3动作对应node | M0双向误判 | M3双向误判 | 降幅 |
-|---|---:|---:|---:|
-| node 14 ↔ 21：`put sample under electrodes` | 166 | 6 | **96.4%** |
-| node 15 ↔ 22：`press pedal` | 247 | 4 | **98.4%** |
-| node 16 ↔ 19：`put sample on machine table` | 206 | 13 | **93.7%** |
-| node 17 ↔ 20：`grip sample from machine table` | 150 | 23 | **84.7%** |
+| 相同Tier3动作对应node | M0双向误判 | 原M3双向误判 | M2 Direct双向误判 | M2 Direct相对M0降幅 |
+|---|---:|---:|---:|---:|
+| node 14 ↔ 21：`put sample under electrodes` | 166 | 6 | **0** | **100.0%** |
+| node 15 ↔ 22：`press pedal` | 247 | 4 | **0** | **100.0%** |
+| node 16 ↔ 19：`put sample on machine table` | 206 | 13 | **3** | **98.5%** |
+| node 17 ↔ 20：`grip sample from machine table` | 150 | 23 | **1** | **99.3%** |
 
-最大的单node recall提升：
+原M3相对M0最大的单node recall提升：
 
 | Node | 动作 | M0 Recall | M3 Recall | 提升 |
 |---|---|---:|---:|---:|
@@ -473,8 +531,8 @@ Stage 2在normal和fault中都获得约19个百分点Node提升，而Tier3提升
 | 17 | grip sample from machine table（前序位置） | 61.95 | 80.13 | +18.18 |
 | 21 | put sample under electrodes（第二次） | 67.68 | 83.16 | +15.49 |
 
-这组结果是task-history方法最直接的机制证据：模型大幅减少了“同一种Tier3动作、不同流程node”
-之间的混淆。
+这组结果是task-history方法最直接的机制证据：原M3已经大幅减少“同一种Tier3动作、不同流程node”
+之间的混淆，M2 Direct又将四组误判进一步压缩到接近零。
 
 M3仍较困难的node包括：
 
@@ -505,7 +563,7 @@ M3仍较困难的node包括：
 all-runs M3的Node优势覆盖所有测试run，是非常强的方向一致性证据。Tier3并非每个run都提升，
 再次说明方法的主要目标应表述为node级流程定位。
 
-## 11. Participant差异
+## 11. Participant差异：原M3与Direct主模型
 
 ### 11.1 all-runs M3结果
 
@@ -525,7 +583,7 @@ all-runs M3的Node优势覆盖所有测试run，是非常强的方向一致性�
 - D的fault样本只有62个，虽然accuracy高，但不应解释为更稳定；
 - 四折总体标准差主要来自participant差异，而不是seed波动。
 
-### 11.2 M3不是每一位participant上都绝对第一
+### 11.2 原十模型中M3不是每一位participant上都绝对第一
 
 all-runs三seed均值中：
 
@@ -534,7 +592,19 @@ all-runs三seed均值中：
 - J的M5/M6略高于M3约0.18个百分点；
 - 但M3在四人等权总体上获得最高综合结果。
 
-因此，应表述为“M3是四折总体最优且最平衡”，而不是“每一折每个指标都第一”。
+因此，在原十模型范围内应表述为“M3是四折总体最优且最平衡”，而不是“每一折每个指标都第一”。
+
+### 11.3 all-runs M2 Direct结果
+
+| Participant | test normal Node | test fault Node | test all Node | test all Tier3 |
+|---|---:|---:|---:|---:|
+| A | 92.29 ± 0.86 | 83.70 ± 4.02 | 89.56 ± 1.81 | 89.64 ± 1.74 |
+| D | 88.25 ± 4.09 | 90.32 ± 1.61 | 88.53 ± 3.69 | 88.67 ± 3.60 |
+| J | **95.61 ± 1.18** | 91.87 ± 0.69 | **94.47 ± 1.02** | **94.53 ± 1.10** |
+| M | 88.89 ± 1.92 | **93.10 ± 1.15** | 89.71 ± 1.36 | 89.71 ± 1.36 |
+
+M2 Direct在四位participant上的`test_all` Node Accuracy均高于对应M2 delta模型；A/D/J/M分别
+提高`10.90 / 6.57 / 1.92 / 6.26`个百分点。Direct的总体优势不是由单一participant驱动。
 
 ## 12. Seed稳定性
 
@@ -549,13 +619,19 @@ all-runs三seed均值中：
 | normal-only | M4 | 79.32 | 0.76 | 81.25 | 0.42 |
 | normal-only | M5 | 79.63 | 1.26 | 81.24 | 0.55 |
 | normal-only | M6 | 79.76 | 1.54 | 81.39 | 0.93 |
+| normal-only | M1 Direct | 80.52 | 2.22 | 83.16 | 0.97 |
+| normal-only | M2 Direct | 88.64 | 0.88 | 89.18 | 0.77 |
+| normal-only | M3 Direct | **88.72** | 0.69 | **89.29** | 0.32 |
 | all-runs | M0 | 69.81 | 1.99 | 83.32 | 0.68 |
 | all-runs | M1 | 79.67 | 1.44 | 84.85 | 0.94 |
 | all-runs | M2 | 84.15 | 1.31 | 84.99 | 0.70 |
-| all-runs | **M3** | **84.74** | **0.98** | **85.63** | **0.48** |
-| all-runs | M4 | 83.01 | 1.00 | 84.58 | **0.15** |
+| all-runs | M3 | 84.74 | 0.98 | 85.63 | 0.48 |
+| all-runs | M4 | 83.01 | 1.00 | 84.58 | 0.15 |
 | all-runs | M5 | 83.78 | 1.04 | 84.98 | 0.58 |
-| all-runs | M6 | 83.71 | **0.48** | 85.05 | 0.49 |
+| all-runs | M6 | 83.71 | 0.48 | 85.05 | 0.49 |
+| all-runs | M1 Direct | 79.99 | 1.43 | 84.97 | 0.65 |
+| all-runs | **M2 Direct** | **90.57** | 1.87 | **90.64** | 1.84 |
+| all-runs | M3 Direct | 90.05 | **0.43** | 90.27 | 0.27 |
 
 M3的all-runs seed均值：
 
@@ -567,6 +643,20 @@ M3的all-runs seed均值：
 
 M3的seed波动小于1个百分点Node和0.5个百分点Tier3；M6的Node最稳定，M4的Tier3最稳定，
 但二者平均性能低于M3。
+
+Direct模型的all-runs seed均值：
+
+| 模型 | Seed | Node Accuracy | Tier3 Accuracy |
+|---|---:|---:|---:|
+| M2 Direct | 1 | 92.28 | 92.33 |
+| M2 Direct | 2 | 90.85 | 90.90 |
+| M2 Direct | 42 | 88.57 | 88.68 |
+| M3 Direct | 1 | 90.37 | 90.43 |
+| M3 Direct | 2 | 90.22 | 90.43 |
+| M3 Direct | 42 | 89.57 | 89.96 |
+
+M2 Direct平均性能最高，但seed间差异较大；M3 Direct的Node/Tier3 seed SD仅`0.43/0.27`，
+稳定性更好。这是“最高均值”和“最低seed波动”之间的取舍。
 
 ## 13. E2E对照
 
@@ -582,29 +672,30 @@ all-runs `test_all`：
 
 Tier3预训练明确改善35-node端到端模型，说明Tier3视觉表征是有效的初始化来源。
 
-### 13.2 M3与E2E-Node-From-Tier3
+### 13.2 M2 Direct与E2E-Node-From-Tier3
 
 | Split | Δ Node Acc | Δ Node Macro-F1 | Δ Tier3 Acc | Δ Tier3 Macro-F1 |
 |---|---:|---:|---:|---:|
-| normal | +7.88 | +6.11 | +0.92 | +2.31 |
-| fault | +5.06 | +3.90 | -1.70 | -0.02 |
-| all | **+7.00** | **+5.33** | +0.17 | +1.73 |
+| normal | +13.52 | +9.56 | +5.70 | +4.30 |
+| fault | +10.50 | +8.87 | +3.26 | +3.83 |
+| all | **+12.82** | **+9.25** | **+5.18** | **+4.22** |
 
-M3的优势主要集中在Node空间；Tier3 Accuracy与E2E transfer非常接近。这是符合预期的：
-history/task graph增加的是流程位置证据，而不是新的当前clip视觉信息。
+M2 Direct在normal、fault和all三个split的Node与Tier3指标上均超过端到端Tier3迁移模型。
+这说明冻结视觉backbone并不会阻止强node识别；当history fusion与node head联合优化时，
+流程信息还能反过来改善聚合后的Tier3判断。
 
-### 13.3 M3与直接Tier3分类
+### 13.3 M2 Direct与直接Tier3分类
 
 all-runs `test_all`：
 
 ```text
-M3聚合Tier3 Accuracy：85.63
-E2E-Tier3-Scratch：   84.92
-差值：                +0.71
+M2 Direct聚合Tier3 Accuracy：90.64
+E2E-Tier3-Scratch：          84.92
+差值：                       +5.72
 
-M3聚合Tier3 Macro-F1：84.58
-E2E-Tier3-Scratch：    82.52
-差值：                 +2.05
+M2 Direct聚合Tier3 Macro-F1：87.06
+E2E-Tier3-Scratch：           82.52
+差值：                        +4.54
 ```
 
 如果应用只需要31类Tier3动作标签，直接Tier3模型已经非常有竞争力。如果应用需要：
@@ -614,7 +705,8 @@ E2E-Tier3-Scratch：    82.52
 - 判断是否满足前置关系；
 - 为后续漏做、多做或非法跳转检测提供状态；
 
-则M3的Node优势更重要。
+则M2 Direct的Node优势更重要。原M3相对E2E的比较仍用于说明delta路线，但当前统一13模型结论
+应以Direct主模型为准。
 
 ## 14. 严格J折与旧先导结论
 
@@ -623,9 +715,13 @@ E2E-Tier3-Scratch：    82.52
 | Scope | 模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
 |---|---|---:|---:|---:|---:|
 | normal-only | M0 | 72.19 ± 3.04 | 72.62 ± 3.15 | 87.69 ± 3.35 | 80.78 ± 3.63 |
-| normal-only | M3 | **89.73 ± 4.08** | **85.99 ± 4.71** | **89.97 ± 3.70** | **85.60 ± 4.52** |
+| normal-only | M3 | 89.73 ± 4.08 | 85.99 ± 4.71 | 89.97 ± 3.70 | 85.60 ± 4.52 |
+| normal-only | M2 Direct | 92.55 ± 1.66 | 87.97 ± 2.45 | 93.21 ± 2.24 | 87.12 ± 2.93 |
+| normal-only | **M3 Direct** | **93.21 ± 0.28** | **88.50 ± 0.48** | **93.87 ± 0.62** | **87.77 ± 0.52** |
 | all-runs | M0 | 74.89 ± 3.35 | 77.20 ± 1.74 | 91.35 ± 0.54 | 86.92 ± 1.78 |
-| all-runs | M3 | **92.49 ± 1.53** | **89.64 ± 1.09** | **92.55 ± 1.63** | **89.22 ± 1.30** |
+| all-runs | M3 | 92.49 ± 1.53 | 89.64 ± 1.09 | 92.55 ± 1.63 | 89.22 ± 1.30 |
+| all-runs | M2 Direct | 94.47 ± 1.02 | 91.66 ± 1.29 | 94.53 ± 1.10 | 91.07 ± 1.76 |
+| all-runs | **M3 Direct** | **94.59 ± 0.48** | **92.19 ± 0.69** | **94.59 ± 0.48** | **91.58 ± 0.92** |
 
 严格J normal-only中，M3相对M0：
 
@@ -642,27 +738,31 @@ Tier3 Accuracy：+1.20
 ```
 
 因此，旧J先导实验关于“历史大幅提高Node分类”的定性结论在不使用J validation、重新从scratch
-训练的严格J折中得到复现。旧先导数值不再用于正式四折均值。
+训练的严格J折中得到复现。Direct M2/M3进一步提高了严格J折结果；旧先导数值不再用于正式四折均值。
 
 ## 15. 修正后的总体结论
 
 ### 15.1 得到强支持的结论
 
-1. **历史信息稳定提高35-node分类。**
-   M3在all-runs提高14.94个百分点Node Accuracy，12/12 participant-seed配对为正，
-   103/103测试run为正。
+1. **Direct Head Fusion是当前最有效的冻结视觉表征方案。**
+   all-runs M2 Direct取得`90.57%` Node Accuracy和`90.64%` Tier3 Accuracy；
+   相对M0分别提高`20.76`和`7.32`个百分点。
 
 2. **收益机制是流程位置消歧。**
-   Stage 2 Node提高18.88个百分点，而Tier3只提高1.76；重复动作node误判下降84.7%–98.4%。
+   M2 Direct相对M0的Stage 2 Node提高`26.72`个百分点；四组重复动作node双向误判下降
+   `98.5%–100%`。
 
-3. **M3是all-runs四折总体最优模型。**
-   它在test_all的Accuracy、Macro-F1和Balanced Accuracy的Node/Tier3指标上均为最高。
+3. **位置编码对Direct模型非常重要。**
+   M2 Direct相对M1 Direct提高`10.57`个百分点Node Accuracy和`5.67`个百分点Tier3 Accuracy，
+   两项均为12/12配对提高。
 
-4. **all-runs训练优于normal-only。**
-   M3严格配对提高5.44个百分点Node和4.65个百分点Tier3，四位participant均值全部为正。
+4. **原delta实验仍稳定证明history有效。**
+   在原十模型中，M3是最强delta模型；相对M0提高`14.94`个百分点Node Accuracy，
+   12/12 participant-seed和103/103测试run均为正。
 
-5. **精确实际顺序不是必要条件。**
-   M3至少不弱于M2，并在all-runs中有小幅、较一致的优势。
+5. **Direct模型不需要graph-valid重排才能取得最佳准确率。**
+   all-runs M3 Direct相对M2 Direct的Node/Tier3 Accuracy低`0.52/0.37`个百分点；
+   实际顺序的M2 Direct应作为主配置。
 
 6. **严格J折复现了旧先导结论。**
    去除旧checkpoint和validation可比性问题后，J折仍显示约17.5个百分点Node提升。
@@ -673,13 +773,16 @@ Tier3 Accuracy：+1.20
    M5/M6平均优于M4，但幅度通常小于1个百分点，且不是每个配对都提高。
 
 2. **M6具有可部署潜力，但不是当前最佳。**
-   M6在normal-only获得最高平均Node Accuracy，在all-runs具有较好seed稳定性，但总体仍低于M3。
+   M6在原normal-only十模型中获得最高平均Node Accuracy，在all-runs具有较好seed稳定性，
+   但总体低于原M3和Direct M2/M3。
 
 3. **M1能够利用历史，但缺少位置结构时不够平衡。**
-   M1在normal-only normal split很强；all-runs相对normal-only时出现normal Node下降、fault大幅提高的权衡。
+   原M1在normal-only normal split很强；M1 Direct相对M1 delta在all-runs下也基本持平，
+   进一步说明没有位置结构时直接更换head并不足以稳定提高性能。
 
-4. **Tier3改善有限。**
-   history模型的Tier3提升通常只有1–3个百分点；若只做动作外观分类，E2E Tier3仍是强baseline。
+4. **all-runs对Direct的平均收益存在，但跨seed一致性有限。**
+   M2 Direct相对normal-only平均提高`1.93`个百分点Node和`1.46`个百分点Tier3 Accuracy，
+   但两项均只有7/12配对为正。
 
 ### 15.3 仍不能得出的结论
 
@@ -703,7 +806,7 @@ Tier3 Accuracy：+1.20
 - participant内run bootstrap；
 - 外层participant bootstrap或hierarchical bootstrap；
 - normal与fault分别报告95% confidence interval；
-- M3−M0、M3−M2、all-runs−normal-only分别计算；
+- M2 Direct−M0、M2 Direct−M2、M3−M0及all-runs−normal-only分别计算；
 - 不将三个seed当作独立participant。
 
 ### 16.2 改进M6 soft relation
@@ -749,30 +852,44 @@ Tier3 Accuracy：+1.20
 - camera/domain shift；
 - 跨数据采集批次验证。
 
+### 16.6 Direct模型的下一步消融
+
+- 比较只训练node head、训练head+768→512 fusion、训练完整history fusion三种冻结层级；
+- 对M2 Direct测试部分解冻ResNet layer4，但保持严格LOSO和固定训练预算；
+- 比较随机node head与M0 node head初始化，区分“直接目标”与“初始化来源”的影响；
+- 对all-runs M2 Direct增加seed，以确认当前seed 1/2/42之间的差异；
+- 在不读取历史真值的前提下，将M6 soft relation加入Direct head，检验relation是否能在更强head上获益。
+
 ## 17. 推荐用于论文或阶段汇报的核心结果
 
-建议优先报告以下五项：
+建议优先报告以下六项：
 
 1. **严格四折三seed all-runs总体：**
-   M3 Node Accuracy `84.74 ± 5.81`，Tier3 Accuracy `85.63 ± 5.08`。
+   M2 Direct Node Accuracy `90.57 ± 2.66`，Tier3 Accuracy `90.64 ± 2.64`。
 
-2. **M3相对M0：**
-   Node Accuracy `+14.94`，Tier3 Accuracy `+2.32`；Node 12/12配对为正。
+2. **M2 Direct相对M0：**
+   Node Accuracy `+20.76`，Tier3 Accuracy `+7.32`；六项Node/Tier3指标均为12/12配对提高。
 
-3. **训练范围：**
-   M3 all-runs相对normal-only，Node `+5.44`，Tier3 `+4.65`。
+3. **Direct相对delta：**
+   M2 Direct相对M2，Node Accuracy `+6.41`，Tier3 Accuracy `+5.65`；
+   Node Accuracy为12/12配对提高。
 
-4. **Stage 2机制：**
-   M3相对M0，Node `+18.88`，Tier3仅`+1.76`。
+4. **位置编码与历史顺序：**
+   M2 Direct相对M1 Direct，Node `+10.57`，Tier3 `+5.67`；
+   M3 Direct并未进一步超过M2 Direct。
 
-5. **重复node与run级证据：**
-   重复动作node双向误判下降`84.7%–98.4%`；all-runs Node在103/103测试run上提高。
+5. **Stage 2与重复node机制：**
+   M2 Direct相对M0的Stage 2 Node Accuracy提高`26.72`个百分点；四组重复动作node误判
+   从`166/247/206/150`次降至`0/0/3/1`次。
+
+6. **跨参与者与run级证据：**
+   A/D/J/M四折的M2 Direct均高于对应M2；相对M0的Node Accuracy在103/103测试run上提高。
 
 推荐总结语：
 
-> 在严格四折三seed LOSO中，历史和task graph结构大幅提升35-node流程状态识别，尤其减少相同动作
-> 在不同流程位置之间的混淆。graph-valid历史不依赖实际精确执行顺序，并在完整all-runs训练中取得
-> 最佳综合性能；relation bias提供小幅附加收益，但soft relation仍有进一步改进空间。
+> 在严格四折三seed LOSO中，冻结Tier3预训练视觉表征并联合训练history fusion与新的node分类头，
+> 比通过delta修正旧分类头更有效。实际顺序加位置编码的M2 Direct取得最高Accuracy，显著减少相同
+> 动作在不同流程位置之间的混淆；graph-valid重排在Direct方案中未带来进一步准确率提升。
 
 ## 18. 结果来源
 
@@ -800,6 +917,14 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
 training_scope_comparison_ADJM_3seeds
 ```
 
+Direct Head Fusion四折三seed汇总：
+
+```text
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
+direct_head_fusion_summary_ADJM_3seeds
+```
+
 最重要的源文件：
 
 ```text
@@ -809,6 +934,9 @@ all_model_training_scope_deltas.csv
 all_model_training_scope_delta_aggregate.csv
 all_model_per_stage_metrics.csv
 all_model_per_stage_cross_person_aggregate.csv
+direct_head_metrics.csv
+direct_head_paired_deltas.csv
+direct_head_aggregate.csv
 ```
 
 混淆与run级分析来自各fold、seed、scope和model目录下的：
@@ -820,3 +948,215 @@ test_results\test_all_predictions.csv
 ```
 
 所有表格均由实际CSV结果重新计算。报告未修改checkpoint、prediction、probability、metrics或原始summary文件。
+
+## 19. Direct Head Fusion新增实验
+
+### 19.1 实验问题与设计
+
+原M1–M3保留冻结M0的35-node分类头，并学习history-conditioned delta来修正原logit。
+Direct Head Fusion检验另一种更直接的方案：
+
+1. 加载对应participant、seed和train scope的Tier3预训练backbone特征；
+2. 冻结RGB backbone，不重新训练视频表征；
+3. 将分类头替换为35-node head；
+4. 联合训练history fusion与新的node分类头；
+5. 保持与原M1–M3相同的历史构造、位置编码和graph-valid重排定义。
+
+因此，Direct与原delta模型的主要差异不是使用了更多测试信息，而是允许分类头与历史融合表示共同适配
+35-node目标。Direct每个模型训练50 epochs，未重新训练100-epoch RGB backbone。
+
+### 19.2 完整性与统计口径
+
+Direct结果覆盖：
+
+- A、D、J、M四个held-out participant；
+- seed 1、2、42；
+- `normal_only`与`all_runs`两个train scope；
+- M1 Direct、M2 Direct、M3 Direct；
+- `test_normal`、`test_fault`、`test_all`。
+
+共计`72`个训练单元和`216`条模型-split指标。所有完成标记、checkpoint、metrics和prediction文件均存在。
+本节数值由原始metrics/prediction重新计算，并与Direct汇总CSV核对。总体均值先在每个participant内
+平均三个seed，再对A/D/J/M等权平均；“±”为四个participant均值之间的样本标准差。
+
+### 19.3 Direct总体结果
+
+#### normal-only训练，test_all
+
+| 模型 | Node Acc | Node Macro-F1 | Node Bal Acc | Tier3 Acc | Tier3 Macro-F1 | Tier3 Bal Acc |
+|---|---:|---:|---:|---:|---:|---:|
+| M1 Direct | 80.52 ± 4.93 | 80.86 ± 4.28 | 81.94 ± 3.98 | 83.16 ± 4.80 | 82.71 ± 3.69 | 83.93 ± 3.27 |
+| M2 Direct | **88.64 ± 3.50** | **85.64 ± 3.88** | **85.94 ± 3.78** | 89.18 ± 3.56 | **85.11 ± 3.92** | **85.39 ± 3.73** |
+| M3 Direct | 88.72 ± 3.97 | 85.51 ± 4.22 | 85.71 ± 3.91 | **89.29 ± 3.96** | 84.94 ± 4.22 | 85.02 ± 3.74 |
+
+normal-only下M2 Direct与M3 Direct基本持平。两者Node Accuracy只差`0.08`个百分点，
+Tier3 Accuracy只差`0.12`个百分点，远小于跨participant标准差。
+
+#### all-runs训练，test_all
+
+| 模型 | Node Acc | Node Macro-F1 | Node Bal Acc | Tier3 Acc | Tier3 Macro-F1 | Tier3 Bal Acc |
+|---|---:|---:|---:|---:|---:|---:|
+| M1 Direct | 79.99 ± 6.52 | 80.69 ± 4.10 | 81.97 ± 3.75 | 84.97 ± 4.96 | 84.04 ± 2.24 | 85.13 ± 1.93 |
+| M2 Direct | **90.57 ± 2.66** | **87.81 ± 2.79** | **88.28 ± 2.54** | **90.64 ± 2.64** | 87.06 ± 3.00 | 87.59 ± 2.74 |
+| M3 Direct | 90.05 ± 3.31 | 87.60 ± 3.32 | 88.27 ± 2.89 | 90.27 ± 3.10 | **87.23 ± 3.05** | **88.04 ± 2.61** |
+
+以主要Accuracy指标衡量，M2 Direct是全部实验中的最佳模型。M3 Direct在Tier3 Macro-F1和
+Balanced Accuracy上略高，但没有超过M2 Direct的Node或Tier3 Accuracy。
+
+### 19.4 相对M0与原delta模型
+
+下表为`test_all`配对差值，单位为百分点。
+
+#### normal-only训练
+
+| Direct模型 | 比较对象 | ΔNode Acc | ΔNode Macro-F1 | ΔTier3 Acc | ΔTier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| M1 Direct | M0 | +13.76 ± 4.92 | +12.47 ± 5.18 | +3.83 ± 3.40 | +6.49 ± 4.51 |
+| M1 Direct | M1 | +1.93 ± 4.44 | +2.15 ± 3.00 | +2.14 ± 2.64 | +1.87 ± 1.57 |
+| M2 Direct | M0 | **+21.88 ± 3.75** | **+17.26 ± 4.39** | +9.85 ± 3.61 | +8.89 ± 3.84 |
+| M2 Direct | M2 | +9.34 ± 6.02 | +7.17 ± 5.30 | +8.10 ± 4.83 | +5.08 ± 4.43 |
+| M3 Direct | M0 | **+21.96 ± 3.89** | **+17.13 ± 4.37** | **+9.96 ± 3.52** | **+8.73 ± 3.68** |
+| M3 Direct | M3 | +9.42 ± 4.71 | +7.03 ± 3.93 | +8.31 ± 3.65 | +5.03 ± 3.16 |
+
+#### all-runs训练
+
+| Direct模型 | 比较对象 | ΔNode Acc | ΔNode Macro-F1 | ΔTier3 Acc | ΔTier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| M1 Direct | M0 | +10.19 ± 3.58 | +7.78 ± 2.67 | +1.65 ± 0.87 | +2.63 ± 2.00 |
+| M1 Direct | M1 | +0.32 ± 1.89 | -0.24 ± 2.11 | +0.12 ± 0.91 | -0.33 ± 1.72 |
+| M2 Direct | M0 | **+20.76 ± 2.40** | **+14.90 ± 3.08** | **+7.32 ± 3.38** | +5.65 ± 2.99 |
+| M2 Direct | M2 | +6.41 ± 3.67 | +4.75 ± 2.95 | +5.65 ± 3.50 | +3.40 ± 2.55 |
+| M3 Direct | M0 | +20.25 ± 2.83 | +14.69 ± 3.19 | +6.96 ± 3.37 | **+5.82 ± 2.51** |
+| M3 Direct | M3 | +5.31 ± 3.35 | +3.71 ± 2.29 | +4.64 ± 2.91 | +2.66 ± 1.75 |
+
+核心判断：
+
+- M1 Direct与M1 delta在all-runs下基本持平，说明没有位置编码时，直接head本身不足以稳定改善模型；
+- M2/M3 Direct相对M0及对应delta模型均有明显提升；
+- all-runs M2 Direct相对M0的六项Node/Tier3指标均为12/12配对提高；
+- M2 Direct相对M2的Node Accuracy、Node Macro-F1、Node Balanced Accuracy和Tier3 Accuracy
+  均为12/12配对提高，Tier3 Macro-F1与Balanced Accuracy为10/12提高；
+- M3 Direct相对M3的Node Accuracy为12/12提高，其余主要指标为10/12或11/12提高。
+
+这表明性能提升来自“history fusion与node head共同优化”，而不只是随机训练波动。
+
+### 19.5 位置编码与graph-valid重排
+
+#### Direct模型内部差值，test_all
+
+| Train scope | 比较 | ΔNode Acc | ΔNode Macro-F1 | ΔTier3 Acc | ΔTier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| normal-only | M2 Direct − M1 Direct | +8.12 ± 1.87 | +4.78 | +6.02 | +2.40 |
+| normal-only | M3 Direct − M2 Direct | +0.08 ± 0.53 | -0.13 | +0.12 | -0.16 |
+| all-runs | M2 Direct − M1 Direct | **+10.57 ± 3.91** | +7.12 | **+5.67** | +3.02 |
+| all-runs | M3 Direct − M2 Direct | -0.52 ± 0.92 | -0.21 | -0.37 | +0.17 |
+
+M2 Direct相对M1 Direct的Node和Tier3 Accuracy在两个scope均为12/12配对提高，说明位置编码
+是Direct Head Fusion的关键部分。相反，all-runs下M3 Direct只在4/12个Node Accuracy配对和
+4/12个Tier3 Accuracy配对中超过M2 Direct。因此：
+
+- **历史的位置信息非常重要；**
+- **graph-valid重排并不比实际顺序更适合Direct head；**
+- 当前主模型应选M2 Direct，M3 Direct保留为顺序鲁棒性/graph-order消融。
+
+### 19.6 normal、fault与all split
+
+| Train scope | 模型 | test_normal Node/Tier3 Acc | test_fault Node/Tier3 Acc | test_all Node/Tier3 Acc |
+|---|---|---:|---:|---:|
+| normal-only | M1 Direct | 83.17 / 85.38 | 74.78 / 78.08 | 80.52 / 83.16 |
+| normal-only | M2 Direct | 90.55 / 90.70 | 83.24 / 85.05 | 88.64 / 89.18 |
+| normal-only | M3 Direct | 91.05 / 91.21 | 81.66 / 83.78 | 88.72 / 89.29 |
+| all-runs | M1 Direct | 81.42 / 86.18 | 77.47 / 83.11 | 79.99 / 84.97 |
+| all-runs | M2 Direct | **91.26 / 91.30** | **89.75 / 89.86** | **90.57 / 90.64** |
+| all-runs | M3 Direct | 90.65 / 90.84 | 89.79 / 89.97 | 90.05 / 90.27 |
+
+all-runs训练对M2/M3 Direct的fault结果帮助最明显，使normal与fault之间的差距大幅缩小。
+M2 Direct的fault Node Accuracy由`83.24%`提高到`89.75%`。
+
+### 19.7 跨参与者、seed与run稳定性
+
+#### all-runs test_all按held-out participant
+
+| Participant | M1 Direct Node/Tier3 Acc | M2 Direct Node/Tier3 Acc | M3 Direct Node/Tier3 Acc |
+|---|---:|---:|---:|
+| A | 76.26 / 80.12 | 89.56 / 89.64 | 89.25 / 89.56 |
+| D | 75.97 / 82.97 | 88.53 / 88.67 | 86.65 / 87.23 |
+| J | 89.67 / 91.77 | **94.47 / 94.53** | 94.59 / 94.59 |
+| M | 78.08 / 85.01 | 89.71 / 89.71 | 89.71 / 89.71 |
+
+M2 Direct相对M2的Node Accuracy在A/D/J/M分别提高
+`10.90 / 6.57 / 1.92 / 6.26`个百分点，四折方向一致。
+
+按seed对四位participant平均：
+
+| Train scope | 模型 | seed 1 Node/Tier3 | seed 2 Node/Tier3 | seed 42 Node/Tier3 |
+|---|---|---:|---:|---:|
+| normal-only | M2 Direct | 87.68 / 88.29 | 89.42 / 89.70 | 88.82 / 89.55 |
+| normal-only | M3 Direct | 88.85 / 89.31 | 89.34 / 89.61 | 87.97 / 88.97 |
+| all-runs | M2 Direct | 92.28 / 92.33 | 90.85 / 90.90 | 88.57 / 88.68 |
+| all-runs | M3 Direct | 90.37 / 90.43 | 90.22 / 90.43 | 89.57 / 89.96 |
+
+all-runs M2 Direct的三个seed均值存在一定差异，但每个seed仍明显高于基线。M3 Direct的seed均值
+更集中，但平均Accuracy略低。
+
+将每个participant-run先在三个seed上平均后，all-runs共有103个测试run：
+
+| 比较 | run等权平均ΔNode Acc | 中位数 | 正向run |
+|---|---:|---:|---:|
+| M1 Direct − M0 | +10.80 | +10.67 | 97/103 |
+| M2 Direct − M0 | **+21.66** | +20.83 | **103/103** |
+| M3 Direct − M0 | +21.29 | +20.83 | **103/103** |
+| M1 Direct − M1 | -0.02 | 0.00 | 48/103 |
+| M2 Direct − M2 | **+6.50** | +5.13 | 83/103 |
+| M3 Direct − M3 | +5.51 | +4.00 | 82/103 |
+
+### 19.8 Stage机制与重复node混淆
+
+#### all-runs test_all按stage
+
+| 模型 | Stage 1 Node/Tier3 Acc | Stage 2 Node/Tier3 Acc | Stage 3 Node/Tier3 Acc |
+|---|---:|---:|---:|
+| M1 Direct | 85.40 / 85.40 | 78.29 / 85.09 | 83.06 / 83.06 |
+| M2 Direct | 83.48 / 83.48 | **92.45 / 92.55** | 87.34 / 87.34 |
+| M3 Direct | 84.32 / 84.32 | 91.49 / 91.79 | **87.77 / 87.77** |
+
+M2 Direct相对M0的Stage 1/2/3 Node Accuracy差值分别为
+`+1.92 / +26.72 / +7.06`个百分点；相对M2 delta则为
+`-0.43 / +8.27 / +3.70`个百分点。Direct方案的主要新增收益集中在Stage 2，正是重复动作node
+最多、最需要流程位置消歧的阶段。
+
+对四组已知重复动作node，汇总12个participant-seed的all-runs `test_all`双向误判次数：
+
+| 重复node对 | M0 | 原M3 | M2 Direct | M3 Direct | M2 Direct相对M0下降 |
+|---|---:|---:|---:|---:|---:|
+| 14 ↔ 21 | 166 | 6 | **0** | 5 | 100.0% |
+| 15 ↔ 22 | 247 | 4 | **0** | 2 | 100.0% |
+| 16 ↔ 19 | 206 | 13 | **3** | **3** | 98.5% |
+| 17 ↔ 20 | 150 | 23 | **1** | 2 | 99.3% |
+
+这提供了最直接的机制证据：M2 Direct几乎消除了同一Tier3动作在不同流程node之间的混淆。
+剩余较困难类别仍包括node 1和node 34，说明非重复node上的视觉或跨参与者差异尚未完全解决。
+
+### 19.9 train scope影响
+
+all-runs减去normal-only的`test_all`差值：
+
+| 模型 | ΔNode Acc | ΔNode Macro-F1 | ΔTier3 Acc | ΔTier3 Macro-F1 | Node正向配对 | Tier3正向配对 |
+|---|---:|---:|---:|---:|---:|---:|
+| M1 Direct | -0.53 ± 5.47 | -0.17 | +1.81 ± 5.04 | +1.33 | 6/12 | 7/12 |
+| M2 Direct | **+1.93 ± 2.53** | +2.17 | **+1.46 ± 2.50** | +1.96 | 7/12 | 7/12 |
+| M3 Direct | +1.33 ± 3.14 | +2.09 | +0.98 ± 2.90 | +2.29 | 7/12 | 6/12 |
+
+all-runs对M2/M3 Direct的平均结果有帮助，尤其改善fault split，但跨seed正向比例仅约一半。
+因此可以报告其平均收益，但不应描述为每个seed都稳定提高。相较之下，原M3 delta的训练范围收益更一致。
+
+### 19.10 结论与使用建议
+
+1. **可行性得到验证：**冻结RGB backbone，仅联合训练history fusion和新node head，不需要重新训练
+   100 epochs backbone，即可取得当前最高准确率。
+2. **推荐主配置：**M2 Direct + all-runs；它在主要Node/Tier3 Accuracy、跨参与者一致性和run级结果上最强。
+3. **推荐消融：**M1 Direct验证位置编码，M3 Direct验证graph-valid重排；二者不应替代M2 Direct主结果。
+4. **保留原实验：**M0–M6仍用于说明delta路线、history收益、relation bias与graph-order消融，
+   不应被Direct结果覆盖或删除。
+5. **限制：**backbone仍是冻结表征，本实验没有证明端到端联合微调一定更优；此外当前只覆盖单相机和
+   A/D/J/M四位participant，仍需外部数据验证。
