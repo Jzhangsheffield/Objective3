@@ -1160,3 +1160,18 @@ all-runs对M2/M3 Direct的平均结果有帮助，尤其改善fault split，但�
    不应被Direct结果覆盖或删除。
 5. **限制：**backbone仍是冻结表征，本实验没有证明端到端联合微调一定更优；此外当前只覆盖单相机和
    A/D/J/M四位participant，仍需外部数据验证。
+
+## 20. Dynamic Epoch Graph-Valid Shuffle实验登记（2026-07-29，结果待运行）
+
+已新增三个与原实验完全隔离的模型：
+
+| 模型 | 初始化与训练边界 | 主要比较 |
+|---|---|---|
+| `m3_dynamic_frozen_m0_delta` | 加载并冻结M0，只训练attention与delta | 原M3 |
+| `m3_dynamic_joint_head_delta` | **不加载M0**；随机node head与attention、delta联合训练 | Dynamic Frozen-M0 Delta |
+| `m3_dynamic_direct_fusion` | 不加载M0、不使用delta；直接训练fusion与node head | 原M3 Direct、Dynamic Joint-Head Delta |
+
+三者仅在训练阶段对每个样本、每个epoch重新生成可复现的graph-valid历史顺序；主测试仍使用固定
+seeded graph-valid顺序。正式结果尚未生成，因此本节不写入任何推测指标。完成A/D/J/M × seeds
+1/2/42 × normal-only/all-runs后，将以
+`outputs/dynamic_epoch_shuffle_summary_ADJM_3seeds/`中的216条严格网格结果更新本报告。

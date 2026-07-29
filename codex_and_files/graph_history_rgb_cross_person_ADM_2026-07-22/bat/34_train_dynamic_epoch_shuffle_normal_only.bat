@@ -1,0 +1,66 @@
+@echo off
+setlocal EnableExtensions
+call "%~dp0config_windows.bat"
+cd /d "%PACKAGE_ROOT%" || exit /b 1
+if not exist "%FEATURE_ROOT%\completed.json" (
+  if not exist "%FEATURE_ROOT%\train_all.pt" (
+    echo Missing normal-only Tier-3 train feature cache: %FEATURE_ROOT%\train_all.pt
+    exit /b 1
+  )
+  if not exist "%FEATURE_ROOT%\test_all.pt" (
+    echo Missing normal-only Tier-3 test feature cache: %FEATURE_ROOT%\test_all.pt
+    exit /b 1
+  )
+  echo Legacy normal-only feature cache has no completed.json; verified train_all.pt and test_all.pt.
+)
+for %%M in (
+  m3_dynamic_frozen_m0_delta
+  m3_dynamic_joint_head_delta
+  m3_dynamic_direct_fusion
+) do (
+  call :run_model %%M
+  if errorlevel 1 exit /b 1
+)
+exit /b 0
+
+:run_model
+if exist "%DYNAMIC_MODEL_ROOT%\normal_only\%~1\completed.json" (
+  echo Completed %~1 normal-only dynamic model exists; skip without overwrite.
+  exit /b 0
+)
+echo ==== Training %~1 / dynamic epoch shuffle / normal-only ====
+if /I "%~1"=="m3_dynamic_frozen_m0_delta" (
+  if not exist "%MODEL_ROOT%\normal_only\m0\last.pth" (
+    echo Missing normal-only M0 checkpoint: %MODEL_ROOT%\normal_only\m0\last.pth
+    exit /b 1
+  )
+  "%PYTHON_BIN%" tools\train_dynamic_epoch_shuffle.py ^
+    --model %~1 ^
+    --train-scope normal_only ^
+    --protocol-root "%PROTOCOL_ROOT%" ^
+    --train-cache "%FEATURE_ROOT%\train_all.pt" ^
+    --test-cache "%FEATURE_ROOT%\test_all.pt" ^
+    --task-graph "%TASK_GRAPH%" ^
+    --relation-matrix "%RELATION_MATRIX%" ^
+    --output-root "%DYNAMIC_MODEL_ROOT%" ^
+    --m0-checkpoint "%MODEL_ROOT%\normal_only\m0\last.pth" ^
+    --epochs %HISTORY_EPOCHS% ^
+    --batch-size 64 ^
+    --num-workers %NUM_WORKERS% ^
+    --seed %SEED%
+) else (
+  "%PYTHON_BIN%" tools\train_dynamic_epoch_shuffle.py ^
+    --model %~1 ^
+    --train-scope normal_only ^
+    --protocol-root "%PROTOCOL_ROOT%" ^
+    --train-cache "%FEATURE_ROOT%\train_all.pt" ^
+    --test-cache "%FEATURE_ROOT%\test_all.pt" ^
+    --task-graph "%TASK_GRAPH%" ^
+    --relation-matrix "%RELATION_MATRIX%" ^
+    --output-root "%DYNAMIC_MODEL_ROOT%" ^
+    --epochs %HISTORY_EPOCHS% ^
+    --batch-size 64 ^
+    --num-workers %NUM_WORKERS% ^
+    --seed %SEED%
+)
+exit /b %ERRORLEVEL%

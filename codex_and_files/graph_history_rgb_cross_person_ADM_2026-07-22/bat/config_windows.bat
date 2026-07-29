@@ -48,6 +48,9 @@ if not defined FOURFOLD_COMPARISON_ROOT set "FOURFOLD_COMPARISON_ROOT=%OUTPUTS_R
 REM Isolated direct-head fusion extension. It never writes under the legacy retrained_* roots.
 if not defined DIRECT_MODEL_ROOT set "DIRECT_MODEL_ROOT=%RUN_ROOT%\history_models\direct_head_fusion"
 if not defined DIRECT_FOURFOLD_SUMMARY_ROOT set "DIRECT_FOURFOLD_SUMMARY_ROOT=%OUTPUTS_ROOT%\direct_head_fusion_summary_ADJM_3seeds"
+REM Isolated per-epoch graph-valid shuffle extension. It never writes under legacy or direct roots.
+if not defined DYNAMIC_MODEL_ROOT set "DYNAMIC_MODEL_ROOT=%RUN_ROOT%\history_models\dynamic_epoch_shuffle"
+if not defined DYNAMIC_FOURFOLD_SUMMARY_ROOT set "DYNAMIC_FOURFOLD_SUMMARY_ROOT=%OUTPUTS_ROOT%\dynamic_epoch_shuffle_summary_ADJM_3seeds"
 if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1 2 42"
 if not defined RUN_SCOPE_COMPARISON set "RUN_SCOPE_COMPARISON=1"
 if not defined RUN_AUXILIARY set "RUN_AUXILIARY=0"

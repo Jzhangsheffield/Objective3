@@ -3,7 +3,7 @@
 文档版本：2026-07-29  
 对应代码包：`graph_history_rgb_cross_person_ADM_2026-07-22`  
 正式实验：A/D/J/M 四折 LOSO，seed 1/2/42，normal-only 与 all-runs  
-新增实验：Direct Head Fusion（`m1_direct`、`m2_direct`、`m3_direct`）
+新增实验：Direct Head Fusion，以及Dynamic Epoch Graph-Valid Shuffle三模型
 
 ## 1. 这套文档解决什么问题
 
@@ -41,6 +41,8 @@
    查看输出树、防覆盖、`completed.json`和结果解释边界。
 9. [08_configuration_assets_and_inventory.md](08_configuration_assets_and_inventory.md)  
    查看配置、依赖、资产、原有说明文件和完整源码清单。
+10. [09_dynamic_epoch_shuffle.md](09_dynamic_epoch_shuffle.md)
+    查看三种dynamic模型、逐epoch合法重排、初始化边界、输出隔离和运行入口。
 
 ## 3. 文档范围
 
@@ -55,12 +57,12 @@ graph_history_rgb_cross_person_ADM_2026-07-22
 
 覆盖内容：
 
-- `graph_history/`：11个Python模块；
-- `tools/`：15个Python命令行入口；
-- `bat/`：49个Windows入口与组合脚本；
-- `slurm/`：35个作业脚本、15个配置/提交shell脚本；
+- `graph_history/`：14个Python模块；
+- `tools/`：18个Python命令行入口；
+- `bat/`：54个Windows入口与组合脚本；
+- `slurm/`：38个作业脚本、17个配置/提交shell脚本；
 - `assets/`与`configs/`；
-- M0–M6、三个E2E对照和三个Direct Head Fusion模型；
+- M0–M6、三个E2E对照、三个Direct Head Fusion模型和三个Dynamic模型；
 - normal-only、all-runs、A/D/J/M、seed 1/2/42和三个测试split；
 - 结果、预测、概率、汇总和防覆盖机制。
 
@@ -87,6 +89,8 @@ CSV/JSON，不从旧报告手工复制。
 - M5读取真实历史node，是oracle实验；M6使用冻结M0概率，是可部署soft-relation版本。
 - M3使用graph-valid重排，但重排不读取当前目标node，因此避免current-label leakage。
 - Direct Head Fusion不加载M0；attention、fusion和随机初始化35-node head联合训练50 epoch。
+- Dynamic Frozen-M0 Delta加载并冻结M0；Dynamic Joint-Head Delta明确不加载M0，node head与delta联合训练。
+- Dynamic Direct Fusion不使用delta；三个dynamic模型只在训练期逐epoch重排，主测试使用固定合法顺序。
 - 新Direct结果中，`m2_direct`与`m3_direct`大幅高于原delta版本；完整结果见第6卷。
 
 ## 6. 与原有说明/结果报告的关系
@@ -96,7 +100,7 @@ CSV/JSON，不从旧报告手工复制。
 ```text
 README.md
 EXPERIMENT_RESULTS_ANALYSIS_2026-07-24.md
-DIRECT_HEAD_FUSION_EXPERIMENT.md
+COMPLETE_EXPERIMENT_CONFIGURATION.md
 ```
 
 本技术手册侧重“代码如何工作”；实验报告侧重“结果说明什么”；原README侧重“如何运行”。当三者

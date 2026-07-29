@@ -1,20 +1,23 @@
-# 完整实验配置说明：M0–M6、E2E与Direct Head Fusion
+# 完整实验配置说明：M0–M6、E2E、Direct与Dynamic
 
 首次建立：2026-07-28
 
 完整恢复与更新：2026-07-29
-状态：记录当前严格四折三seed的全部实验配置；Direct Head Fusion是独立新增阶段，不修改原实验
+
+状态：记录当前严格四折三seed的全部实验配置；Direct和Dynamic均为独立新增阶段，不修改原实验
 
 ## 1. 文档范围
 
-本文件统一说明以下三组实验，避免只保留Direct配置而丢失原实验细节：
+本文件统一说明以下四组实验：
 
 1. 冻结RGB特征实验：M0–M6；
 2. RGB端到端对照：E2E-Tier3-Scratch、E2E-Node-Scratch、E2E-Node-From-Tier3；
-3. 新增实验：M1 Direct、M2 Direct、M3 Direct。
+3. Direct Head Fusion：M1 Direct、M2 Direct、M3 Direct；
+4. Dynamic Epoch Shuffle：Frozen-M0 Delta、Joint-Head Delta、Direct Fusion。
 
 正式结果使用A/D/J/M严格四折、seed 1/2/42、normal-only/all-runs两个完整pipeline。
-旧实验的checkpoint、prediction、metrics、summary和完成标记均保留；Direct只写入自己的新目录。
+旧实验的checkpoint、prediction、metrics、summary和完成标记均保留；Direct和Dynamic分别只写入
+各自的新目录。
 
 ## 2. 所有实验共同遵守的协议
 
@@ -704,7 +707,214 @@ outputs\direct_head_fusion_summary_ADJM_3seeds\
 | M3 Direct − M3 | graph-valid条件下联合训练fusion与新head是否优于delta |
 | M2 Direct − M1 Direct | Direct结构中位置编码的贡献 |
 | M3 Direct − M2 Direct | Direct结构中graph-valid重排的贡献 |
+| Dynamic Frozen-M0 Delta − M3 | 每epoch重新采样合法顺序是否优于每样本固定重排 |
+| Dynamic Joint-Head Delta − Dynamic Frozen-M0 Delta | 不加载M0、联合训练新head与delta的作用 |
+| Dynamic Direct Fusion − Dynamic Joint-Head Delta | 相同动态历史下feature fusion与logit delta的差异 |
+| Dynamic Direct Fusion − M3 Direct | 动态重排是否改善Direct结构 |
 | all-runs − normal-only | 训练时纳入fault runs的影响 |
 
-这三组实验应共同保留：原M0–M6提供delta、顺序和relation消融，E2E提供视频级对照，
-Direct Head Fusion回答“冻结视觉表征后，直接联合学习history fusion和node分类头是否更有效”。
+这四组实验应共同保留：原M0–M6提供delta、顺序和relation消融，E2E提供视频级对照，
+Direct Head Fusion比较直接feature fusion，Dynamic实验检验每epoch合法顺序增强。
+
+## 17. Dynamic Epoch Graph-Valid Shuffle新增实验
+
+### 17.1 研究问题
+
+原M3与M3 Direct在Dataset初始化时为每个样本生成一次graph-valid重排；同一seed下，该样本在全部
+50 epochs中始终使用相同顺序。Dynamic实验保持模型结构、训练样本和优化参数不变，只把训练history
+改为：
+
+```text
+每个epoch、每个样本重新采样一个graph-valid顺序
+```
+
+epoch顺序由以下seed确定：
+
+```text
+SHA256(base_seed : epoch : sample_name)
+```
+
+因此同一base seed的完整训练可以复现，但同一样本在不同epoch通常会看到不同合法顺序。随机采样不
+强制相邻epoch必须不同；只有一个合法拓扑序时自然保持不变。
+
+### 17.2 三个模型的严格定义
+
+| 模型ID | 当前clip分支 | History分支 | M0使用 | 最终输出 |
+|---|---|---|---|---|
+| `m3_dynamic_frozen_m0_delta` | 冻结M0 head | position + attention + delta，全部训练 | 加载并冻结 | `M0 logits + scale × delta` |
+| `m3_dynamic_joint_head_delta` | 随机35-node head，参与训练 | position + attention + delta，全部训练 | **不加载** | `trainable head logits + scale × delta` |
+| `m3_dynamic_direct_fusion` | 随机35-node head，参与训练 | position + attention + feature fusion，全部训练 | 不加载 | `head(Fusion(current, context))` |
+
+三个模型都使用对应scope的冻结Tier3 512维feature cache，不重新训练100-epoch RGB backbone。
+
+#### Frozen-M0 Delta
+
+结构与原M3完全相同，唯一变化是训练history每epoch重新重排。M0的LayerNorm和35-node Linear全部
+冻结；训练history projections、position embedding、attention、delta head和history scale。
+该模型与原M3的差值能够单独归因于动态重排。
+
+#### Joint-Head Delta
+
+该模型明确不加载M0：
+
+```text
+current_logits = TrainableNodeHead(current_feature)
+delta = DeltaHead(current, Attention(current, epoch_history))
+logits = current_logits + sigmoid(scale) × delta
+```
+
+35-node head随机初始化，与attention和delta在同一个50-epoch阶段联合训练。它与Direct模型使用
+相同的Tier3 feature来源、随机node head和训练预算；差别只在history作用于logit还是feature。
+
+Tier3原fc为31类，node head为35类，因此不加载Tier3 fc参数。“Tier3初始化”指使用Tier3 backbone
+产生的512维冻结视觉特征。
+
+#### Direct Fusion
+
+结构与M3 Direct完全相同，没有delta：
+
+```text
+context = Attention(current, epoch_history)
+fused_feature = Linear([current_feature; context])
+logits = TrainableNodeHead(fused_feature)
+```
+
+fusion继续采用`[I,0]`初始化，训练开始时`fused_feature == current_feature`。
+
+### 17.3 训练与测试重排策略
+
+| 阶段 | History order | 原因 |
+|---|---|---|
+| 训练 | `graph_valid_epoch_shuffle` | 每epoch增加合法顺序多样性 |
+| 主测试 | `graph_valid_static_seeded` | 与原M3/M3 Direct使用完全相同的固定测试顺序，保证严格配对 |
+
+测试阶段不进行随机重排，也不对多次测试取最好结果。当前target node不参与拓扑重排，继续避免
+current-label leakage。history长度≤1时无法重排；history中包含重复node时沿用原逻辑回退actual
+order。
+
+### 17.4 实际重排覆盖率
+
+对A/D/J/M、两个scope的真实训练manifest模拟50 epochs：
+
+- 约`33.5%–37.6%`的训练样本出现多个合法顺序；
+- 约`10.4%–10.9%`的样本history长度≤1；
+- repeated-node回退在normal-only约`0%–0.7%`，all-runs约`2.5%–3.6%`。
+
+每个训练目录保存`shuffle_audit.json`，记录多顺序样本数、回退数、每epoch相对actual变化数和
+相邻epoch顺序变化数。
+
+### 17.5 公共训练配置
+
+| 配置 | 值 |
+|---|---:|
+| epochs | 50 |
+| batch size | 64 |
+| optimizer | AdamW |
+| learning rate | `1e-3` |
+| weight decay | `1e-4` |
+| loss | 35-node Cross Entropy |
+| action loss weight | `0.0` |
+| gradient clip | `1.0` |
+| AMP | 默认关闭 |
+| validation | 无 |
+| checkpoint | 最后epoch `last.pth` |
+
+Dynamic训练DataLoader关闭`persistent_workers`，使更新后的epoch在Windows spawn和Linux fork
+worker中都可靠生效。该设置只用于新Dynamic入口，不改变原实验DataLoader行为。
+
+### 17.6 输出隔离与防覆盖
+
+```text
+outputs\<P>_as_test\cam_001484412812\seed_<S>\
+history_models\dynamic_epoch_shuffle\<scope>\<model>\
+├── last.pth
+├── train_log.json
+├── experiment_config.json
+├── learned_parameters.json
+├── shuffle_audit.json
+├── test_results\
+└── completed.json
+```
+
+该路径不位于以下任何原目录：
+
+```text
+history_models\retrained_normal_only
+history_models\retrained_all_runs
+history_models\direct_head_fusion
+e2e_baselines
+```
+
+标准入口不传`--overwrite`。存在`completed.json`时安全跳过；目录非空但无完成标记时停止。
+
+### 17.7 Windows运行
+
+单折单seed、两个scope：
+
+```bat
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_dynamic_epoch_shuffle_one_fold.bat
+```
+
+分scope：
+
+```bat
+call bat\34_train_dynamic_epoch_shuffle_normal_only.bat
+call bat\35_train_dynamic_epoch_shuffle_all_runs.bat
+```
+
+完整A/D/J/M四折三seed：
+
+```bat
+call bat\run_dynamic_epoch_shuffle_ADJM.bat
+```
+
+### 17.8 HPC/Slurm运行
+
+单折单seed：
+
+```bash
+bash slurm/submit_dynamic_epoch_shuffle_one_fold.sh A 1 both
+```
+
+完整四折三seed：
+
+```bash
+bash slurm/submit_dynamic_epoch_shuffle_ADJM.sh
+```
+
+每个participant-seed-scope提交一个3-task array，对应三个Dynamic模型。
+
+### 17.9 汇总
+
+Windows：
+
+```bat
+call bat\36_summarize_dynamic_epoch_shuffle_ADJM_3seeds.bat
+```
+
+HPC：
+
+```bash
+sbatch slurm/38_summarize_dynamic_epoch_shuffle_ADJM_3seeds.slurm
+```
+
+完整网格：
+
+```text
+4 participants × 3 seeds × 2 scopes × 3 models × 3 splits = 216 rows
+```
+
+输出：
+
+```text
+outputs\dynamic_epoch_shuffle_summary_ADJM_3seeds\
+├── dynamic_epoch_shuffle_metrics.csv
+├── dynamic_epoch_shuffle_paired_deltas.csv
+├── dynamic_epoch_shuffle_aggregate.csv
+└── completed.json
+```
+
+严格配对包括Dynamic模型相对M0、原M3、原M3 Direct以及Dynamic模型彼此之间的差值。总体统计继续
+先在participant内平均三个seed，再对A/D/J/M等权汇总。

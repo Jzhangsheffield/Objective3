@@ -954,7 +954,7 @@ participant × seed × scope 是否都具有 10 个模型和 3 个测试 split�
 完整设计和运行说明另见：
 
 ```text
-DIRECT_HEAD_FUSION_EXPERIMENT.md
+COMPLETE_EXPERIMENT_CONFIGURATION.md
 ```
 
 ### 15.1 实验目的与模型
@@ -1120,3 +1120,95 @@ mK_direct − 原mK delta模型
 其中`K`为1、2或3。`direct_head_aggregate.csv`先在每个participant内部平均三个seed，再对
 A/D/J/M等权汇总均值与样本标准差。汇总默认启用完整网格检查，缺少任何direct、M0或对应delta
 结果都会停止并报告缺失路径。
+
+## 16. Dynamic Epoch Graph-Valid Shuffle实验（独立新增阶段，2026-07-29）
+
+完整配置、模型公式和输出说明见：
+
+```text
+COMPLETE_EXPERIMENT_CONFIGURATION.md
+```
+
+### 16.1 三个模型
+
+| 模型 | Node head | History作用 | M0 |
+|---|---|---|---|
+| `m3_dynamic_frozen_m0_delta` | M0初始化并冻结 | 每epoch graph-valid history产生logit delta | 加载并冻结 |
+| `m3_dynamic_joint_head_delta` | 随机初始化并训练 | 每epoch graph-valid history产生logit delta | **不加载** |
+| `m3_dynamic_direct_fusion` | 随机初始化并训练 | 每epoch graph-valid history进行feature fusion | 不加载 |
+
+训练history seed为`SHA256(base_seed:epoch:sample_name)`，所以每个epoch重新采样但整个seed实验仍可
+复现。主测试继续使用原M3的固定seeded graph-valid顺序，确保能与静态M3/M3 Direct严格配对。
+
+### 16.2 输出隔离
+
+新实验只写入：
+
+```text
+outputs\<P>_as_test\cam_001484412812\seed_<S>\
+history_models\dynamic_epoch_shuffle\<scope>\<model>\
+```
+
+不会写入原`retrained_*`、`direct_head_fusion`或E2E目录。每个模型保存
+`shuffle_audit.json`证明每epoch重排确实生效。
+
+### 16.3 Windows运行
+
+```bat
+REM 单折单seed，两个scope
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_dynamic_epoch_shuffle_one_fold.bat
+
+REM 完整四折三seed并汇总
+call bat\run_dynamic_epoch_shuffle_ADJM.bat
+```
+
+分步入口：
+
+```bat
+call bat\34_train_dynamic_epoch_shuffle_normal_only.bat
+call bat\35_train_dynamic_epoch_shuffle_all_runs.bat
+call bat\36_summarize_dynamic_epoch_shuffle_ADJM_3seeds.bat
+```
+
+### 16.4 HPC/Slurm运行
+
+```bash
+# 单折单seed
+bash slurm/submit_dynamic_epoch_shuffle_one_fold.sh A 1 both
+
+# 完整A/D/J/M × seeds 1/2/42 × 两个scope
+bash slurm/submit_dynamic_epoch_shuffle_ADJM.sh
+```
+
+训练array为：
+
+```text
+slurm/36_train_dynamic_epoch_shuffle_normal_only.slurm
+slurm/37_train_dynamic_epoch_shuffle_all_runs.slurm
+```
+
+完整汇总任务为：
+
+```text
+slurm/38_summarize_dynamic_epoch_shuffle_ADJM_3seeds.slurm
+```
+
+### 16.5 严格汇总
+
+完整网格包含216条指标：
+
+```text
+4 participants × 3 seeds × 2 scopes × 3 models × 3 splits
+```
+
+输出：
+
+```text
+outputs\dynamic_epoch_shuffle_summary_ADJM_3seeds\
+├── dynamic_epoch_shuffle_metrics.csv
+├── dynamic_epoch_shuffle_paired_deltas.csv
+├── dynamic_epoch_shuffle_aggregate.csv
+└── completed.json
+```

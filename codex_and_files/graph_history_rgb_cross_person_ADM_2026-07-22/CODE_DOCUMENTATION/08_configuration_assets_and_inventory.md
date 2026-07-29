@@ -133,7 +133,8 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 - 增量E2E；
 - 完整all-runs；
 - 严格四折三seed；
-- Direct Head Fusion。
+- Direct Head Fusion；
+- Dynamic Epoch Graph-Valid Shuffle。
 
 因为它保留历史演化，早期章节中的默认三折或辅助all-runs不能覆盖后期严格定义。
 
@@ -141,10 +142,10 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 
 正式结果解释报告。当前版本已扩展Direct结果。统计结论应追溯到`outputs`中的CSV/JSON和predictions。
 
-### `DIRECT_HEAD_FUSION_EXPERIMENT.md`
+### `COMPLETE_EXPERIMENT_CONFIGURATION.md`
 
-记录实验配置、运行方式、输出隔离和Direct与原模型比较。它是配置/实验设计说明；本技术手册进一步
-解释实际类、函数、shape和调用链。
+记录M0–M6、E2E、Direct与Dynamic实验的完整配置、运行方式、输出隔离和比较关系。它是当前统一的
+配置/实验设计说明；本技术手册进一步解释实际类、函数、shape和调用链。
 
 ## 7. Python源码清单
 
@@ -163,6 +164,9 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 | `models.py` | 430 | M0–M6和Direct |
 | `engine.py` | 217 | feature模型训练评估 |
 | `video_evaluation.py` | 203 | E2E视频评估 |
+| `dynamic_data.py` | 166 | 逐epoch、逐样本确定性graph-valid重排 |
+| `dynamic_models.py` | 112 | Dynamic Joint-Head Delta |
+| `dynamic_engine.py` | 84 | epoch状态注入与dynamic训练循环 |
 
 ### `tools/`
 
@@ -183,20 +187,23 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 | `summarize_cross_person.py` | 182 | 早期跨人 |
 | `summarize_all_models.py` | 583 | 正式十模型 |
 | `summarize_direct_head_fusion.py` | 287 | Direct汇总 |
+| `train_dynamic_epoch_shuffle.py` | 308 | 三种Dynamic模型训练 |
+| `summarize_dynamic_epoch_shuffle.py` | 379 | Dynamic严格配对汇总 |
+| `smoke_test_dynamic_epoch_shuffle.py` | 259 | Dynamic数据、训练循环和模型回归测试 |
 
-总计26个Python文件，约4568行。
+当前共14个包模块与18个Python工具入口；Dynamic实现独立成文件，原训练入口未改写。
 
 ## 8. 编排脚本清单
 
 完整逐文件用途见第5卷。数量：
 
 ```text
-BAT                  49
-Slurm job scripts    35
-HPC config/submit sh 15
+BAT                  54
+Slurm job scripts    38
+HPC config/submit sh 17
 ```
 
-BAT按编号00–33加组合入口；Slurm作业按01–35；submit脚本把作业连接成依赖图。
+Dynamic新增BAT 34–36、Slurm 36–38及独立组合/提交入口；原编号与调用链保持不变。
 
 ## 9. 结果文件不属于源码
 
@@ -219,12 +226,12 @@ completed markers
 |---|---|
 | 研究问题与全流程 | 第0卷 |
 | 所有关键数据字段/shape | 第1卷 |
-| 11个底层模块及函数 | 第2、3卷 |
-| 15个Python入口及函数 | 第4卷 |
-| 49个BAT | 第5卷 |
-| 35个Slurm作业 | 第5卷 |
-| 15个shell配置/提交入口 | 第5卷 |
+| 14个底层模块及函数 | 第2、3、9卷 |
+| 18个Python入口及函数 | 第4、9卷 |
+| 54个BAT | 第5、9卷 |
+| 38个Slurm作业 | 第5、9卷 |
+| 17个shell配置/提交入口 | 第5、9卷 |
 | Direct新增结果 | 第6卷 |
+| Dynamic逐epoch重排新增阶段 | 第9卷 |
 | 输出与防覆盖 | 第7卷 |
 | assets/config/requirements/原报告 | 本卷 |
-

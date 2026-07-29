@@ -88,5 +88,34 @@
     "validation": false,
     "output_subdirectory": "history_models/direct_head_fusion",
     "overwrite_existing_results": false
+  },
+  "dynamic_epoch_shuffle_extension": {
+    "experiment_family": "dynamic_epoch_graph_valid_shuffle",
+    "models": [
+      "m3_dynamic_frozen_m0_delta",
+      "m3_dynamic_joint_head_delta",
+      "m3_dynamic_direct_fusion"
+    ],
+    "train_scopes": ["normal_only", "all_runs"],
+    "participants": ["A", "D", "J", "M"],
+    "seeds": [1, 2, 42],
+    "reuse_existing_tier3_feature_caches": true,
+    "training_history_order": "graph_valid_epoch_shuffle",
+    "evaluation_history_order": "graph_valid_static_seeded",
+    "epoch_shuffle_seed_formula": "sha256(base_seed:epoch:sample_name)",
+    "joint_head_uses_m0_checkpoint": false,
+    "joint_head_initialization": "random",
+    "frozen_delta_uses_m0_checkpoint": true,
+    "direct_uses_logit_delta": false,
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "action_loss_weight": 0.0,
+    "checkpoint_policy": "last_epoch_only",
+    "validation": false,
+    "output_subdirectory": "history_models/dynamic_epoch_shuffle",
+    "summary_subdirectory": "dynamic_epoch_shuffle_summary_ADJM_3seeds",
+    "overwrite_existing_results": false
   }
 }
