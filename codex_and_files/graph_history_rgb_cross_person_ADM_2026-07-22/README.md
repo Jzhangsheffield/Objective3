@@ -1212,3 +1212,56 @@ outputs\dynamic_epoch_shuffle_summary_ADJM_3seeds\
 ├── dynamic_epoch_shuffle_aggregate.csv
 └── completed.json
 ```
+
+## 17. Atomic-tail Graph-Valid实验（独立新增阶段，2026-07-30）
+
+该实验不修改原`graph_valid`或Dynamic实验。若真实最新历史node构成某个未完成atomic sequence的
+合法前缀，则将整个前缀连续固定在历史末尾，其余历史继续graph-valid随机重排。当前真实target不参与
+tail判断。
+
+三个模型：
+
+```text
+m3_atomic_tail_frozen_m0_delta
+m3_atomic_tail_joint_head_delta
+m3_atomic_tail_direct_fusion
+```
+
+刷新频率：
+
+```text
+1     每epoch重排
+10    每10 epochs重排
+once  整个训练只生成一次
+```
+
+Windows单折：
+
+```bat
+set TEST_PARTICIPANT=A
+set SEED=1
+set ATOMIC_TAIL_REFRESH_POLICIES=1 10 once
+call bat\run_atomic_tail_one_fold.bat
+```
+
+Windows完整实验：
+
+```bat
+call bat\run_atomic_tail_ADJM.bat
+```
+
+HPC：
+
+```bash
+bash slurm/submit_atomic_tail_one_fold.sh A 1 both
+bash slurm/submit_atomic_tail_ADJM.sh
+```
+
+输出仅写入：
+
+```text
+history_models\atomic_tail_graph_valid\<scope>\<refresh_policy>\<model>\
+```
+
+完整配置、回退规则、单模型命令和汇总说明见
+`COMPLETE_EXPERIMENT_CONFIGURATION.md`第18节。

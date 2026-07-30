@@ -3,7 +3,7 @@
 文档版本：2026-07-29  
 对应代码包：`graph_history_rgb_cross_person_ADM_2026-07-22`  
 正式实验：A/D/J/M 四折 LOSO，seed 1/2/42，normal-only 与 all-runs  
-新增实验：Direct Head Fusion，以及Dynamic Epoch Graph-Valid Shuffle三模型
+新增实验：Direct、Dynamic，以及Atomic-tail Graph-Valid三模型
 
 ## 1. 这套文档解决什么问题
 
@@ -43,6 +43,8 @@
    查看配置、依赖、资产、原有说明文件和完整源码清单。
 10. [09_dynamic_epoch_shuffle.md](09_dynamic_epoch_shuffle.md)
     查看三种dynamic模型、逐epoch合法重排、初始化边界、输出隔离和运行入口。
+11. [10_atomic_tail_graph_valid.md](10_atomic_tail_graph_valid.md)
+    查看atomic tail判定、刷新频率、回退逻辑、独立输出和运行入口。
 
 ## 3. 文档范围
 
@@ -57,12 +59,12 @@ graph_history_rgb_cross_person_ADM_2026-07-22
 
 覆盖内容：
 
-- `graph_history/`：14个Python模块；
-- `tools/`：18个Python命令行入口；
-- `bat/`：54个Windows入口与组合脚本；
-- `slurm/`：38个作业脚本、17个配置/提交shell脚本；
+- `graph_history/`：15个Python模块；
+- `tools/`：22个Python命令行入口；
+- `bat/`：59个Windows入口与组合脚本；
+- `slurm/`：41个作业脚本、19个配置/提交shell脚本；
 - `assets/`与`configs/`；
-- M0–M6、三个E2E对照、三个Direct Head Fusion模型和三个Dynamic模型；
+- M0–M6、三个E2E对照、三个Direct、三个Dynamic和三个Atomic-tail模型；
 - normal-only、all-runs、A/D/J/M、seed 1/2/42和三个测试split；
 - 结果、预测、概率、汇总和防覆盖机制。
 
@@ -91,6 +93,7 @@ CSV/JSON，不从旧报告手工复制。
 - Direct Head Fusion不加载M0；attention、fusion和随机初始化35-node head联合训练50 epoch。
 - Dynamic Frozen-M0 Delta加载并冻结M0；Dynamic Joint-Head Delta明确不加载M0，node head与delta联合训练。
 - Dynamic Direct Fusion不使用delta；三个dynamic模型只在训练期逐epoch重排，主测试使用固定合法顺序。
+- Atomic-tail只锚定真实最新历史形成的未完成atomic前缀，不读取当前target；支持每1/10 epochs或全程一次。
 - 新Direct结果中，`m2_direct`与`m3_direct`大幅高于原delta版本；完整结果见第6卷。
 
 ## 6. 与原有说明/结果报告的关系

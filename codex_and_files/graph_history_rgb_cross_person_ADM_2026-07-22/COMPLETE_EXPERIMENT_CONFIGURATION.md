@@ -14,6 +14,7 @@
 2. RGB端到端对照：E2E-Tier3-Scratch、E2E-Node-Scratch、E2E-Node-From-Tier3；
 3. Direct Head Fusion：M1 Direct、M2 Direct、M3 Direct；
 4. Dynamic Epoch Shuffle：Frozen-M0 Delta、Joint-Head Delta、Direct Fusion。
+5. Atomic-tail Graph-Valid：三种模型 × `1/10/once`三种重排刷新频率。
 
 正式结果使用A/D/J/M严格四折、seed 1/2/42、normal-only/all-runs两个完整pipeline。
 旧实验的checkpoint、prediction、metrics、summary和完成标记均保留；Direct和Dynamic分别只写入
@@ -918,3 +919,234 @@ outputs\dynamic_epoch_shuffle_summary_ADJM_3seeds\
 
 严格配对包括Dynamic模型相对M0、原M3、原M3 Direct以及Dynamic模型彼此之间的差值。总体统计继续
 先在participant内平均三个seed，再对A/D/J/M等权汇总。
+
+## 18. Atomic-tail Graph-Valid新增实验
+
+### 18.1 目的与独立性
+
+原`graph_valid`只保证观察历史之间的先后依赖，不单独使用`immediate_previous`。因此预测node 11时，
+历史node 10可能被重排到较早位置。Atomic-tail实验新增独立排序策略，不修改原
+`FeatureHistoryDataset`、`randomized_graph_valid_history`、Dynamic入口或任何旧输出：
+
+```text
+atomic_tail_graph_valid
+```
+
+### 18.2 Tail选择规则
+
+排序只读取真实历史和Task Graph，不读取当前真实node。按以下条件识别active atomic tail：
+
+1. 取真实时间线上最后一个历史node；
+2. 找到包含该node的atomic sequence；
+3. 历史中该sequence的node必须恰好组成一个合法但未完成的前缀；
+4. 该前缀不能要求排在其他已观察历史node之前；
+5. 满足条件时，把整个前缀作为连续block固定在重排末尾；
+6. 其余历史使用原graph-valid随机拓扑排序。
+
+示例：
+
+```text
+历史包含 [10]          → [10]固定最后
+历史包含 [12,13,14]    → [12,13,14]连续固定最后
+历史包含 [10,11]       → atomic sequence已完成，不强制放最后
+历史只包含 [11]        → 不是合法前缀，回退普通graph-valid
+历史出现重复node       → 沿用原策略，回退actual order
+```
+
+该规则不会根据当前标签推断tail，因此`uses_current_target_for_reordering=false`。
+
+### 18.3 重排刷新频率
+
+训练入口参数：
+
+```text
+--shuffle-refresh-interval 1
+--shuffle-refresh-interval 10
+--shuffle-refresh-interval once
+```
+
+| 参数 | epoch顺序 |
+|---|---|
+| `1` | 每个epoch重新生成一次；epoch 1、2、3分别使用round 0、1、2 |
+| `10` | epoch 1–10使用round 0，11–20使用round 1，以此类推 |
+| `once` | 全部训练epoch使用round 0，只在训练开始生成一次 |
+
+局部seed为：
+
+```text
+SHA256(atomic_tail : base_seed : refresh_round : sample_name)
+```
+
+所以同一participant、seed、刷新频率和样本可完全复现。测试统一使用`once/round 0`的固定
+atomic-tail顺序，不因训练刷新频率而产生测试随机性。
+
+### 18.4 三个模型
+
+| 模型 | Node head | History作用 | M0 |
+|---|---|---|---|
+| `m3_atomic_tail_frozen_m0_delta` | M0初始化并冻结 | attention + logit delta | 加载并冻结 |
+| `m3_atomic_tail_joint_head_delta` | 随机初始化并训练 | attention + logit delta | **不加载** |
+| `m3_atomic_tail_direct_fusion` | 随机初始化并训练 | feature fusion，不使用delta | 不加载 |
+
+网络、optimizer、loss、50 epochs和feature cache与对应Dynamic模型保持一致；新增变量只有tail策略与
+刷新频率。
+
+### 18.5 输出隔离
+
+```text
+outputs\<P>_as_test\cam_001484412812\seed_<S>\
+history_models\atomic_tail_graph_valid\<scope>\<refresh_policy>\<model>\
+├── last.pth
+├── train_log.json
+├── experiment_config.json
+├── learned_parameters.json
+├── shuffle_audit.json
+├── test_results\
+└── completed.json
+```
+
+`refresh_policy`为：
+
+```text
+refresh_every_1
+refresh_every_10
+refresh_once
+```
+
+标准BAT/Slurm入口不传`--overwrite`；目标目录非空但无完成标记时停止。该目录与原M0–M6、E2E、
+Direct、Dynamic目录完全分离。
+
+`shuffle_audit.json`记录tail应用率、回退原因、tail长度、refresh round、实际顺序变化和
+`atomic_tail_violations`。后者应始终为0。
+
+### 18.6 Windows运行
+
+单折单seed，两个scope、三个模型、三种刷新频率：
+
+```bat
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_atomic_tail_one_fold.bat
+```
+
+只运行指定刷新频率，例如每10 epochs：
+
+```bat
+set ATOMIC_TAIL_REFRESH_POLICIES=10
+set TEST_PARTICIPANT=A
+set SEED=1
+call bat\run_atomic_tail_one_fold.bat
+```
+
+也可设置：
+
+```bat
+set ATOMIC_TAIL_REFRESH_POLICIES=1
+set ATOMIC_TAIL_REFRESH_POLICIES=once
+set ATOMIC_TAIL_REFRESH_POLICIES=1 10 once
+```
+
+完整A/D/J/M × seeds 1/2/42 × 两个scope × 全部频率：
+
+```bat
+call bat\run_atomic_tail_ADJM.bat
+```
+
+分步入口：
+
+```text
+bat\37_train_atomic_tail_normal_only.bat
+bat\38_train_atomic_tail_all_runs.bat
+bat\39_summarize_atomic_tail_ADJM_3seeds.bat
+```
+
+### 18.7 单个模型Python示例
+
+Joint-Head Delta、每10 epochs刷新；该命令不接受M0：
+
+```bat
+python tools\train_atomic_tail_graph_valid.py ^
+  --model m3_atomic_tail_joint_head_delta ^
+  --train-scope normal_only ^
+  --protocol-root "<fold>\protocols" ^
+  --train-cache "<seed>\features\retrained_normal_only\train_all.pt" ^
+  --test-cache "<seed>\features\retrained_normal_only\test_all.pt" ^
+  --task-graph assets\integrated_task_graph_latest.json ^
+  --relation-matrix assets\integrated_feature_history_matrix.json ^
+  --output-root "<seed>\history_models\atomic_tail_graph_valid" ^
+  --shuffle-refresh-interval 10 ^
+  --epochs 50 --batch-size 64 --seed 1
+```
+
+Frozen-M0模型必须额外传入：
+
+```text
+--m0-checkpoint "<seed>\history_models\retrained_normal_only\normal_only\m0\last.pth"
+```
+
+### 18.8 HPC/Slurm运行
+
+单折单seed：
+
+```bash
+bash slurm/submit_atomic_tail_one_fold.sh A 1 both
+```
+
+完整四折三seed：
+
+```bash
+bash slurm/submit_atomic_tail_ADJM.sh
+```
+
+每个participant-seed-scope提交一个9-task array：
+
+```text
+3 models × 3 refresh policies
+```
+
+训练和汇总入口：
+
+```text
+slurm/39_train_atomic_tail_normal_only.slurm
+slurm/40_train_atomic_tail_all_runs.slurm
+slurm/41_summarize_atomic_tail_ADJM_3seeds.slurm
+```
+
+### 18.9 完整网格与汇总
+
+完整训练配置数：
+
+```text
+4 participants × 3 seeds × 2 scopes × 3 policies × 3 models = 216
+```
+
+三个测试split产生：
+
+```text
+216 × 3 = 648 metric rows
+```
+
+汇总输出：
+
+```text
+outputs\atomic_tail_graph_valid_summary_ADJM_3seeds\
+├── atomic_tail_metrics.csv
+├── atomic_tail_paired_deltas.csv
+├── atomic_tail_aggregate.csv
+└── completed.json
+```
+
+核心完整性检查只要求Atomic-tail网格及原M0/M3/M3 Direct基线。已有Dynamic结果会自动加入
+no-tail配对；如果尚未完成Dynamic实验，只记录为optional missing，不阻止Atomic-tail汇总。
+
+### 18.10 重排预览
+
+使用canonical history `[1, ..., current_node-1]`预览node 1–20：
+
+```bat
+python tools\preview_atomic_tail_reorders.py ^
+  --task-graph assets\integrated_task_graph_latest.json ^
+  --relation-matrix assets\integrated_feature_history_matrix.json ^
+  --seed 42 ^
+  --last-current-node 20
+```

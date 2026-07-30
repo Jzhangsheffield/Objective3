@@ -167,6 +167,7 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 | `dynamic_data.py` | 166 | 逐epoch、逐样本确定性graph-valid重排 |
 | `dynamic_models.py` | 112 | Dynamic Joint-Head Delta |
 | `dynamic_engine.py` | 84 | epoch状态注入与dynamic训练循环 |
+| `atomic_tail_data.py` | 295 | atomic tail判定、合法重排、刷新周期Dataset与审计 |
 
 ### `tools/`
 
@@ -190,20 +191,24 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 | `train_dynamic_epoch_shuffle.py` | 308 | 三种Dynamic模型训练 |
 | `summarize_dynamic_epoch_shuffle.py` | 379 | Dynamic严格配对汇总 |
 | `smoke_test_dynamic_epoch_shuffle.py` | 259 | Dynamic数据、训练循环和模型回归测试 |
+| `train_atomic_tail_graph_valid.py` | 342 | 三模型Atomic-tail训练和固定测试 |
+| `summarize_atomic_tail_graph_valid.py` | 489 | Atomic-tail完整网格与配对汇总 |
+| `preview_atomic_tail_reorders.py` | 86 | canonical history重排预览 |
+| `smoke_test_atomic_tail_graph_valid.py` | 191 | tail规则和刷新频率回归测试 |
 
-当前共14个包模块与18个Python工具入口；Dynamic实现独立成文件，原训练入口未改写。
+当前共15个包模块与22个Python工具入口；Dynamic和Atomic-tail均独立实现，原训练入口未改写。
 
 ## 8. 编排脚本清单
 
 完整逐文件用途见第5卷。数量：
 
 ```text
-BAT                  54
-Slurm job scripts    38
-HPC config/submit sh 17
+BAT                  59
+Slurm job scripts    41
+HPC config/submit sh 19
 ```
 
-Dynamic新增BAT 34–36、Slurm 36–38及独立组合/提交入口；原编号与调用链保持不变。
+Atomic-tail新增BAT 37–39、Slurm 39–41及独立组合/提交入口；原编号与调用链保持不变。
 
 ## 9. 结果文件不属于源码
 
@@ -226,12 +231,13 @@ completed markers
 |---|---|
 | 研究问题与全流程 | 第0卷 |
 | 所有关键数据字段/shape | 第1卷 |
-| 14个底层模块及函数 | 第2、3、9卷 |
-| 18个Python入口及函数 | 第4、9卷 |
-| 54个BAT | 第5、9卷 |
-| 38个Slurm作业 | 第5、9卷 |
-| 17个shell配置/提交入口 | 第5、9卷 |
+| 15个底层模块及函数 | 第2、3、9、10卷 |
+| 22个Python入口及函数 | 第4、9、10卷 |
+| 59个BAT | 第5、9、10卷 |
+| 41个Slurm作业 | 第5、9、10卷 |
+| 19个shell配置/提交入口 | 第5、9、10卷 |
 | Direct新增结果 | 第6卷 |
 | Dynamic逐epoch重排新增阶段 | 第9卷 |
+| Atomic-tail及刷新频率新增阶段 | 第10卷 |
 | 输出与防覆盖 | 第7卷 |
 | assets/config/requirements/原报告 | 本卷 |

@@ -1175,3 +1175,18 @@ all-runs对M2/M3 Direct的平均结果有帮助，尤其改善fault split，但�
 seeded graph-valid顺序。正式结果尚未生成，因此本节不写入任何推测指标。完成A/D/J/M × seeds
 1/2/42 × normal-only/all-runs后，将以
 `outputs/dynamic_epoch_shuffle_summary_ADJM_3seeds/`中的216条严格网格结果更新本报告。
+
+## 21. Atomic-tail Graph-Valid实验登记（2026-07-30，结果待运行）
+
+新增排序策略在不读取当前target的前提下，将“真实最新历史node所属的未完成atomic前缀”连续固定在
+重排末尾。其余历史仍进行graph-valid随机重排。新增三个模型：
+
+| 模型 | 初始化 | History输出 |
+|---|---|---|
+| `m3_atomic_tail_frozen_m0_delta` | 加载并冻结M0 | logit delta |
+| `m3_atomic_tail_joint_head_delta` | 随机node head，**不加载M0** | logit delta |
+| `m3_atomic_tail_direct_fusion` | 随机node head，不加载M0 | feature fusion |
+
+每个模型分别运行`refresh_every_1`、`refresh_every_10`和`refresh_once`。测试统一使用固定
+atomic-tail顺序。正式结果尚未生成，本节不写入推测指标；完整网格结果将保存到
+`outputs/atomic_tail_graph_valid_summary_ADJM_3seeds/`并在运行后补入本报告。

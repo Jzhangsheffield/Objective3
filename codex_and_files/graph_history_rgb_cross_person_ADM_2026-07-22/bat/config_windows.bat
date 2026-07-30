@@ -51,6 +51,10 @@ if not defined DIRECT_FOURFOLD_SUMMARY_ROOT set "DIRECT_FOURFOLD_SUMMARY_ROOT=%O
 REM Isolated per-epoch graph-valid shuffle extension. It never writes under legacy or direct roots.
 if not defined DYNAMIC_MODEL_ROOT set "DYNAMIC_MODEL_ROOT=%RUN_ROOT%\history_models\dynamic_epoch_shuffle"
 if not defined DYNAMIC_FOURFOLD_SUMMARY_ROOT set "DYNAMIC_FOURFOLD_SUMMARY_ROOT=%OUTPUTS_ROOT%\dynamic_epoch_shuffle_summary_ADJM_3seeds"
+REM Isolated atomic-tail graph-valid extension. Refresh policies: 1, 10, or once.
+if not defined ATOMIC_TAIL_MODEL_ROOT set "ATOMIC_TAIL_MODEL_ROOT=%RUN_ROOT%\history_models\atomic_tail_graph_valid"
+if not defined ATOMIC_TAIL_FOURFOLD_SUMMARY_ROOT set "ATOMIC_TAIL_FOURFOLD_SUMMARY_ROOT=%OUTPUTS_ROOT%\atomic_tail_graph_valid_summary_ADJM_3seeds"
+if not defined ATOMIC_TAIL_REFRESH_POLICIES set "ATOMIC_TAIL_REFRESH_POLICIES=1 10 once"
 if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1 2 42"
 if not defined RUN_SCOPE_COMPARISON set "RUN_SCOPE_COMPARISON=1"
 if not defined RUN_AUXILIARY set "RUN_AUXILIARY=0"

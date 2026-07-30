@@ -117,5 +117,37 @@
     "output_subdirectory": "history_models/dynamic_epoch_shuffle",
     "summary_subdirectory": "dynamic_epoch_shuffle_summary_ADJM_3seeds",
     "overwrite_existing_results": false
+  },
+  "atomic_tail_graph_valid_extension": {
+    "experiment_family": "atomic_tail_graph_valid",
+    "models": [
+      "m3_atomic_tail_frozen_m0_delta",
+      "m3_atomic_tail_joint_head_delta",
+      "m3_atomic_tail_direct_fusion"
+    ],
+    "train_scopes": ["normal_only", "all_runs"],
+    "participants": ["A", "D", "J", "M"],
+    "seeds": [1, 2, 42],
+    "reuse_existing_tier3_feature_caches": true,
+    "training_history_order": "atomic_tail_graph_valid",
+    "evaluation_history_order": "atomic_tail_graph_valid_static_seeded",
+    "active_tail_rule": "latest_real_history_node_completes_an_incomplete_atomic_prefix",
+    "uses_current_target_for_reordering": false,
+    "shuffle_refresh_intervals": [1, 10, "once"],
+    "shuffle_seed_formula": "sha256(atomic_tail:base_seed:refresh_round:sample_name)",
+    "joint_head_uses_m0_checkpoint": false,
+    "joint_head_initialization": "random",
+    "frozen_delta_uses_m0_checkpoint": true,
+    "direct_uses_logit_delta": false,
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "action_loss_weight": 0.0,
+    "checkpoint_policy": "last_epoch_only",
+    "validation": false,
+    "output_subdirectory": "history_models/atomic_tail_graph_valid",
+    "summary_subdirectory": "atomic_tail_graph_valid_summary_ADJM_3seeds",
+    "overwrite_existing_results": false
   }
 }
