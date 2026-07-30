@@ -8,6 +8,11 @@ REM   scope:        all_runs
 REM   model:        m3_atomic_tail_direct_fusion
 REM   refresh:      every epoch, every 10 epochs, once
 REM Total: 2 participants x 3 seeds x 3 refresh policies = 18 training runs.
+REM
+REM Use a deliberately short, isolated output root to stay below the legacy
+REM Windows MAX_PATH limit.  Existing standard experiment directories are not
+REM moved, overwritten, or reused:
+REM   outputs\at_ad\<participant>_s<seed>\
 
 call "%~dp0config_windows.bat" || exit /b 1
 cd /d "%PACKAGE_ROOT%" || exit /b 1
@@ -19,6 +24,7 @@ echo Seeds: 1 2 42
 echo Scope: all_runs
 echo Refresh policies: 1 10 once
 echo Total training runs: 18
+echo Short output root: %OUTPUTS_ROOT%\at_ad
 echo ============================================================
 
 for %%P in (A D) do (
@@ -49,7 +55,7 @@ set "CURRENT_FOLD_ROOT=%OUTPUTS_ROOT%\!CURRENT_PARTICIPANT!_as_test\cam_%CAMERA_
 set "CURRENT_PROTOCOL_ROOT=!CURRENT_FOLD_ROOT!\protocols"
 set "CURRENT_RUN_ROOT=!CURRENT_FOLD_ROOT!\seed_!CURRENT_SEED!"
 set "CURRENT_FEATURE_ROOT=!CURRENT_RUN_ROOT!\features\retrained_all_runs"
-set "CURRENT_ATOMIC_ROOT=!CURRENT_RUN_ROOT!\history_models\atomic_tail_graph_valid"
+set "CURRENT_ATOMIC_ROOT=%OUTPUTS_ROOT%\at_ad\!CURRENT_PARTICIPANT!_s!CURRENT_SEED!"
 
 set "CURRENT_REFRESH_LABEL=refresh_every_!CURRENT_REFRESH!"
 if /I "!CURRENT_REFRESH!"=="once" set "CURRENT_REFRESH_LABEL=refresh_once"
