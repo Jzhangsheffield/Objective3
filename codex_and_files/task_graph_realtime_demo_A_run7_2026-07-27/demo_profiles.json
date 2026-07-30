@@ -3,17 +3,39 @@
   "profiles": [
     {
       "profile_id": "a_run7_seed1",
-      "title": "A / run_7",
-      "subtitle": "25 actions • 02:18 • all-runs seed 1",
+      "title": "A / run_7 — Oracle",
+      "subtitle": "25 actions • GT nodes • graph-valid order • seed 1",
+      "history_protocol": "oracle",
+      "m3_label": "M3",
       "config": "config.json",
       "validation_summary": "outputs/validation_summary.json"
     },
     {
+      "profile_id": "a_run7_predicted_actual_seed1",
+      "title": "A / run_7 — Predicted History",
+      "subtitle": "25 actions • M3-predicted nodes • actual order • seed 1",
+      "history_protocol": "predicted",
+      "m3_label": "M3-PH",
+      "config": "profiles/a_run7_predicted_actual_seed1/config.json",
+      "validation_summary": "profiles/a_run7_predicted_actual_seed1/outputs/validation_summary.json"
+    },
+    {
       "profile_id": "j_run12_seed1",
-      "title": "J / run_12",
-      "subtitle": "24 actions • 01:42 • all-runs seed 1",
+      "title": "J / run_12 — Oracle",
+      "subtitle": "24 actions • GT nodes • graph-valid order • seed 1",
+      "history_protocol": "oracle",
+      "m3_label": "M3",
       "config": "profiles/j_run12_seed1/config.json",
       "validation_summary": "profiles/j_run12_seed1/outputs/validation_summary.json"
+    },
+    {
+      "profile_id": "j_run12_predicted_actual_seed1",
+      "title": "J / run_12 — Predicted History",
+      "subtitle": "24 actions • M3-predicted nodes • actual order • seed 1",
+      "history_protocol": "predicted",
+      "m3_label": "M3-PH",
+      "config": "profiles/j_run12_predicted_actual_seed1/config.json",
+      "validation_summary": "profiles/j_run12_predicted_actual_seed1/outputs/validation_summary.json"
     }
   ]
 }

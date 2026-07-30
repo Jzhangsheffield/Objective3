@@ -1,23 +1,24 @@
 # RGB Task-Graph History 严格四折三Seed实验结果分析
 
 首次报告日期：2026-07-24
-完整更新日期：2026-07-29
+完整更新日期：2026-07-30
 相机：`001484412812`
 任务：35-node分类，并将35-node概率聚合为31类Tier3结果
 主要实验设计：A/D/J/M严格四折LOSO，`seed_1`、`seed_2`、`seed_42`
 
 ## 1. 执行摘要
 
-本次更新在原有A/D/J/M四折、三seed、normal-only与all-runs严格结果之外，新增了完整的
-Direct Head Fusion实验。原M1–M3通过学习delta修正冻结M0分类头；Direct M1–M3则加载对应
-Tier3预训练backbone的冻结RGB特征，只训练history fusion和新的35-node分类头。
+本次更新在原有A/D/J/M四折、三seed、normal-only与all-runs严格结果之外，纳入了完整的
+Direct Head Fusion和Dynamic Epoch Graph-Valid Shuffle实验。原M1–M3通过学习delta修正冻结
+M0分类头；Direct M1–M3加载对应Tier3预训练backbone的冻结RGB特征，只训练history fusion和
+新的35-node分类头；Dynamic实验进一步检验训练中每个epoch重新生成合法历史顺序的影响。
 
 当前最重要的结果如下：
 
 1. **严格结果网格完整。**
-   原实验包含`720`条模型级结果；Direct实验另包含
+   原实验包含`720`条模型级结果；Direct和Dynamic实验各包含
    `4 participants × 3 seeds × 2 train scopes × 3 models × 3 splits = 216`条结果。
-   合计936条模型级结果，没有缺折、缺seed、缺模型或缺split。
+   合计`1152`条模型级结果，没有缺折、缺seed、缺模型或缺split。
 
 2. **Direct M2是当前最高Accuracy方案。**
    在all-runs的`test_all`上，M2 Direct的Node Accuracy为`90.57 ± 2.66%`，
@@ -58,6 +59,21 @@ Tier3预训练backbone的冻结RGB特征，只训练history fusion和新的35-no
    M5 oracle relation和M6 soft relation相对M4均有小幅平均提升，但幅度通常小于1个百分点，
    且没有稳定超过M3。当前证据更支持将M3作为主模型，将M4/M5/M6作为relation消融。
 
+11. **每个epoch重新进行graph-valid重排没有带来总体提升。**
+    all-runs下，Dynamic Frozen-M0 Delta相对固定重排M3的Node/Tier3 Accuracy分别低
+    `0.51/0.50`个百分点；Dynamic Direct相对固定M3 Direct低`0.26/0.26`个百分点。
+    逐样本比较也显示两组实验的新增纠正数都少于新增退化数，因此不能把动态重排解释为有效增益。
+
+12. **Dynamic实验再次支持“联合训练分类头”而不是冻结M0。**
+    all-runs下，Dynamic Joint-Head Delta相对Dynamic Frozen-M0 Delta提高
+    `1.14/0.93`个百分点Node/Tier3 Accuracy；Dynamic Direct Fusion进一步提高
+    `4.41/3.96`个百分点，达到`89.79/90.02%`，但仍未超过固定顺序的M2 Direct。
+
+13. **Dynamic Direct的主要失效集中在少数参与者、run和跨动作视觉混淆。**
+    D的平均Node Accuracy最低（`87.37%`），A则有最多三seed一致错误（25个样本）；
+    最难node为1、34、4、8和24。剩余高频错误多为放置/抓取、开/关设备及工具取放之间的
+    不同Tier3混淆，而不再主要是同一动作在重复流程node间的混淆。
+
 这些结果支持以下核心解释：
 
 > 历史和task graph信息的主要价值，是把视觉上相同或相似的动作定位到正确的流程node。
@@ -82,8 +98,9 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - train scope：`normal_only`和`all_runs`；
 - 原模型：M0–M6及3个E2E对照；
 - Direct模型：M1 Direct、M2 Direct、M3 Direct；
+- Dynamic模型：Dynamic Frozen-M0 Delta、Dynamic Joint-Head Delta、Dynamic Direct Fusion；
 - split：`test_normal`、`test_fault`、`test_all`；
-- overall、per-stage、prediction、严格training-scope delta及Direct相对M0/对应delta模型的配对结果。
+- overall、per-stage、prediction、严格training-scope delta，以及Direct/Dynamic的严格配对结果。
 
 旧J先导实验包不再进入四折均值。它仅用于历史对照，以判断早期定性结论是否在严格J折中复现。
 
@@ -99,7 +116,10 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 | `direct_head_metrics.csv` | 216 | 4人 × 3seed × 2scope × 3 Direct模型 × 3split |
 | `direct_head_paired_deltas.csv` | 432 | 每个Direct模型分别与M0及对应delta模型比较 |
 | `direct_head_aggregate.csv` | 36 | 2scope × 3 Direct模型 × 3split × 2 comparison |
-| 本报告统一主表 | **936** | 原720条 + Direct 216条，共13个模型设置 |
+| `dynamic_epoch_shuffle_metrics.csv` | 216 | 4人 × 3seed × 2scope × 3 Dynamic模型 × 3split |
+| `dynamic_epoch_shuffle_paired_deltas.csv` | 648 | Dynamic模型与对应静态/动态基线的严格配对 |
+| `dynamic_epoch_shuffle_aggregate.csv` | 54 | 2scope × 3 Dynamic模型 × 3split及其预注册比较 |
+| 本报告统一结果网格 | **1152** | 原720条 + Direct 216条 + Dynamic 216条，共16个模型设置 |
 
 本次检查确认：
 
@@ -111,6 +131,9 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - 每个实验都有normal、fault和all三个测试split。
 - 72个Direct训练单元（4人 × 3seed × 2scope × 3模型）均有完成标记、checkpoint与测试结果；
 - Direct汇总CSV与216份原始metrics JSON逐项一致，最大浮点差为`1.11×10^-16`。
+- 72个Dynamic训练单元也均有完成标记、checkpoint、三split指标与prediction文件；
+- Dynamic汇总包含216条metrics、648条严格paired delta和54条participant-first aggregate，
+  并与216份原始metrics JSON的实验键逐项核对，无缺失或重复。
 
 ### 2.3 严格LOSO设置
 
@@ -180,7 +203,7 @@ D的fault split只有62个clip，并缺失5个node和5个Tier3类别。不同par
 配对计数如“12/12”为描述性稳定性指标，不等于12个独立统计样本。当前真正的外层独立单位只有
 4位participant，因此本报告不做普通clip级t-test，也不宣称统计显著性。
 
-## 5. 十三模型Strict normal-only统一结果
+## 5. 原十三模型Strict normal-only统一结果（Dynamic另见第20节）
 
 ### 5.1 test_all四折三seed结果
 
@@ -222,7 +245,7 @@ Balanced Accuracy同样由Direct模型领先：M2 Direct的Node/Tier3 Balanced A
 Direct M2/M3覆盖normal-only三个split的全部最佳项。M1 Direct仍明显落后，表明提升不是单纯来自
 替换分类头，而是来自位置编码与history fusion共同作用。
 
-## 6. 十三模型完整all-runs统一结果
+## 6. 原十三模型完整all-runs统一结果（Dynamic另见第20节）
 
 ### 6.1 test_all四折三seed结果
 
@@ -925,6 +948,14 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
 direct_head_fusion_summary_ADJM_3seeds
 ```
 
+Dynamic Epoch Graph-Valid Shuffle四折三seed汇总：
+
+```text
+D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\
+graph_history_rgb_cross_person_ADM_2026-07-22\outputs\
+dynamic_epoch_shuffle_summary_ADJM_3seeds
+```
+
 最重要的源文件：
 
 ```text
@@ -937,6 +968,9 @@ all_model_per_stage_cross_person_aggregate.csv
 direct_head_metrics.csv
 direct_head_paired_deltas.csv
 direct_head_aggregate.csv
+dynamic_epoch_shuffle_metrics.csv
+dynamic_epoch_shuffle_paired_deltas.csv
+dynamic_epoch_shuffle_aggregate.csv
 ```
 
 混淆与run级分析来自各fold、seed、scope和model目录下的：
@@ -1161,20 +1195,264 @@ all-runs对M2/M3 Direct的平均结果有帮助，尤其改善fault split，但�
 5. **限制：**backbone仍是冻结表征，本实验没有证明端到端联合微调一定更优；此外当前只覆盖单相机和
    A/D/J/M四位participant，仍需外部数据验证。
 
-## 20. Dynamic Epoch Graph-Valid Shuffle实验登记（2026-07-29，结果待运行）
+## 20. Dynamic Epoch Graph-Valid Shuffle实验结果（2026-07-30）
 
-已新增三个与原实验完全隔离的模型：
+### 20.1 实验问题、配置与完整性
 
-| 模型 | 初始化与训练边界 | 主要比较 |
+本实验检验：固定随机种子下，如果不再让每个样本整个训练过程只使用一个固定graph-valid历史顺序，
+而是在每个epoch为其重新生成一个可复现的合法顺序，是否能通过顺序数据增强提高泛化。三个模型与
+原实验完全隔离：
+
+| 模型 | 初始化与训练边界 | 主要严格比较 |
 |---|---|---|
-| `m3_dynamic_frozen_m0_delta` | 加载并冻结M0，只训练attention与delta | 原M3 |
-| `m3_dynamic_joint_head_delta` | **不加载M0**；随机node head与attention、delta联合训练 | Dynamic Frozen-M0 Delta |
-| `m3_dynamic_direct_fusion` | 不加载M0、不使用delta；直接训练fusion与node head | 原M3 Direct、Dynamic Joint-Head Delta |
+| Dynamic Frozen-M0 Delta | 加载并冻结M0，只训练attention与delta | 固定重排M3 |
+| Dynamic Joint-Head Delta | **不加载M0**；随机node head与attention、delta联合训练 | Dynamic Frozen、固定M3 |
+| Dynamic Direct Fusion | 不加载M0、不使用delta；直接训练fusion与node head | 固定M3 Direct、Dynamic Joint |
 
-三者仅在训练阶段对每个样本、每个epoch重新生成可复现的graph-valid历史顺序；主测试仍使用固定
-seeded graph-valid顺序。正式结果尚未生成，因此本节不写入任何推测指标。完成A/D/J/M × seeds
-1/2/42 × normal-only/all-runs后，将以
-`outputs/dynamic_epoch_shuffle_summary_ADJM_3seeds/`中的216条严格网格结果更新本报告。
+动态重排只发生在训练阶段；测试仍使用固定seeded graph-valid顺序，因而模型间测试输入保持一致。
+结果覆盖A/D/J/M、seed 1/2/42、`normal_only`/`all_runs`及三个测试split，共72个训练单元、
+216条metrics、216份prediction和648条严格配对差值，均完整。以下总体统计继续采用
+participant-first口径：先对每位participant的三个seed求均值，再对四位participant等权平均；
+“±”为四个participant均值的样本标准差。
+
+### 20.2 Dynamic总体结果
+
+`test_all`结果如下：
+
+| Train scope | Dynamic模型 | Node Acc | Node Macro-F1 | Tier3 Acc | Tier3 Macro-F1 |
+|---|---|---:|---:|---:|---:|
+| normal-only | Frozen-M0 Delta | 79.20 ± 6.83 | 78.33 | 81.16 ± 6.14 | 79.91 |
+| normal-only | Joint-Head Delta | 83.11 ± 6.54 | 82.69 | 84.60 ± 5.09 | 83.73 |
+| normal-only | Direct Fusion | **86.92 ± 4.84** | **84.58** | **87.38 ± 5.04** | **84.29** |
+| all-runs | Frozen-M0 Delta | 84.24 ± 6.11 | 83.48 | 85.13 ± 5.69 | 84.24 |
+| all-runs | Joint-Head Delta | 85.38 ± 5.23 | 84.36 | 86.06 ± 4.93 | 84.76 |
+| all-runs | Direct Fusion | **89.79 ± 3.35** | **86.97** | **90.02 ± 3.19** | **86.33** |
+
+三种Dynamic结构的排序在两个train scope中一致：
+
+> **Dynamic Direct Fusion > Dynamic Joint-Head Delta > Dynamic Frozen-M0 Delta。**
+
+这再次表明允许node head随history representation共同学习，比冻结M0分类头只学习delta更有效；
+而在联合训练方案内，直接进行feature fusion又明显优于保留“base logits + delta”的结构。
+不过，全局最佳仍是all-runs M2 Direct的`90.57/90.64%` Node/Tier3 Accuracy，Dynamic Direct
+没有刷新最佳结果；相对M2 Direct分别低`0.78/0.62`个百分点。
+
+### 20.3 与固定重排及初始化方案的严格配对比较
+
+下表为all-runs `test_all`的participant-first配对差值；正数表示前者更高。
+
+| 比较 | ΔNode Acc | Node正/平/负 | ΔTier3 Acc | Tier3正/平/负 |
+|---|---:|---:|---:|---:|
+| Dynamic Frozen − 固定M3 | **-0.51** | 5/1/6 | **-0.50** | 5/0/7 |
+| Dynamic Joint − 固定M3 | +0.64 | 7/0/5 | +0.43 | 7/1/4 |
+| Dynamic Direct − 固定M3 Direct | **-0.26** | 5/1/6 | **-0.26** | 4/1/7 |
+| Dynamic Joint − Dynamic Frozen | +1.14 | 7/0/5 | +0.93 | 9/0/3 |
+| Dynamic Direct − Dynamic Joint | **+4.41** | 11/0/1 | **+3.96** | 11/0/1 |
+| Dynamic Direct − M0 | +19.98 | 12/0/0 | +6.70 | 12/0/0 |
+
+其中第一行和第三行只改变“固定一次还是每epoch重排”，是判断动态重排本身最干净的比较：
+两项平均差值均为负，且正向配对没有超过半数。因此当前数据不支持“增加合法排列多样性会自动提高
+准确率”。Dynamic Joint虽略高于固定M3，但它同时改变了M0初始化与head训练边界，不能把这
+`0.64/0.43`个百分点归因于动态重排。
+
+normal-only下结论更明显：Dynamic Direct相对固定M3 Direct的Node/Tier3 Accuracy分别低
+`1.80/1.91`个百分点，仅有4/12和5/12个配对提高。由此看，每epoch强制更换顺序在训练数据较少时
+更可能增加优化噪声，而不是形成有效正则化。
+
+逐样本比较也得到相同结论。all-runs下共比较`1895 × 3 seeds = 5685`个样本-seed预测：
+
+| 比较 | Node纠正 | Node退化 | Tier3纠正 | Tier3退化 |
+|---|---:|---:|---:|---:|
+| Dynamic Frozen vs 固定M3 | 94 | **119** | 74 | **99** |
+| Dynamic Direct vs 固定M3 Direct | 151 | **164** | 140 | **153** |
+| Dynamic Joint vs Dynamic Frozen | **194** | 133 | **156** | 106 |
+
+也就是说，动态重排确实改变了模型学到的决策边界，而不是完全无效；但相对对应静态模型，它带来的
+新增退化略多于新增纠正。Joint相对Frozen则有正净收益，支持联合训练head本身，而不是支持
+每epoch重排。
+
+### 20.4 train scope、split与seed稳定性
+
+all-runs模型在三个测试split上的结果：
+
+| Dynamic模型 | test_normal Node/Tier3 | test_fault Node/Tier3 | test_all Node/Tier3 |
+|---|---:|---:|---:|
+| Frozen-M0 Delta | 85.35 / 86.15 | 82.65 / 83.66 | 84.24 / 85.13 |
+| Joint-Head Delta | 86.32 / 86.95 | 84.09 / 84.87 | 85.38 / 86.06 |
+| Direct Fusion | **90.77 / 90.96** | **88.11 / 88.48** | **89.79 / 90.02** |
+
+all-runs减去normal-only的`test_all`严格配对差值为：
+
+| Dynamic模型 | ΔNode Acc | Node正向配对 | ΔTier3 Acc | Tier3正向配对 |
+|---|---:|---:|---:|---:|
+| Frozen-M0 Delta | **+5.04** | 10/12 | **+3.97** | 11/12 |
+| Joint-Head Delta | +2.27 | 9/12 | +1.46 | 9/12 |
+| Direct Fusion | +2.87 | 11/12 | +2.64 | 10/12 |
+
+Dynamic模型从fault训练样本中获益明显；这组train-scope收益比固定Direct实验更一致，尤其是
+Dynamic Direct的Node Accuracy在11/12配对中提高。
+
+all-runs `test_all`按seed对四位participant平均：
+
+| Dynamic模型 | seed 1 Node/Tier3 | seed 2 Node/Tier3 | seed 42 Node/Tier3 |
+|---|---:|---:|---:|
+| Frozen-M0 Delta | 85.55 / 85.88 | 82.30 / 84.21 | 84.86 / 85.31 |
+| Joint-Head Delta | 86.50 / 86.72 | 86.13 / 86.29 | 83.52 / 85.18 |
+| Direct Fusion | **90.50 / 90.80** | **89.42 / 89.70** | **89.44 / 89.56** |
+
+Dynamic Direct的三个seed只相差约1.1个百分点，是三者中最稳定的；Joint的seed 42 Node结果偏低，
+说明随机初始化head与delta联合优化仍有一定训练方差。
+
+### 20.5 Participant、Stage与局部顺序机制
+
+all-runs `test_all`按held-out participant：
+
+| Participant | Frozen-M0 Delta Node/Tier3 | Joint-Head Delta Node/Tier3 | Direct Fusion Node/Tier3 |
+|---|---:|---:|---:|
+| A | 79.12 / 80.20 | 81.44 / 81.75 | 87.63 / 88.32 |
+| D | 81.96 / 82.47 | 83.55 / 84.56 | 87.37 / 87.45 |
+| J | **93.09 / 93.21** | **93.09 / 93.15** | **94.59 / 94.59** |
+| M | 82.77 / 84.64 | 83.45 / 84.79 | 89.56 / 89.71 |
+
+J在三种模型上都最容易；Frozen与Joint最困难的是A。Dynamic Direct中D的平均Node Accuracy最低，
+但只比A低`0.25`个百分点，二者应共同视为主要跨参与者困难折。Dynamic Direct相对固定M3 Direct
+在D上反而提高`0.72`个百分点Node Accuracy，却在A上下降`1.62`个百分点，说明动态重排的作用
+具有明显participant依赖性。
+
+分阶段结果：
+
+| Dynamic模型 | Stage 1 Node/Tier3 | Stage 2 Node/Tier3 | Stage 3 Node/Tier3 |
+|---|---:|---:|---:|
+| Frozen-M0 Delta | **85.00 / 85.00** | 83.97 / 85.20 | 84.27 / 84.27 |
+| Joint-Head Delta | 83.99 / 83.99 | 85.45 / 86.38 | 85.94 / 85.94 |
+| Direct Fusion | 83.43 / 83.43 | **91.44 / 91.76** | **86.92 / 86.92** |
+
+Dynamic Direct的优势仍集中在包含大量相似和重复动作的Stage 2。与固定M3 Direct相比，其Stage
+1/2/3 Node Accuracy分别约低`0.89/0.05/0.85`个百分点：动态重排没有改善Stage 2，也没有出现
+某一stage灾难性崩溃。
+
+对“最新历史node应当靠近当前动作”的局部机制再做两项检查：
+
+| 目标组 | M0 Node/Tier3 | 固定M3 | 固定M3 Direct | Dynamic Frozen | Dynamic Joint | Dynamic Direct |
+|---|---:|---:|---:|---:|---:|---:|
+| immediate-target nodes | 65.26 / 83.72 | 84.36 / 85.59 | **91.28 / 91.59** | 83.76 / 84.99 | 85.39 / 86.32 | 91.24 / 91.56 |
+| Stage2 nodes 13–25 | 64.07 / 83.87 | 84.27 / 85.59 | 91.51 / 91.84 | 83.58 / 84.91 | 85.31 / 86.31 | **91.60 / 91.95** |
+
+Dynamic Direct没有在immediate-target组上崩溃，但也没有超过固定M3 Direct；这与总体结论一致：
+全局graph-valid随机性能够保留大部分历史收益，却没有充分保护“最新atomic前缀”的局部邻近信号。
+Atomic-tail实验正是对这一更具体假设的后续检验，但在其结果产生前不能提前下结论。
+
+### 20.6 详细失效分析
+
+#### 20.6.1 最难node与participant特异错误
+
+Dynamic Direct的最低召回node如下。Recall为四位participant等权平均，support为四折中的唯一
+测试样本数；低support类别的百分比应谨慎解释。
+
+| Node | 动作 | Recall | Unique support |
+|---:|---|---:|---:|
+| 1 | unlock crimper | **62.22%** | 22 |
+| 34 | take lock from table | **70.92%** | 25 |
+| 4 | turn on crimper | 74.17% | 22 |
+| 8 | turn on extractor fan | 76.39% | 22 |
+| 24 | put sample on table | 77.28% | 103 |
+| 35 | lock crimper | 78.01% | 25 |
+| 6 | turn on air compressor | 78.06% | 22 |
+| 7 | turn on water pump | 78.61% | 22 |
+| 30 | turn off air compressor | 79.91% | 26 |
+| 20 | grip sample from machine table | 83.10% | 99 |
+
+其中node 24不仅support较大，而且在A折Recall只有`36.11%`，是比低support node 1更可靠的
+系统性弱点。participant特异的最低Recall还包括：D的node 18（reverse sample，`41.67%`）、
+J的node 34（`20.83%`）以及M的node 1（`33.33%`）。因此不能用单一“最难动作”概括所有人；
+跨参与者外观、操作习惯和场景差异会改变主要错误类别。
+
+#### 20.6.2 高频混淆
+
+下表汇总all-runs Dynamic Direct在四折三seed上的有向错误次数；同一真实样本会随三个seed计三次。
+
+| 真实node → 预测node | 动作混淆 | 错误次数 |
+|---|---|---:|
+| 20 → 19 | grip sample from machine table → put sample on machine table | 24 |
+| 24 → 12 | put sample on table → take plier from table | 23 |
+| 24 → 25 | put sample on table → put plier on table | 22 |
+| 24 → 34 | put sample on table → take lock from table | 18 |
+| 16 → 17 | put sample on machine table → grip sample from machine table | 17 |
+| 18 → 23 | reverse sample → inspect sample | 17 |
+| 34 → 24 | take lock from table → put sample on table | 17 |
+| 1 → 4 | unlock crimper → turn on crimper | 13 |
+| 8 → 28 | turn on extractor fan → turn off extractor fan | 13 |
+| 30 → 6 | turn off air compressor → turn on air compressor | 13 |
+| 7 → 29 | turn on water pump → turn off water pump | 12 |
+| 6 → 30 | turn on air compressor → turn off air compressor | 11 |
+
+这些高频错误全部跨Tier3，而不是同一Tier3动作在不同node位置之间的互换。剩余瓶颈已经从原M0的
+“流程位置消歧”部分转向更困难的视觉语义问题：放置与抓取、样品与工具、设备开与关，以及相邻
+操作间过渡帧外观相似。改进这类错误更可能需要时序片段、手-物交互或设备状态特征，而不是单纯增加
+更多历史排列。
+
+四组已知重复动作node的双向误判次数进一步支持这一判断：
+
+| 模型 | 14↔21 | 15↔22 | 16↔19 | 17↔20 | 合计 |
+|---|---:|---:|---:|---:|---:|
+| M0 | 166 | 247 | 206 | 150 | 769 |
+| 固定M3 | 6 | 4 | 13 | 23 | 46 |
+| 固定M3 Direct | 5 | 2 | 3 | 2 | **12** |
+| Dynamic Frozen | 2 | 3 | 18 | 22 | 45 |
+| Dynamic Joint | 9 | 14 | 7 | 7 | 37 |
+| Dynamic Direct | 1 | 2 | 4 | 6 | 13 |
+
+Dynamic Direct仍几乎消除了重复node混淆，但合计13次并未优于固定M3 Direct的12次。Dynamic
+Joint在14↔21和15↔22上明显多于Frozen，说明“联合训练head”带来的平均提升并不保证所有
+重复node对都同步改善。
+
+#### 20.6.3 三seed一致错误、困难run与置信度
+
+Dynamic Direct共有`79/1895`个唯一测试样本在三个seed中全部预测错误。按participant为
+A 25、D 22、M 19、J 13；按stage为Stage 1/2/3的`23/39/17`个。Stage 2错误数最高主要受其
+样本量更大影响，不等于Stage 2错误率最高。三seed一致错误最多的node是24（17个）、18（9个）
+和34（6个），说明这些错误不是简单依靠更换seed即可消除。
+
+seed平均后的最困难run为：
+
+| Participant / run | 样本数 | Node Acc | Tier3 Acc |
+|---|---:|---:|---:|
+| A / run_16 | 25 | **66.67%** | 68.00% |
+| M / run_19 | 25 | 69.33% | 69.33% |
+| A / run_28 | 24 | 72.22% | 73.61% |
+| A / run_27 | 6 | 72.22% | 72.22% |
+| D / run_10 | 25 | 73.33% | 73.33% |
+| D / run_19 | 25 | 74.67% | 74.67% |
+| J / run_35 | 14 | 76.19% | 76.19% |
+
+在103个run的等权比较中，Dynamic Frozen相对固定M3有30个提高、32个持平、41个下降，
+平均Node差`-0.49`个百分点；Dynamic Direct相对固定M3 Direct为33提高、28持平、42下降，
+平均差`-0.40`个百分点。这说明总体负差不是由单个异常run造成，而是小幅、分散地出现在更多run上。
+
+最后，三种Dynamic模型均存在高置信错误：
+
+| Dynamic模型 | 正确样本平均置信度 | 错误样本平均置信度 | ≥0.9错误/全部错误 | 10-bin ECE |
+|---|---:|---:|---:|---:|
+| Frozen-M0 Delta | 97.47% | 83.85% | 485/866（56.0%） | 10.63% |
+| Joint-Head Delta | 97.79% | 84.77% | 469/805（58.3%） | 10.11% |
+| Direct Fusion | **98.01%** | **79.76%** | 262/565（46.4%） | **6.13%** |
+
+Dynamic Direct准确率和校准都最好，但仍有近一半错误的置信度不低于0.9。部署或在线异常检测时，
+不能只用最大softmax阈值识别失败；更适合结合graph不一致、动作持续时间、预测跳变和模型集成分歧。
+
+### 20.7 Dynamic实验结论
+
+1. **每epoch graph-valid重排可正常训练，但不是当前的性能改进项。**两个最干净的静态—动态比较
+   均为小幅负差，逐样本纠正少于退化。
+2. **Dynamic Joint优于Dynamic Frozen，说明重新学习node head是有价值的；**但其优势混合了
+   初始化、训练边界与结构差异，不能归因于重排频率。
+3. **Dynamic Direct是三种Dynamic模型中明确最佳，**但仍低于固定M2 Direct，也未超过固定M3
+   Direct；正式主模型与原有结论无需更换。
+4. **历史信息已经基本解决重复流程node消歧，**剩余错误更多是跨Tier3视觉/动作语义混淆和
+   participant/run域偏移。
+5. **下一步atomic-tail实验具有合理动机：**它不是再次增加随机性，而是保护最新atomic前缀的
+   局部顺序。应重点比较`refresh_once`、`refresh_every_10`和`refresh_every_1`，判断是否存在
+   “适度增强优于每epoch强增强”的规律。
 
 ## 21. Atomic-tail Graph-Valid实验登记（2026-07-30，结果待运行）
 

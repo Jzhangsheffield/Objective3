@@ -1,5 +1,5 @@
 {
-  "schema_version": "task-graph-realtime-demo-v2",
+  "schema_version": "task-graph-realtime-demo-v3",
   "created_from": {
     "source_run_manifest_record": {
       "sample_name": "run_sample_000005",
@@ -40,8 +40,8 @@
     "source_dataset_was_modified": false
   },
   "demo": {
-    "profile_id": "a_run7_seed1",
-    "title": "Task Graph History Demo — A / run_7",
+    "profile_id": "a_run7_predicted_actual_seed1",
+    "title": "Task Graph Predicted-History Demo — A / run_7",
     "participant": "A",
     "source_run": "run_7",
     "run_sample_name": "run_sample_000005",
@@ -49,10 +49,10 @@
     "seed": 1,
     "train_scope": "all_runs",
     "playback_speed": 1.0,
-    "history_policy": "completed_action_ground_truth_node_idx",
-    "history_order": "graph_valid",
-    "history_mode_label": "ORACLE NODES • GRAPH-VALID ORDER",
-    "m3_display_name": "M3",
+    "history_policy": "completed_action_m3_predicted_node_idx",
+    "history_order": "actual",
+    "history_mode_label": "M3-PREDICTED NODES • ACTUAL TEMPORAL ORDER",
+    "m3_display_name": "M3-PH",
     "boundary_policy": "supplied_frame_annotations",
     "prediction_timing": "after_action_segment_end",
     "background_policy": "supplied_annotations_not_model_prediction"
@@ -62,8 +62,8 @@
   "current_start_frame": "20260313_101225_419908.jpg",
   "current_end_frame": "20260313_101443_849216.jpg",
   "original_frame_offset": 676,
-  "segments_file": "derived\\demo_segments.jsonl",
-  "validation_report": "derived\\data_validation_report.json",
+  "segments_file": "profiles\\a_run7_predicted_actual_seed1\\derived\\demo_segments.jsonl",
+  "validation_report": "profiles\\a_run7_predicted_actual_seed1\\derived\\data_validation_report.json",
   "preprocessing": {
     "source_image_mode": "RGB",
     "source_image_size": [

@@ -1,21 +1,24 @@
-# A/run_7 与 J/run_12 三模型实时 Demo 说明
+# A/run_7 与 J/run_12：Oracle / 预测历史三模型实时 Demo 说明
 
 ## 1. Demo 目标
 
-本目录提供两个可在会议中直接播放的真实测试run，并通过启动选择器并排展示三个模型：
+本目录提供两个可在会议中直接播放的真实测试 run，并为每个 run 提供两种 M3 历史协议；启动选择器共有四个入口，均并排展示三个模型：
 
 - **M0（Current Frozen RGB Feature）**：当前动作由同一RGB backbone提取512维特征，再直接预测35个Task Graph node；不使用历史。
-- **M3（Graph-valid History）**：使用当前动作的 RGB 特征，以及此前已经完成动作的真实 `node_idx`，按 Task Graph 规则对历史进行重排后预测当前 node。
+- **M3（Oracle History）**：使用当前动作的 RGB 特征，以及此前已经完成动作的真实 `node_idx`，按 Task Graph 规则对历史进行重排后预测当前 node。
+- **M3-PH（Predicted History）**：使用同一份 M3 checkpoint，但历史节点来自 M3-PH 自己此前的 top-1 预测，按动作真实发生的时间顺序输入，不做 graph-valid shuffle。错误会进入后续历史。
 - **E2E-Node-Scratch**：只使用当前动作的 RGB 帧，不使用历史。
 
 可选择的profile：
 
-| Profile | 数据 | Seed | 动作数 | 时长 |
-|---|---|---:|---:|---:|
-| A / run_7 | `run_sample_000005` / camera `001484412812` | 1 | 25 | 138.43 s |
-| J / run_12 | `run_sample_000058` / camera `001484412812` | 1 | 24 | 102.42 s |
+| Profile | M3 历史节点 | 历史顺序 | 动作数 | 时长 |
+|---|---|---|---:|---:|
+| A / run_7 — Oracle | 已完成动作 GT node | graph-valid shuffle | 25 | 138.43 s |
+| A / run_7 — Predicted History | 已完成动作 M3-PH 预测 node | 实际发生顺序、不 shuffle | 25 | 138.43 s |
+| J / run_12 — Oracle | 已完成动作 GT node | graph-valid shuffle | 24 | 102.42 s |
+| J / run_12 — Predicted History | 已完成动作 M3-PH 预测 node | 实际发生顺序、不 shuffle | 24 | 102.42 s |
 
-两个Demo都按原始时间戳以 **1×** 速度播放。每个动作段结束后才开始预测；当前动作的真实标签在M0、M3和E2E都完成预测后才显示，并且只在此后进入M3历史。
+全部 Demo 都使用 seed 1，并按原始时间戳以 **1×** 速度播放。每个动作段结束后才开始预测；当前动作的真实标签在 M0、M3/M3-PH 和 E2E 都完成预测后才显示。Oracle profile 随后把 GT node 加入历史；Predicted History profile 则把 M3-PH 的预测 node 加入历史，GT 只用于评分和显示。
 
 > 重要说明：这个版本使用人工标注提供的 action/background 边界，因此 background 直接来自标注，不经过模型，也不使用置信度阈值。它展示的是“已知分段边界下的在线顺序动作识别”，不是完整的无边界在线检测系统。
 
@@ -29,16 +32,13 @@
 run_demo.bat
 ```
 
-首先出现选择页面，点击：
+首先出现 2×2 选择页面，可按 participant/run 与历史协议选择：
 
 ```text
-Run A / run_7
-```
-
-或：
-
-```text
-Run J / run_12
+A / run_7 — Oracle
+A / run_7 — Predicted History
+J / run_12 — Oracle
+J / run_12 — Predicted History
 ```
 
 等待模型加载完成、顶部状态变为 `Ready` 后，点击：
@@ -54,7 +54,8 @@ Demo 窗口会自动最大化，以便完整显示视频、预测卡和实时 Ta
 - `Play / Pause / Resume`：按 1× 时间戳速度播放或暂停；
 - `Restart`：清空预测结果和 M3 历史，从头播放；
 - 当前 segment 状态：显示 background 或 action 是否正在进行；
-- M0、M3与E2E三张预测卡：明确显示 `Predicted Node`、完整 `node_id`、occurrence、confidence、top-3，以及文字化的 `CORRECT / INCORRECT`；
+- M0、M3/M3-PH与E2E三张预测卡：明确显示 `Predicted Node`、完整 `node_id`、occurrence、confidence、top-3，以及文字化的 `CORRECT / INCORRECT`；
+- 顶部与 M3 卡片会显式标出当前协议；Predicted History 模式显示 `M3-PREDICTED NODES • ACTUAL TEMPORAL ORDER`；
 - Ground truth：只在三个预测完成后揭示，并独立显示 `Ground-truth Node` 和完整 `node_id`；
 - Live Task Graph：显示 37 个节点和 48 条直接依赖边；已完成真实节点按预测结果使用绿/黄/红填充，当前 Ground Truth 使用亮色边框；
 - Consecutive execution：必须相邻执行的 atomic sequence 使用紫色加粗箭头和组下方的整体方括线表示；
@@ -64,7 +65,7 @@ Demo 窗口会自动最大化，以便完整显示视频、预测卡和实时 Ta
 
 模型加载需要额外时间，取决于磁盘和GPU状态。
 
-当前版本为两个profile都预生成了 **960×540 H.264显示视频**并使用后台顺序解码。如果视频缺失，运行 `build_all_display_videos.bat` 重新生成。
+当前版本为两个 run 各预生成一份 **960×540 H.264显示视频**并使用后台顺序解码；同一 run 的两种历史协议共用显示视频。如果视频缺失，运行 `build_all_display_videos.bat` 重新生成。
 
 ### 2.2 运行完整一致性验证
 
@@ -74,13 +75,17 @@ Demo 窗口会自动最大化，以便完整显示视频、预测卡和实时 Ta
 validate_all_demos.bat
 ```
 
-该脚本会依次重跑A的25个动作和J的24个动作，并将三个模型的新预测与原实验保存结果逐项比较。结果分别写入：
+该脚本会依次重跑四个 profile。Oracle profile 的三个模型都与原实验保存结果逐项比较；Predicted History profile 的 M0/E2E 与原结果比较，M3-PH 因输入协议改变而不应与 Oracle M3 CSV 作为复现目标。结果分别写入：
 
 ```text
 outputs/validation_predictions.jsonl
 outputs/validation_summary.json
 profiles/j_run12_seed1/outputs/validation_predictions.jsonl
 profiles/j_run12_seed1/outputs/validation_summary.json
+profiles/a_run7_predicted_actual_seed1/outputs/validation_predictions.jsonl
+profiles/a_run7_predicted_actual_seed1/outputs/validation_summary.json
+profiles/j_run12_predicted_actual_seed1/outputs/validation_predictions.jsonl
+profiles/j_run12_predicted_actual_seed1/outputs/validation_summary.json
 ```
 
 ### 2.3 重新生成派生元数据
@@ -101,7 +106,7 @@ prepare_demo_data.bat
 build_all_display_videos.bat
 ```
 
-它会为两个profile分别生成：
+它会为两个 run 分别生成：
 
 ```text
 derived/display_960x540_h264.mp4
@@ -129,6 +134,8 @@ task_graph_realtime_demo_A_run7_2026-07-27/
 ├─ run_demo.bat
 ├─ run_a_demo.bat
 ├─ run_j_demo.bat
+├─ run_a_predicted_history_demo.bat
+├─ run_j_predicted_history_demo.bat
 ├─ validate_all_demos.bat
 ├─ build_all_display_videos.bat
 ├─ validate_demo.bat
@@ -150,26 +157,34 @@ task_graph_realtime_demo_A_run7_2026-07-27/
 │  ├─ validation_predictions.jsonl
 │  └─ validation_summary.json
 ├─ profiles/
-│  └─ j_run12_seed1/
+│  ├─ j_run12_seed1/
+│  │  ├─ config.json
+│  │  ├─ source_metadata/
+│  │  │  ├─ run_sample_000058_frame_annotation.source.csv
+│  │  │  └─ run_sample_000058_segmentation_annotation.source.csv
+│  │  ├─ derived/
+│  │  │  ├─ demo_manifest.json
+│  │  │  ├─ demo_segments.jsonl
+│  │  │  ├─ data_validation_report.json
+│  │  │  ├─ display_960x540_h264.mp4
+│  │  │  └─ display_video_report.json
+│  │  └─ outputs/
+│  │     ├─ validation_predictions.jsonl
+│  │     └─ validation_summary.json
+│  ├─ a_run7_predicted_actual_seed1/
+│  │  ├─ config.json
+│  │  ├─ derived/
+│  │  └─ outputs/
+│  └─ j_run12_predicted_actual_seed1/
 │     ├─ config.json
-│     ├─ source_metadata/
-│     │  ├─ run_sample_000058_frame_annotation.source.csv
-│     │  └─ run_sample_000058_segmentation_annotation.source.csv
 │     ├─ derived/
-│     │  ├─ demo_manifest.json
-│     │  ├─ demo_segments.jsonl
-│     │  ├─ data_validation_report.json
-│     │  ├─ display_960x540_h264.mp4
-│     │  └─ display_video_report.json
 │     └─ outputs/
-│        ├─ validation_predictions.jsonl
-│        └─ validation_summary.json
 └─ previews/
    ├─ a_run7_seed1_preview.png
    └─ j_run12_seed1_preview.png
 ```
 
-原始RGB帧没有复制到本目录。Demo只读访问原始帧目录。A显示视频约10 MB，J显示视频约7 MB，二者都是独立派生缓存，不会覆盖或改变任何原始JPEG。
+原始RGB帧没有复制到本目录。Demo只读访问原始帧目录。A显示视频约10 MB，J显示视频约7 MB，二者都是独立派生缓存，不会覆盖或改变任何原始JPEG。Predicted History profile 复用对应 run 的来源 metadata 快照与 H.264 显示视频，仅拥有独立的配置、派生清单和验证输出。
 
 ## 4. 使用的数据
 
@@ -385,17 +400,19 @@ current_frame_idx = original_frame_idx - 676
 | seed | 1（两个 profile 相同） |
 | training scope | all-runs |
 | M0 | RGB feature → node classifier，不使用历史 |
-| M3 | retrained all-runs / graph-valid history |
+| M3 / M3-PH checkpoint | 同一份 retrained all-runs M3 权重 |
+| Oracle M3 输入 | GT history node + graph-valid shuffle |
+| M3-PH 输入 | 自预测 history node + actual temporal order |
 | E2E-Node-Scratch | 当前 RGB clip → node classifier，不使用历史 |
 | 输出空间 | Task Graph node |
 
-权重、Task Graph、关系矩阵和原实验预测结果由根目录 `config.json`（A）或 `profiles/j_run12_seed1/config.json`（J）指向既有实验包：
+权重、Task Graph、关系矩阵和原实验预测结果由各 profile config 指向既有实验包：
 
 ```text
 D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22
 ```
 
-Demo 不会改动该实验包。
+Demo 不会改动该实验包。M3-PH 没有重新训练模型：它是对已训练 M3 checkpoint 的测试时历史输入策略改变，因此结果应解读为部署压力测试，而不是与训练条件完全匹配的新模型。
 
 ### 6.2 RGB 预处理
 
@@ -412,23 +429,46 @@ mean = [0.5369, 0.5295, 0.5208]
 std  = [0.2311, 0.2360, 0.2363]
 ```
 
-M0、M3 和 E2E 对当前动作使用相同的 16 帧采样规则。M0 与 M3 共用冻结 RGB backbone 得到的当前动作特征；M0 只对当前特征分类，M3 额外使用历史和 Task Graph 重排。E2E-Node-Scratch 则从当前 RGB clip 端到端预测 node。
+M0、M3/M3-PH 和 E2E 对当前动作使用相同的 16 帧采样规则。M0 与 M3/M3-PH 共用冻结 RGB backbone 得到的当前动作特征；M0 只对当前特征分类，M3/M3-PH 额外使用历史。仅 Oracle profile 做 Task Graph graph-valid 重排；Predicted History profile 保持实际时间顺序。E2E-Node-Scratch 则从当前 RGB clip 端到端预测 node。
 
-### 6.3 M3 历史策略
+### 6.3 两种 M3 历史策略
 
-M3 的状态更新顺序是：
+两种策略都从空历史开始，当前动作的 RGB feature 也都在动作 segment 结束后才提取。共同的时序是：
 
 1. action segment 结束；
-2. 从当前 action 采样 16 帧并提取当前特征；
-3. 读取此前已完成动作的历史；
-4. 使用这些历史动作的真实 `node_idx` 做 graph-valid reordering；
-5. M0 使用当前 RGB feature 独立预测当前 node；
-6. M3 使用当前 feature 与重排后的历史预测当前 node；
-7. E2E 使用当前 RGB clip 独立预测；
-8. 三个预测均完成后，才揭示当前 ground truth；
-9. 当前动作的真实 `node_idx` 和当前 RGB feature 被加入历史，供后续动作使用。
+2. 从当前 action 均匀采样 16 帧并提取当前 feature；
+3. 读取此前已完成动作的 feature 与历史 node；
+4. M0、M3/M3-PH、E2E 分别完成当前 node 预测；
+5. 预测完成后才揭示当前 GT；
+6. 当前 feature 与所选历史 node 被加入状态，供下一个动作使用。
 
-因此，当前动作的真实标签不会泄漏到当前预测中；但历史真实 node 是本次会议 Demo 明确采用的 oracle-history 条件。
+Oracle profile 的第 3、6 步为：
+
+```text
+history node = 已完成动作的真实 node_idx
+history order = graph-valid shuffle
+```
+
+Predicted History profile 的第 3、6 步为：
+
+```text
+history node = 已完成动作的 M3-PH top-1 预测 node_idx
+history order = 实际发生顺序
+shuffle = false
+```
+
+因此新 profile 在 action 1 时历史长度为 0；action 2 的历史只含 action 1 的 feature 与预测 node；之后逐步累积。GT node 不会进入 M3-PH 的未来历史，只用于 `correct/incorrect` 评分、界面显示和审计字段。某一步预测错误后，错误 node 会进入下一步，形成真实的误差传播路径。
+
+`validation_predictions.jsonl` 会为每个 action 保存：
+
+- `history_entries_before_current`：输入当前 M3/M3-PH 的历史明细；
+- `history_node_order`：模型实际看到的 node 顺序；
+- `history_node_added_for_future`：当前动作完成后加入下一步历史的 node；
+- `history_node_added_source`：`ground_truth` 或 `m3_prediction`。
+
+这使得新协议可逐动作追踪和复核，而不只看最终准确率。
+
+`validate_all_demos.bat` 还会自动检查历史长度、已完成动作成员集合、node 来源，以及 Predicted History 的实际时间顺序；任一检查失败时批处理会以失败结束。
 
 ### 6.4 Node 优先的界面语义
 
@@ -466,11 +506,11 @@ Ground Truth 区域使用中性颜色独立展示真实 node，不再依靠预�
 
 1. 未执行节点使用深色；
 2. 每个动作完成并揭示 Ground Truth 后，对应真实 node 持续点亮；
-   - 绿色：M0、M3、E2E 三个模型都预测正确；
-   - 黄色：M3 预测正确，但 M0 或 E2E 至少一个预测错误；
-   - 红色：M3 预测错误；
+   - 绿色：M0、当前 profile 的 M3/M3-PH、E2E 三个模型都预测正确；
+   - 黄色：M3/M3-PH 预测正确，但 M0 或 E2E 至少一个预测错误；
+   - 红色：M3/M3-PH 预测错误；
 3. 最近完成的真实 node 额外使用亮色边框；
-4. M0、M3、E2E 的当前 top-1 分别用橙色、绿色、蓝色标签显示在预测 node 上方；
+4. M0、M3/M3-PH、E2E 的当前 top-1 分别用橙色、绿色、蓝色标签显示在预测 node 上方；
 5. 新动作开始时清除上一动作的三个临时预测标签，但保留已经完成的真实路径；
 6. `Restart` 同时清空模型历史、列表历史和图上的已完成路径；
 7. 鼠标悬停节点时，图底部显示完整动作含义和命中该节点的当前模型 confidence。
@@ -511,7 +551,7 @@ supplied_annotations_not_model_prediction
 - 原始采集时间间隔被保留；
 - 如果界面短时落后，会直接显示当前时间点应显示的最新帧，以保持时间轴同步；
 - 模型推理在单独的工作线程中运行，不阻塞 Tk 界面；
-- 推理任务串行执行，保证 M3 历史顺序稳定。
+- 推理任务串行执行，保证 M3/M3-PH 历史顺序稳定。
 
 ### 7.1 流畅播放优化
 
@@ -572,26 +612,43 @@ PyTorch 2.6.0+cu126
 GPU: NVIDIA GeForce RTX 4090
 ```
 
-2026-07-27 的全动作验证结果：
+2026-07-30 的四 profile 全动作验证结果：
 
-| Profile | M0 | M3 | E2E-Node-Scratch | 与既有 top-1 一致 |
-|---|---:|---:|---:|---:|
-| A / run_7 / seed 1 | 19/25（76%） | 22/25（88%） | 18/25（72%） | 三模型均 25/25 |
-| J / run_12 / seed 1 | 19/24（79.17%） | 23/24（95.83%） | 21/24（87.5%） | 三模型均 24/24 |
+| Profile | M0 | M3 / M3-PH | E2E-Node-Scratch | 复现检查 |
+|---|---:|---:|---:|---|
+| A / run_7 / Oracle | 19/25（76%） | 22/25（88%） | 18/25（72%） | 三模型 top-1 均 25/25 |
+| A / run_7 / Predicted History | 19/25（76%） | 22/25（88%） | 18/25（72%） | M0/E2E 均 25/25；M3-PH 不以 Oracle CSV 为复现目标 |
+| J / run_12 / Oracle | 19/24（79.17%） | 23/24（95.83%） | 21/24（87.5%） | 三模型 top-1 均 24/24 |
+| J / run_12 / Predicted History | 19/24（79.17%） | 23/24（95.83%） | 21/24（87.5%） | M0/E2E 均 24/24；M3-PH 不以 Oracle CSV 为复现目标 |
 
-| Profile | 最大 M0 confidence 差 | 最大 M3 confidence 差 | 最大 E2E confidence 差 | 平均三模型推理时间 |
-|---|---:|---:|---:|---:|
-| A / run_7 | 0.000401 | 0.000927 | 0.000931 | 约 158 ms/action |
-| J / run_12 | 0.000732 | 0.000354 | 0.000922 | 约 156 ms/action |
+本次运行的平均三模型推理时间约为：
 
-两个 profile 的类别预测都与既有实验完全一致。小于 0.001 的 confidence 差异属于当前 GPU 运行下的浮点数值差异，不改变任何 top-1 node。
+| Profile | 平均推理时间 |
+|---|---:|
+| A / Oracle | 161 ms/action |
+| A / Predicted History | 162 ms/action |
+| J / Oracle | 163 ms/action |
+| J / Predicted History | 164 ms/action |
+
+推理计时包含 GPU 当次状态，适合确认能否跟上 1× 播放，不应作为严格性能 benchmark。
+
+新旧协议在这两个代表性 run 上的 M3 top-1 恰好全部相同，因此最终准确率也相同；这不表示新协议没有生效：
+
+- A 中有 10 个动作的 M3 置信度发生变化，最大差为 0.00736；
+- J 中有 7 个动作的 M3 置信度发生变化，最大差为 0.01359；
+- A 的 action 13：GT N13、M3-PH 预测 N12；action 14 的输入历史尾部经审计为 N12；
+- J 的 action 4：GT N15、M3-PH 预测 N19；action 5 的输入历史尾部经审计为 N19；
+- 两个新 profile 的全部历史条目都通过“来源为此前 M3-PH 预测、动作索引严格按实际发生顺序”的链式检查。
+
+这说明错误节点已实际传播，只是在这两个短 run 上没有进一步改变后续 top-1。是否在完整测试集上产生准确率差异，需要对全部 run 运行同一 predicted-history protocol 后再报告。
 
 J / run_12 存在 seed 1、2、42 三个严格 LOSO 结果。本 Demo 选择 seed 1，是因为它与 A profile 保持相同 seed，且在 J/run_12 上三模型结果完整，M3（23/24）和 E2E（21/24）也优于另外两个候选 seed，适合现场展示。该选择只决定展示哪一份已有模型结果，没有在 J/run_12 上重新调参。
 
-错误分布：
+这两个 run 中新旧协议共有的 M3/M3-PH 错误分布：
 
-- M3 错误：action 13、20、24；
-- E2E 错误：action 13、14、16、21、22、24、25；
+- A 的 M3/M3-PH 错误：action 13、20、24；
+- J 的 M3/M3-PH 错误：action 4；
+- A 的 E2E 错误：action 13、14、16、21、22、24、25；
 - action 14 是一个适合会议讲解的例子：M3 正确预测 node 14，而只看当前 RGB 的 E2E 预测为 node 21。这两个 node 的可见动作语义相同，历史与 Task Graph 提供了步骤位置区分。
 
 ## 9. 输出文件说明
@@ -613,15 +670,16 @@ J / run_12 存在 seed 1、2、42 三个严格 LOSO 结果。本 Demo 选择 see
 每个 action 一行，包含：
 
 - true node、label、stage；
-- M0/M3/E2E top-1、confidence、top-3；
-- M3 使用的 graph-valid history node 顺序；
+- M0/M3/M3-PH/E2E top-1、confidence、top-3；
+- 实际使用的 history policy、history order 与逐条历史 node；
+- 当前动作加入未来历史的 node 及其来源；
 - 16 个采样帧的局部索引；
 - 推理时间；
 - 与既有实验结果的 node/confidence 差异。
 
 ### `outputs/validation_summary.json`
 
-完整 run 的三模型准确率、复现匹配数、最大 confidence 差和平均推理时间摘要。A 的文件位于根目录 `outputs/`，J 的文件位于 `profiles/j_run12_seed1/outputs/`。
+完整 run 的三模型准确率、适用的复现匹配数、最大 confidence 差和平均推理时间摘要。Oracle A 的文件位于根目录 `outputs/`；其余三个 profile 分别位于各自 `profiles/<profile_id>/outputs/`。
 
 ### `derived/display_video_report.json`
 
@@ -631,9 +689,9 @@ J / run_12 存在 seed 1、2、42 三个严格 LOSO 结果。本 Demo 选择 see
 
 记录逐JPEG显示链路与H.264顺序解码链路的600帧性能对照。
 
-### `previews/a_run7_seed1_preview.png` 与 `previews/j_run12_seed1_preview.png`
+### `previews/`
 
-两个文件都使用对应 run 的真实帧和实测三模型预测结果生成，用于快速检查布局；不是手工伪造的占位内容。
+`a_run7_seed1_preview.png` 与 `j_run12_seed1_preview.png` 使用对应 run 的真实帧和实测三模型预测结果生成。`live_launcher_four_profiles.png` 是最终四入口选择器检查图；`live_a_predicted_history_layout.png` 是实际加载新 M3-PH 模型并完成第一个动作推理后的全屏检查图。这些文件用于布局复核，不是手工伪造的占位内容。
 
 ## 10. 环境与依赖
 
@@ -663,7 +721,7 @@ C:\Users\digit\anaconda3\envs\Pytorch\python.exe
 
 1. **边界是给定的**：没有在线检测动作起止点；
 2. **background 是给定的**：没有训练或预测 background 类；
-3. **M3 使用真实历史 node**：属于 oracle completed-history 设置；
+3. **M3 有两种测试协议**：Oracle 使用真实历史 node；M3-PH 使用自身预测历史，但复用在 Oracle/graph-valid 条件下训练的 checkpoint；
 4. **只演示两个指定 participant/run**：A / run_7 与 J / run_12，camera 均为 001484412812；
 5. **动作完成后预测**：不是动作尚未完成时的 early recognition；
 6. **准确率来自这个代表性 run**：不替代完整测试集统计。
@@ -672,10 +730,11 @@ C:\Users\digit\anaconda3\envs\Pytorch\python.exe
 
 1. 增加滑动 window 与 actionness/background 头；
 2. 在独立 calibration set 上确定 background 阈值；
-3. 用模型预测的已完成 node 替代真实历史 node；
-4. 增加 boundary debounce、最短动作长度和多窗口投票；
-5. 将当前双 profile 选择器扩展到更多 run/camera；
-6. 分别报告 supplied-boundary、predicted-boundary 和 predicted-history 三种设置。
+3. 在完整测试集上批量运行 predicted-history protocol，报告误差传播统计；
+4. 如需要正式部署结果，使用 predicted-history / actual-order 条件重新训练或微调 M3；
+5. 增加 boundary debounce、最短动作长度和多窗口投票；
+6. 将当前四入口选择器扩展到更多 run/camera；
+7. 分别报告 supplied-boundary、predicted-boundary 和 predicted-history 三种设置。
 
 ## 12. 源数据保护结论
 

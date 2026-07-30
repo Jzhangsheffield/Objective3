@@ -27,8 +27,11 @@ class TaskGraphView:
         task_graph_path: Path,
         *,
         colors: dict[str, str],
+        m3_display_name: str = "M3",
     ) -> None:
         self.colors = colors
+        self.model_labels = dict(self.MODEL_LABELS)
+        self.model_labels["m3"] = m3_display_name
         graph = json.loads(task_graph_path.read_text(encoding="utf-8"))
         self.nodes = {
             int(node["node_idx"]): node
@@ -96,7 +99,11 @@ class TaskGraphView:
         ).pack(side="left", padx=(14, 0))
         tk.Label(
             header,
-            text="green = all correct   •   yellow = M3 correct/mixed   •   red = M3 wrong",
+            text=(
+                "green = all correct   •   "
+                f"yellow = {m3_display_name} correct/mixed   •   "
+                f"red = {m3_display_name} wrong"
+            ),
             bg=colors["panel"],
             fg=colors["muted"],
             font=("Segoe UI", 8),
@@ -167,7 +174,7 @@ class TaskGraphView:
         self._current_summary = (
             f"Action {result['annotation_row_index']}  •  GT N{true_node}  •  "
             f"M0 N{self.current_predictions['m0']}  •  "
-            f"M3 N{self.current_predictions['m3']}  •  "
+            f"{self.model_labels['m3']} N{self.current_predictions['m3']}  •  "
             f"E2E N{self.current_predictions['e2e']}"
         )
         self.detail.configure(text=self._current_summary)
@@ -300,8 +307,8 @@ class TaskGraphView:
             x, y = self.node_centers[node_idx]
             for stack_index, model_key in enumerate(model_keys):
                 marker_y = y - radius_y - 7 - stack_index * 12
-                label = self.MODEL_LABELS[model_key]
-                marker_width = 23 if label != "E2E" else 27
+                label = self.model_labels[model_key]
+                marker_width = max(23, 7 * len(label) + 6)
                 self.canvas.create_rectangle(
                     x - marker_width / 2,
                     marker_y - 5,
@@ -374,7 +381,7 @@ class TaskGraphView:
         stage = node.get("stage_id", -1)
         label = node.get("action_label_tier3", node["node_id"])
         prediction_parts = [
-            f"{self.MODEL_LABELS[key]} {self.current_confidences[key]:.3f}"
+            f"{self.model_labels[key]} {self.current_confidences[key]:.3f}"
             for key, predicted_node in self.current_predictions.items()
             if predicted_node == hovered
         ]

@@ -100,6 +100,22 @@ class InferenceEngine:
         self.paths = {
             key: resolve(value) for key, value in self.config["paths"].items()
         }
+        self.history_policy = str(
+            self.config["demo"].get(
+                "history_policy", "completed_action_ground_truth_node_idx"
+            )
+        )
+        self.history_order = str(
+            self.config["demo"].get("history_order", "graph_valid")
+        )
+        supported_history_policies = {
+            "completed_action_ground_truth_node_idx",
+            "completed_action_m3_predicted_node_idx",
+        }
+        if self.history_policy not in supported_history_policies:
+            raise ValueError(f"Unsupported history_policy: {self.history_policy}")
+        if self.history_order not in {"graph_valid", "actual"}:
+            raise ValueError(f"Unsupported history_order: {self.history_order}")
         package_root = self.paths["experiment_package"]
         if str(package_root) not in sys.path:
             sys.path.insert(0, str(package_root))
@@ -279,14 +295,18 @@ class InferenceEngine:
         e2e_probabilities = F.softmax(e2e_logits.float(), dim=-1)[0]
 
         with self._lock:
-            history_rows = self.randomized_graph_valid_history(
-                list(self._history),
-                graph=self.graph,
-                seed=self.stable_sample_seed(
-                    int(self.config["demo"]["seed"]),
-                    str(segment["original_action_sample_name"]),
-                ),
-            )
+            stored_history_rows = list(self._history)
+            if self.history_order == "graph_valid":
+                history_rows = self.randomized_graph_valid_history(
+                    stored_history_rows,
+                    graph=self.graph,
+                    seed=self.stable_sample_seed(
+                        int(self.config["demo"]["seed"]),
+                        str(segment["original_action_sample_name"]),
+                    ),
+                )
+            else:
+                history_rows = stored_history_rows
             if history_rows:
                 history_features = torch.stack(
                     [row["feature"] for row in history_rows], dim=0
@@ -327,11 +347,20 @@ class InferenceEngine:
                 e2e_probabilities
             )
 
-            # The completed action enters history only after both current predictions.
-            # Its ground-truth node is used solely for future graph-valid reordering.
+            true_node = int(segment["node_idx"])
+            if self.history_policy == "completed_action_ground_truth_node_idx":
+                history_node_for_future = true_node
+                history_node_source = "ground_truth"
+            else:
+                history_node_for_future = m3_node
+                history_node_source = "m3_prediction"
+
+            # The current action enters history only after all current predictions.
             self._history.append(
                 {
-                    "node_idx": int(segment["node_idx"]),
+                    "node_idx": int(history_node_for_future),
+                    "true_node_idx": true_node,
+                    "history_node_source": history_node_source,
                     "feature": current_feature[0].detach(),
                     "sample_name": segment["original_action_sample_name"],
                     "annotation_row_index": int(segment["annotation_row_index"]),
@@ -341,7 +370,6 @@ class InferenceEngine:
         if self.device.type == "cuda":
             torch.cuda.synchronize(self.device)
         elapsed_ms = (time.perf_counter() - started) * 1000.0
-        true_node = int(segment["node_idx"])
         true_node_info = self._node_info(true_node)
         m0_node_info = self._node_info(m0_node)
         m3_node_info = self._node_info(m3_node)
@@ -357,9 +385,28 @@ class InferenceEngine:
             "true_display_name": true_node_info["display_name"],
             "stage_id": int(segment["stage_id"]),
             "history_length_before_current": len(history_rows),
+            "history_policy": self.history_policy,
+            "history_order": self.history_order,
+            "history_node_order": [int(row["node_idx"]) for row in history_rows],
+            "history_entries_before_current": [
+                {
+                    "annotation_row_index": int(row["annotation_row_index"]),
+                    "sample_name": str(row["sample_name"]),
+                    "history_node_idx": int(row["node_idx"]),
+                    "true_node_idx": int(row.get("true_node_idx", row["node_idx"])),
+                    "history_node_source": str(
+                        row.get("history_node_source", "ground_truth")
+                    ),
+                }
+                for row in history_rows
+            ],
             "graph_valid_history_node_order": [
                 int(row["node_idx"]) for row in history_rows
-            ],
+            ]
+            if self.history_order == "graph_valid"
+            else None,
+            "history_node_added_for_future": int(history_node_for_future),
+            "history_node_added_source": history_node_source,
             "selected_local_frame_indices_zero_based": selected_indices,
             "m0": {
                 "pred_node_idx": m0_node,
@@ -428,12 +475,79 @@ def validate_all(
     existing_m0 = _prediction_lookup(
         resolve(data.config["paths"]["existing_m0_predictions"])
     )
-    existing_m3 = _prediction_lookup(
-        resolve(data.config["paths"]["existing_m3_predictions"])
+    compare_m3_to_existing = (
+        data.config["demo"].get("history_policy")
+        == "completed_action_ground_truth_node_idx"
+        and data.config["demo"].get("history_order", "graph_valid") == "graph_valid"
+    )
+    existing_m3 = (
+        _prediction_lookup(resolve(data.config["paths"]["existing_m3_predictions"]))
+        if compare_m3_to_existing
+        else None
     )
     existing_e2e = _prediction_lookup(
         resolve(data.config["paths"]["existing_e2e_predictions"])
     )
+    history_length_sequence_valid = all(
+        int(result["history_length_before_current"]) == result_index
+        for result_index, result in enumerate(results)
+    )
+    history_membership_and_node_source_valid = True
+    actual_history_order_valid: bool | None = (
+        True
+        if data.config["demo"].get("history_order", "graph_valid") == "actual"
+        else None
+    )
+    for result_index, result in enumerate(results):
+        completed_results = results[:result_index]
+        history_entries = result["history_entries_before_current"]
+        expected_by_action = {
+            int(completed["annotation_row_index"]): (
+                int(completed["true_node_idx"])
+                if data.config["demo"].get("history_policy")
+                == "completed_action_ground_truth_node_idx"
+                else int(completed["m3"]["pred_node_idx"])
+            )
+            for completed in completed_results
+        }
+        observed_by_action = {
+            int(entry["annotation_row_index"]): int(entry["history_node_idx"])
+            for entry in history_entries
+        }
+        expected_source = (
+            "ground_truth"
+            if data.config["demo"].get("history_policy")
+            == "completed_action_ground_truth_node_idx"
+            else "m3_prediction"
+        )
+        history_membership_and_node_source_valid = (
+            history_membership_and_node_source_valid
+            and observed_by_action == expected_by_action
+            and all(
+                entry["history_node_source"] == expected_source
+                for entry in history_entries
+            )
+            and int(result["history_node_added_for_future"])
+            == (
+                int(result["true_node_idx"])
+                if expected_source == "ground_truth"
+                else int(result["m3"]["pred_node_idx"])
+            )
+            and result["history_node_added_source"] == expected_source
+        )
+        if actual_history_order_valid is not None:
+            actual_history_order_valid = (
+                actual_history_order_valid
+                and [
+                    int(entry["annotation_row_index"])
+                    for entry in history_entries
+                ]
+                == [
+                    int(completed["annotation_row_index"])
+                    for completed in completed_results
+                ]
+            )
+
     for result in results:
         sample_name = result["sample_name"]
         result["existing_result_match"] = {
@@ -444,7 +558,9 @@ def validate_all(
             "m3_node": (
                 result["m3"]["pred_node_idx"]
                 == int(existing_m3[sample_name]["pred_node_idx"])
-            ),
+            )
+            if existing_m3 is not None
+            else None,
             "e2e_node": (
                 result["e2e"]["pred_node_idx"]
                 == int(existing_e2e[sample_name]["pred_node_idx"])
@@ -453,9 +569,13 @@ def validate_all(
                 result["m0"]["confidence"]
                 - float(existing_m0[sample_name]["node_confidence"])
             ),
-            "m3_confidence_abs_diff": abs(
-                result["m3"]["confidence"]
-                - float(existing_m3[sample_name]["node_confidence"])
+            "m3_confidence_abs_diff": (
+                abs(
+                    result["m3"]["confidence"]
+                    - float(existing_m3[sample_name]["node_confidence"])
+                )
+                if existing_m3 is not None
+                else None
             ),
             "e2e_confidence_abs_diff": abs(
                 result["e2e"]["confidence"]
@@ -464,10 +584,13 @@ def validate_all(
         }
 
     summary = {
-        "schema_version": "task-graph-realtime-demo-inference-validation-v2",
+        "schema_version": "task-graph-realtime-demo-inference-validation-v3",
+        "profile_id": data.config["demo"].get("profile_id"),
         "participant": data.config["demo"]["participant"],
         "run": data.config["demo"]["source_run"],
         "seed": data.config["demo"]["seed"],
+        "history_policy": data.config["demo"].get("history_policy"),
+        "history_order": data.config["demo"].get("history_order", "graph_valid"),
         "device": engine.device_name,
         "actions": len(results),
         "m0_correct": sum(int(row["m0"]["correct"]) for row in results),
@@ -479,8 +602,11 @@ def validate_all(
         "m0_existing_node_matches": sum(
             int(row["existing_result_match"]["m0_node"]) for row in results
         ),
-        "m3_existing_node_matches": sum(
-            int(row["existing_result_match"]["m3_node"]) for row in results
+        "m3_reference_comparison_applicable": compare_m3_to_existing,
+        "m3_existing_node_matches": (
+            sum(int(row["existing_result_match"]["m3_node"]) for row in results)
+            if compare_m3_to_existing
+            else None
         ),
         "e2e_existing_node_matches": sum(
             int(row["existing_result_match"]["e2e_node"]) for row in results
@@ -488,22 +614,71 @@ def validate_all(
         "max_m0_confidence_abs_diff": max(
             row["existing_result_match"]["m0_confidence_abs_diff"] for row in results
         ),
-        "max_m3_confidence_abs_diff": max(
-            row["existing_result_match"]["m3_confidence_abs_diff"] for row in results
+        "max_m3_confidence_abs_diff": (
+            max(
+                row["existing_result_match"]["m3_confidence_abs_diff"]
+                for row in results
+            )
+            if compare_m3_to_existing
+            else None
         ),
         "max_e2e_confidence_abs_diff": max(
             row["existing_result_match"]["e2e_confidence_abs_diff"] for row in results
         ),
         "mean_inference_ms": sum(row["inference_ms"] for row in results) / len(results),
-        "all_predictions_match_existing": all(
+        "all_applicable_predictions_match_existing": all(
             row["existing_result_match"]["m0_node"]
-            and row["existing_result_match"]["m3_node"]
             and row["existing_result_match"]["e2e_node"]
+            and (
+                row["existing_result_match"]["m3_node"]
+                if compare_m3_to_existing
+                else True
+            )
             for row in results
         ),
+        "all_predictions_match_existing": (
+            all(
+                row["existing_result_match"]["m0_node"]
+                and row["existing_result_match"]["m3_node"]
+                and row["existing_result_match"]["e2e_node"]
+                for row in results
+            )
+            if compare_m3_to_existing
+            else None
+        ),
+        "first_m3_error_action": next(
+            (
+                int(row["annotation_row_index"])
+                for row in results
+                if not row["m3"]["correct"]
+            ),
+            None,
+        ),
+        "history_protocol_checks": {
+            "history_length_matches_completed_action_count": (
+                history_length_sequence_valid
+            ),
+            "history_membership_and_node_source_valid": (
+                history_membership_and_node_source_valid
+            ),
+            "actual_history_order_valid": actual_history_order_valid,
+            "all_pass": (
+                history_length_sequence_valid
+                and history_membership_and_node_source_valid
+                and (
+                    actual_history_order_valid
+                    if actual_history_order_valid is not None
+                    else True
+                )
+            ),
+        },
     }
     write_jsonl(output_dir / "validation_predictions.jsonl", results)
     write_json(output_dir / "validation_summary.json", summary)
+    if not summary["history_protocol_checks"]["all_pass"]:
+        raise RuntimeError(
+            "History protocol audit failed; inspect validation_summary.json"
+        )
     return summary
 
 

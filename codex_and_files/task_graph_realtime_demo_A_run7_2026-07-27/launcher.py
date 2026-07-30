@@ -30,8 +30,8 @@ class DemoLauncher:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("Choose Task Graph Demo")
-        self.root.geometry("980x570")
-        self.root.minsize(900, 520)
+        self.root.geometry("1180x820")
+        self.root.minsize(1040, 720)
         self.root.configure(bg=COLORS["page"])
         self.profiles = read_json(DEMO_ROOT / "demo_profiles.json")["profiles"]
         self._build_ui()
@@ -57,7 +57,7 @@ class DemoLauncher:
             header,
             text=(
                 "Each demo uses supplied action boundaries and compares "
-                "M0, M3 and E2E-Node-Scratch."
+                "M0, M3/M3-PH and E2E-Node-Scratch. Choose the M3 history protocol."
             ),
             bg=COLORS["page"],
             fg=COLORS["muted"],
@@ -66,12 +66,13 @@ class DemoLauncher:
 
         cards = tk.Frame(self.root, bg=COLORS["page"])
         cards.pack(fill="both", expand=True, padx=28, pady=(0, 22))
-        for column in range(len(self.profiles)):
+        for column in range(2):
             cards.grid_columnconfigure(column, weight=1, uniform="profile")
-        cards.grid_rowconfigure(0, weight=1)
+        for row in range((len(self.profiles) + 1) // 2):
+            cards.grid_rowconfigure(row, weight=1, uniform="profile")
 
-        for column, profile in enumerate(self.profiles):
-            self._profile_card(cards, column, profile)
+        for index, profile in enumerate(self.profiles):
+            self._profile_card(cards, index // 2, index % 2, profile)
 
         footer = tk.Label(
             self.root,
@@ -85,7 +86,9 @@ class DemoLauncher:
         )
         footer.pack(pady=(0, 18))
 
-    def _profile_card(self, parent: tk.Widget, column: int, profile: dict) -> None:
+    def _profile_card(
+        self, parent: tk.Widget, row: int, column: int, profile: dict
+    ) -> None:
         panel = tk.Frame(
             parent,
             bg=COLORS["panel"],
@@ -93,26 +96,32 @@ class DemoLauncher:
             highlightthickness=1,
         )
         panel.grid(
-            row=0,
+            row=row,
             column=column,
             sticky="nsew",
             padx=(6 if column else 0, 0 if column else 6),
+            pady=(6 if row else 0, 0 if row else 6),
         )
-        tk.Frame(panel, bg=COLORS["blue"], height=4).pack(fill="x")
+        accent = (
+            COLORS["amber"]
+            if profile.get("history_protocol") == "predicted"
+            else COLORS["blue"]
+        )
+        tk.Frame(panel, bg=accent, height=4).pack(fill="x")
         tk.Label(
             panel,
             text=profile["title"],
             bg=COLORS["panel"],
             fg=COLORS["text"],
-            font=("Segoe UI Semibold", 23),
-        ).pack(anchor="w", padx=24, pady=(24, 3))
+            font=("Segoe UI Semibold", 18),
+        ).pack(anchor="w", padx=20, pady=(17, 2))
         tk.Label(
             panel,
             text=profile["subtitle"],
             bg=COLORS["panel"],
             fg=COLORS["muted"],
             font=("Segoe UI", 10),
-        ).pack(anchor="w", padx=24)
+        ).pack(anchor="w", padx=20)
 
         summary_path = DEMO_ROOT / profile["validation_summary"]
         summary = read_json(summary_path) if summary_path.is_file() else None
@@ -121,12 +130,14 @@ class DemoLauncher:
             metrics_color = COLORS["amber"]
         else:
             actions = int(summary["actions"])
+            m3_label = profile.get("m3_label", "M3")
             metrics_text = (
-                f"M0   {summary['m0_correct']:>2}/{actions}   "
+                f"{'M0':<6}{summary['m0_correct']:>2}/{actions}   "
                 f"{100 * summary['m0_accuracy']:5.1f}%\n\n"
-                f"M3   {summary['m3_correct']:>2}/{actions}   "
+                f"{m3_label:<6}"
+                f"{summary['m3_correct']:>2}/{actions}   "
                 f"{100 * summary['m3_accuracy']:5.1f}%\n\n"
-                f"E2E  {summary['e2e_correct']:>2}/{actions}   "
+                f"{'E2E':<6}{summary['e2e_correct']:>2}/{actions}   "
                 f"{100 * summary['e2e_accuracy']:5.1f}%"
             )
             metrics_color = COLORS["green"]
@@ -135,26 +146,26 @@ class DemoLauncher:
             text=metrics_text,
             bg=COLORS["panel_alt"],
             fg=metrics_color,
-            font=("Consolas", 14),
+            font=("Consolas", 11),
             justify="left",
             anchor="w",
-            padx=18,
-            pady=18,
-        ).pack(fill="x", padx=24, pady=(28, 22))
+            padx=14,
+            pady=11,
+        ).pack(fill="x", padx=20, pady=(14, 12))
 
         tk.Button(
             panel,
             text=f"Run {profile['title']}  ▶",
             command=lambda selected=profile: self._launch(selected),
-            bg=COLORS["blue"],
+            bg=accent,
             fg="#07111E",
             activebackground="#76B8FF",
             activeforeground="#07111E",
             relief="flat",
-            font=("Segoe UI Semibold", 12),
+            font=("Segoe UI Semibold", 10),
             padx=18,
-            pady=11,
-        ).pack(fill="x", padx=24, pady=(0, 24))
+            pady=8,
+        ).pack(fill="x", padx=20, pady=(0, 16))
 
     def _launch(self, profile: dict) -> None:
         config_path = (DEMO_ROOT / profile["config"]).resolve()

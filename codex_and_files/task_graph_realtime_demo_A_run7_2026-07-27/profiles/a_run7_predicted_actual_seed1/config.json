@@ -1,8 +1,8 @@
 {
-  "schema_version": "task-graph-realtime-demo-v2",
+  "schema_version": "task-graph-realtime-demo-v3",
   "demo": {
-    "profile_id": "a_run7_seed1",
-    "title": "Task Graph History Demo — A / run_7",
+    "profile_id": "a_run7_predicted_actual_seed1",
+    "title": "Task Graph Predicted-History Demo — A / run_7",
     "participant": "A",
     "source_run": "run_7",
     "run_sample_name": "run_sample_000005",
@@ -10,10 +10,10 @@
     "seed": 1,
     "train_scope": "all_runs",
     "playback_speed": 1.0,
-    "history_policy": "completed_action_ground_truth_node_idx",
-    "history_order": "graph_valid",
-    "history_mode_label": "ORACLE NODES • GRAPH-VALID ORDER",
-    "m3_display_name": "M3",
+    "history_policy": "completed_action_m3_predicted_node_idx",
+    "history_order": "actual",
+    "history_mode_label": "M3-PREDICTED NODES • ACTUAL TEMPORAL ORDER",
+    "m3_display_name": "M3-PH",
     "boundary_policy": "supplied_frame_annotations",
     "prediction_timing": "after_action_segment_end",
     "background_policy": "supplied_annotations_not_model_prediction"
@@ -37,10 +37,10 @@
     "e2e_node_scratch_checkpoint": "D:/Junxi_data/Objective3_thermal_crimp/codex_and_files/graph_history_rgb_cross_person_ADM_2026-07-22/outputs/A_as_test/cam_001484412812/seed_1/e2e_baselines/all_runs/e2e_node_scratch/last.pth",
     "display_video": "derived/display_960x540_h264.mp4",
     "display_video_report": "derived/display_video_report.json",
-    "outputs_dir": "outputs",
-    "derived_segments": "derived/demo_segments.jsonl",
-    "derived_manifest": "derived/demo_manifest.json",
-    "validation_report": "derived/data_validation_report.json"
+    "outputs_dir": "profiles/a_run7_predicted_actual_seed1/outputs",
+    "derived_segments": "profiles/a_run7_predicted_actual_seed1/derived/demo_segments.jsonl",
+    "derived_manifest": "profiles/a_run7_predicted_actual_seed1/derived/demo_manifest.json",
+    "validation_report": "profiles/a_run7_predicted_actual_seed1/derived/data_validation_report.json"
   },
   "preprocessing": {
     "source_image_mode": "RGB",

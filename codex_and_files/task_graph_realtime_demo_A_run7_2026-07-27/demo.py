@@ -51,6 +51,15 @@ class DemoApp:
         self.root.minsize(1380, 860)
         self.root.configure(bg=COLORS["page"])
 
+        demo_config = data.config["demo"]
+        self.history_policy = demo_config["history_policy"]
+        self.history_order = demo_config["history_order"]
+        self.history_mode_label = demo_config["history_mode_label"]
+        self.m3_display_name = demo_config["m3_display_name"]
+        self.predicted_history_mode = (
+            self.history_policy == "completed_action_m3_predicted_node_idx"
+        )
+
         self.relative_frame_times = [
             row["timestamp_seconds"] - data.first_timestamp_seconds
             for row in data.frames
@@ -130,9 +139,9 @@ class DemoApp:
         header.pack(fill="x", padx=22, pady=(16, 10))
         tk.Label(
             header,
-            text="TASK GRAPH HISTORY • REAL-TIME REPLAY",
+            text=f"TASK GRAPH HISTORY • REAL-TIME REPLAY • {self.history_mode_label}",
             bg=COLORS["page"],
-            fg=COLORS["blue"],
+            fg=COLORS["amber"] if self.predicted_history_mode else COLORS["blue"],
             font=("Segoe UI Semibold", 10),
         ).pack(anchor="w")
         tk.Label(
@@ -150,7 +159,10 @@ class DemoApp:
         ).pack(anchor="w", pady=(2, 0))
         self.system_status = tk.Label(
             header,
-            text="Buffering H.264 display video and loading M0, M3 and E2E…",
+            text=(
+                "Buffering H.264 display video and loading "
+                f"M0, {self.m3_display_name} and E2E…"
+            ),
             bg=COLORS["page"],
             fg=COLORS["amber"],
             font=("Segoe UI", 10),
@@ -234,7 +246,14 @@ class DemoApp:
         self.m3_card = self._prediction_card(
             results_panel,
             row=2,
-            title="M3 PREDICTION • GRAPH-VALID HISTORY",
+            title=(
+                f"{self.m3_display_name} PREDICTION • "
+                + (
+                    "SELF-PREDICTED NODES / ACTUAL ORDER"
+                    if self.predicted_history_mode
+                    else "ORACLE NODES / GRAPH-VALID ORDER"
+                )
+            ),
             accent=COLORS["green"],
         )
         self.e2e_card = self._prediction_card(
@@ -268,6 +287,7 @@ class DemoApp:
             results_panel,
             resolve(self.data.config["paths"]["task_graph"]),
             colors=COLORS,
+            m3_display_name=self.m3_display_name,
         )
         self.task_graph_view.grid(
             row=5,
@@ -328,7 +348,14 @@ class DemoApp:
         history_panel.pack(fill="both", padx=22, pady=(0, 8))
         tk.Label(
             history_panel,
-            text="COMPLETED ACTION HISTORY",
+            text=(
+                "COMPLETED ACTION HISTORY • "
+                + (
+                    "M3-PH feeds its own predicted node into the next action"
+                    if self.predicted_history_mode
+                    else "M3 receives completed ground-truth nodes"
+                )
+            ),
             bg=COLORS["panel"],
             fg=COLORS["muted"],
             font=("Segoe UI Semibold", 9),
@@ -344,7 +371,7 @@ class DemoApp:
             "event": "#",
             "truth": "Completed ground truth",
             "m0": "M0 prediction",
-            "m3": "M3 prediction",
+            "m3": f"{self.m3_display_name} prediction",
             "e2e": "E2E prediction",
             "latency": "Inference",
         }
@@ -435,7 +462,7 @@ class DemoApp:
             self.system_status.configure(
                 text=(
                     f"Ready • {self.engine.device_name} • buffered H.264 display "
-                    "• supplied boundaries • 1× playback"
+                    f"• {self.history_mode_label} • supplied boundaries • 1× playback"
                 ),
                 fg=COLORS["green"],
             )
@@ -540,7 +567,15 @@ class DemoApp:
                 self.playing = False
                 self.play_button.configure(text="▶  Replay")
                 self.system_status.configure(
-                    text="Replay complete • all completed actions added once to M3 history",
+                    text=(
+                        "Replay complete • all completed actions added once to "
+                        f"{self.m3_display_name} history as "
+                        + (
+                            "M3-PH predictions"
+                            if self.predicted_history_mode
+                            else "ground-truth nodes"
+                        )
+                    ),
                     fg=COLORS["green"],
                 )
         self.root.after(12, self._tick)
@@ -724,7 +759,10 @@ class DemoApp:
                 f"{result['true_node_id']}\n"
                 f"Tier-3: {result['true_label']}{truth_occurrence}\n"
                 f"Stage {result['stage_id']} • "
-                f"History before current: {result['history_length_before_current']} completed actions"
+                f"History before current: {result['history_length_before_current']} completed actions\n"
+                f"{self.m3_display_name} history: {self.history_mode_label} • "
+                f"adds N{result['history_node_added_for_future']} "
+                f"({result['history_node_added_source']}) for future actions"
             )
         )
         self.task_graph_view.show_result(result)
@@ -769,7 +807,7 @@ class DemoApp:
                 f"Action {result['annotation_row_index']} complete • "
                 f"M0 predicted N{result['m0']['pred_node_idx']} "
                 f"({'correct' if result['m0']['correct'] else 'incorrect'}) • "
-                f"M3 predicted N{result['m3']['pred_node_idx']} "
+                f"{self.m3_display_name} predicted N{result['m3']['pred_node_idx']} "
                 f"({'correct' if result['m3']['correct'] else 'incorrect'}) • "
                 f"E2E predicted N{result['e2e']['pred_node_idx']} "
                 f"({'correct' if result['e2e']['correct'] else 'incorrect'}) • "
