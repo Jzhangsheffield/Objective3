@@ -134,13 +134,15 @@ GPU版PyTorch必须与CUDA/驱动匹配，不能只依赖通用`pip install`命�
 - 完整all-runs；
 - 严格四折三seed；
 - Direct Head Fusion；
-- Dynamic Epoch Graph-Valid Shuffle。
+- Dynamic Epoch Graph-Valid Shuffle；
+- A/D Atomic-tail Direct Fusion缩减实验。
 
 因为它保留历史演化，早期章节中的默认三折或辅助all-runs不能覆盖后期严格定义。
 
-### `EXPERIMENT_RESULTS_ANALYSIS_2026-07-24.md`
+### `EXPERIMENT_RESULTS_ANALYSIS_2026-07-30.md`
 
-正式结果解释报告。当前版本已扩展Direct结果。统计结论应追溯到`outputs`中的CSV/JSON和predictions。
+正式结果解释报告。当前版本已扩展Direct、Dynamic和A/D Atomic-tail结果，并包含统一逐人/逐模型
+失效分析。统计结论应追溯到`outputs`中的CSV/JSON和predictions。
 
 ### `COMPLETE_EXPERIMENT_CONFIGURATION.md`
 
