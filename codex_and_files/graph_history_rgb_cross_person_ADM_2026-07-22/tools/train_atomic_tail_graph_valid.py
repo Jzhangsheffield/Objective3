@@ -16,7 +16,7 @@ from graph_history.atomic_tail_data import (
     normalize_refresh_interval,
     refresh_policy_label,
 )
-from graph_history.data import collate_history_batch
+from graph_history.data import FeatureHistoryDataset, collate_history_batch
 from graph_history.dynamic_engine import train_epoch_shuffled_feature_model
 from graph_history.dynamic_models import build_joint_head_delta_model
 from graph_history.engine import evaluate_feature_model
@@ -92,6 +92,16 @@ def main() -> None:
         "--shuffle-refresh-interval",
         default="1",
         help="Positive epoch count (for example 1 or 10), or 'once'.",
+    )
+    parser.add_argument(
+        "--evaluation-history-order",
+        choices=["atomic_tail", "actual"],
+        default="atomic_tail",
+        help=(
+            "History order used only for evaluation.  The default preserves the "
+            "original experiment; 'actual' evaluates the trained model on the "
+            "chronological history without reordering."
+        ),
     )
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=64)
@@ -228,7 +238,11 @@ def main() -> None:
         "visual_backbone_frozen_via_feature_cache": True,
         "feature_cache_metadata": feature_metadata,
         "training_history_order": "atomic_tail_graph_valid",
-        "evaluation_history_order": "atomic_tail_graph_valid_static_seeded",
+        "evaluation_history_order": (
+            "actual_chronological"
+            if args.evaluation_history_order == "actual"
+            else "atomic_tail_graph_valid_static_seeded"
+        ),
         "shuffle_refresh_policy": refresh_policy,
         "shuffle_refresh_interval_epochs": refresh_interval,
         "shuffle_seed_formula": (
@@ -280,20 +294,36 @@ def main() -> None:
     write_json(model_dir / "learned_parameters.json", parameter_summary)
     print(f"Saved final epoch checkpoint: {checkpoint_path}")
 
-    test_result_root = ensure_dir(model_dir / "test_results")
+    test_result_root = ensure_dir(
+        model_dir
+        / (
+            "test_results_actual_order"
+            if args.evaluation_history_order == "actual"
+            else "test_results"
+        )
+    )
     for split_name in ("test_normal", "test_fault", "test_all"):
         selection_manifest = (
             Path(args.protocol_root)
             / args.train_scope
             / f"{split_name}.jsonl"
         )
-        test_dataset = AtomicTailGraphValidHistoryDataset(
-            feature_cache_path=args.test_cache,
-            selection_manifest=selection_manifest,
-            graph=graph,
-            shuffle_seed=args.seed,
-            refresh_interval="once",
-        )
+        if args.evaluation_history_order == "actual":
+            test_dataset = FeatureHistoryDataset(
+                feature_cache_path=args.test_cache,
+                selection_manifest=selection_manifest,
+                history_order="actual",
+                graph=graph,
+                shuffle_seed=args.seed,
+            )
+        else:
+            test_dataset = AtomicTailGraphValidHistoryDataset(
+                feature_cache_path=args.test_cache,
+                selection_manifest=selection_manifest,
+                graph=graph,
+                shuffle_seed=args.seed,
+                refresh_interval="once",
+            )
         test_loader = build_loader(
             test_dataset,
             args.batch_size,
@@ -328,8 +358,11 @@ def main() -> None:
             "tested_splits": ["test_normal", "test_fault", "test_all"],
             "training_history_order": "atomic_tail_graph_valid",
             "evaluation_history_order": (
-                "atomic_tail_graph_valid_static_seeded"
+                "actual_chronological"
+                if args.evaluation_history_order == "actual"
+                else "atomic_tail_graph_valid_static_seeded"
             ),
+            "test_result_root": str(test_result_root),
             "uses_current_target_for_reordering": False,
             "uses_m0_checkpoint": uses_m0_checkpoint,
             "uses_logit_delta": uses_logit_delta,

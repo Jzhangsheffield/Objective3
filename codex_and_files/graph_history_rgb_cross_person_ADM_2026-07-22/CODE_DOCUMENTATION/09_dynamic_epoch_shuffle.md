@@ -2,7 +2,7 @@
 
 文档版本：2026-07-30
 状态：实现、smoke test及正式A/D/J/M × seeds 1/2/42结果均已完成；结果分析见
-`EXPERIMENT_RESULTS_ANALYSIS_2026-07-30.md`
+`EXPERIMENT_RESULTS_ANALYSIS_2026-08-04.md`
 
 ## 1. 实验目的
 

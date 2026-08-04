@@ -1263,5 +1263,14 @@ bash slurm/submit_atomic_tail_ADJM.sh
 history_models\atomic_tail_graph_valid\<scope>\<refresh_policy>\<model>\
 ```
 
+对已经完成的Atomic-tail Direct checkpoint使用真实时间顺序重新测试（不重新训练、不覆盖原测试）：
+
+```bat
+call bat\run_at_actual_eval_ADJM.bat
+```
+
+单个checkpoint的新结果写入原模型目录下的`test_results_actual_order`；四折配对汇总写入
+`outputs\at_actual`。原`test_results`继续保留固定seeded atomic-tail测试顺序结果。
+
 完整配置、回退规则、单模型命令和汇总说明见
 `COMPLETE_EXPERIMENT_CONFIGURATION.md`第18节。

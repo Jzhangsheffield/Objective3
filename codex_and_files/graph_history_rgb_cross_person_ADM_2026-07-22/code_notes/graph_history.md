@@ -396,4 +396,17 @@ def forward(self, x: torch.Tensor) -> torch.Tensor:
 使用构造的模块进行前向传播
 
 
+## data.py
+
+### safe_torch_load(path: str | Path) -> Any
+```python
+def safe_torch_load(path: str | Path) -> Any:
+    try:
+        return torch.load(path, map_location="cpu", weights_only=True)
+    except TypeError:
+        return torch.load(path, map_location="cpu")
+```
+用于加载 pytorch格式数据，其中weights_only表示
+
+
 

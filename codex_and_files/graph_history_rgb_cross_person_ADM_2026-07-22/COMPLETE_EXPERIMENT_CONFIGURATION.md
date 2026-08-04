@@ -1150,3 +1150,43 @@ python tools\preview_atomic_tail_reorders.py ^
   --seed 42 ^
   --last-current-node 20
 ```
+
+### 18.11 真实顺序测试（Actual-Eval）
+
+原Atomic-tail结果在训练期使用Atomic-tail重排，测试期也使用固定seeded Atomic-tail重排。为与
+M2 Direct的“真实顺序训练、真实顺序测试”进行更干净的比较，新增Actual-Eval：训练checkpoint不变，
+只把测试history改为按`annotation_row_index`排列的真实时间顺序。
+
+直接重测现有A/D/J/M、seed 1/2/42、两个scope和三种刷新策略：
+
+```bat
+call bat\run_at_actual_eval_ADJM.bat
+```
+
+可在调用前覆盖网格：
+
+```bat
+set "ACTUAL_EVAL_PARTICIPANTS=A D M J"
+set "ACTUAL_EVAL_SEEDS=1 2 42"
+set "ACTUAL_EVAL_SCOPES=normal_only all_runs"
+set "ACTUAL_EVAL_POLICIES=1 10 once"
+call bat\run_at_actual_eval_ADJM.bat
+```
+
+输出完全独立：
+
+```text
+outputs\at_ad\<P>_s<seed>\<scope>\<policy>\m3_atomic_tail_direct_fusion\
+├── test_results\                 # 原固定Atomic-tail顺序测试，保持不变
+└── test_results_actual_order\    # 新真实顺序测试
+
+outputs\at_actual\
+├── atomic_actual_order_metrics.csv
+├── atomic_actual_order_seed_aggregate.csv
+├── atomic_actual_order_participant_aggregate.csv
+├── atomic_actual_order_aggregate.csv
+└── completed.json
+```
+
+未来训练也可向`tools\train_atomic_tail_graph_valid.py`传入
+`--evaluation-history-order actual`；默认值仍为`atomic_tail`，因此旧命令和旧实验可完全复现。
