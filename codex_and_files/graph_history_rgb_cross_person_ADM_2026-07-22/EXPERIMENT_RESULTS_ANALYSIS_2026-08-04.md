@@ -1,18 +1,18 @@
 # RGB Task-Graph History严格四折三Seed及完整Atomic-tail Direct实验结果分析
 
 首次报告日期：2026-07-24
-完整更新日期：2026-08-04
+完整更新日期：2026-08-05
 相机：`001484412812`
 任务：35-node分类，并将35-node概率聚合为31类Tier3结果
 主要实验设计：A/D/J/M严格四折LOSO，`seed_1`、`seed_2`、`seed_42`
-Atomic-tail实验：A/D/J/M、normal-only与all-runs、Direct Fusion、三seed、三种刷新策略
+Atomic-tail实验：A/D/J/M、normal-only与all-runs、Direct Fusion、三seed、三种刷新策略；另补充真实历史顺序测试
 
 ## 1. 执行摘要
 
 本次更新在原有A/D/J/M四折、三seed、normal-only与all-runs严格结果，以及完整Direct Head
-Fusion和Dynamic Epoch Graph-Valid Shuffle实验之外，补齐了四折、两个train scope的Atomic-tail
-Direct Fusion实验。Atomic-tail不读取当前target，将真实最新历史node所属的未完成atomic前缀固定在
-重排末尾，并比较训练期`refresh_once`、`refresh_every_10`和`refresh_every_1`。
+Fusion、Dynamic Epoch Graph-Valid Shuffle和Atomic-tail Direct实验之外，又对全部72个Atomic-tail
+checkpoint统一使用真实历史时间顺序重新测试。新评估不重新训练、不读取当前target，仅改变测试阶段的
+history排列，因此可以将Atomic-tail与同样使用真实测试顺序的M2 Direct进行干净比较。
 
 当前最重要的结果如下：
 
@@ -21,13 +21,13 @@ Direct Fusion实验。Atomic-tail不读取当前target，将真实最新历史no
    `4 participants × 3 seeds × 2 train scopes × 3 models × 3 splits = 216`条结果。
    四折主网格合计`1152`条。Atomic-tail另有
    `4 participants × 3 seeds × 2 train scopes × 3 refresh policies × 1 model × 3 splits = 216`条，
-   总计`1368`条可用模型-split结果。Atomic-tail的72个训练任务均有checkpoint、completed、
-   三个split的metrics和prediction，并构成完整四折结果。
+   原训练协议总计`1368`条模型-split结果。新增真实顺序测试另有216条重评估记录，因此当前共有
+   `1584`条“模型 × 测试协议 × split”评估记录；Atomic-tail仍只有72个训练任务，没有重复训练。
 
-2. **Atomic once取得最高四折均值，但M2 Direct仍是更稳健的主方案。**
-   all-runs的`test_all`上，Atomic `refresh_once`达到`90.99 ± 3.03%` Node Accuracy和
-   `91.11 ± 2.98%` Tier3 Accuracy，为当前最高四折均值；但相对M2 Direct仅提高
-   `0.42/0.47`个百分点，Node为6/12个配对提高，Tier3为5提高、1持平、6下降，配对95%区间跨0。
+2. **统一为真实测试顺序后，Atomic once仍取得最高四折均值，但优势不稳定。**
+   all-runs的`test_all`上，Atomic `refresh_once`达到`91.03 ± 3.13%` Node Accuracy和
+   `91.18 ± 3.06%` Tier3 Accuracy；相对M2 Direct提高`0.46/0.54`个百分点。Node和Tier3都只有
+   6/12个participant-seed配对提高、6/12下降，Node配对95%区间为`[-1.45, +2.37]`，仍跨0。
    在all-runs的`test_all`上，M2 Direct的Node Accuracy为`90.57 ± 2.66%`，
    Tier3 Accuracy为`90.64 ± 2.64%`；相对M0分别提高`20.76`和`7.32`个百分点，
    两项均在12/12个participant-seed配对中提高。
@@ -82,16 +82,16 @@ Direct Fusion实验。Atomic-tail不读取当前target，将真实最新历史no
     不同Tier3混淆，而不再主要是同一动作在重复流程node间的混淆。
 
 14. **Atomic-tail的最佳刷新频率随训练范围变化，但每epoch刷新始终不是最佳。**
-    all-runs下，`refresh_once`的Node/Tier3 Accuracy为`90.99/91.11%`，高于
-    `refresh_every_10`的`89.78/90.27%`和`refresh_every_1`的`89.12/89.34%`；
-    相对每epoch刷新提高`1.87/1.76`个百分点，并在9/12个配对中更高。normal-only下则是
-    `refresh_every_10`最佳（`89.41/89.84%`），说明最优刷新频率不是与train scope无关的常数。
+    真实顺序测试下，all-runs的`refresh_once`为`91.03/91.18%`，高于
+    `refresh_every_10`的`89.73/90.29%`和`refresh_every_1`的`89.18/89.45%`；
+    相对每epoch刷新提高`1.85/1.74`个百分点。normal-only下仍是`refresh_every_10`最佳
+    （`89.42/89.85%`），说明最优刷新频率不是与train scope无关的常数。
 
-15. **Atomic-tail的四折均值正向，但尚不能替代M2 Direct主结论。**
-    all-runs `refresh_once`相对M2 Direct提高`0.42/0.47`个百分点，但只有6/12个配对为正；
-    normal-only最佳的`refresh_every_10`提高`0.76/0.66`个百分点，也只有6个Node配对为正、另有
-    2个持平。并且M2 Direct使用实际测试顺序，Atomic-tail使用固定atomic-tail测试顺序，比较同时
-    包含训练与测试history构造差异。当前应将Atomic once报告为最高均值的结构消融，而不是稳定取代主模型。
+15. **真实顺序测试消除了协议混杂，但Atomic-tail仍未稳定超过M2 Direct。**
+    all-runs `refresh_once`相对M2 Direct提高`0.46/0.54`个百分点，Node/Tier3均为6胜6负；
+    normal-only最佳的`refresh_every_10`提高`0.77/0.67`个百分点，两项均为6胜、1平、5负。
+    因此现在可以确认小幅均值优势并非来自Atomic-tail测试重排，但仍应报告为最高均值的结构消融，
+    不能表述为跨participant和seed稳定取代M2 Direct。
 
 16. **跨模型失效机制发生了阶段性迁移。**
     M0的Node错误中`45.8%`仍属于同一Tier3的重复流程node混淆；M2 Direct中该比例已降至
@@ -125,6 +125,7 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - Dynamic模型：Dynamic Frozen-M0 Delta、Dynamic Joint-Head Delta、Dynamic Direct Fusion；
 - Atomic-tail模型：A/D/J/M的Atomic Direct Fusion，`refresh_every_1`、`refresh_every_10`、
   `refresh_once`，同时覆盖`normal_only`与`all_runs`；
+- Atomic-tail真实顺序重评估：上述72个checkpoint均额外使用`actual_chronological`测试历史；
 - split：`test_normal`、`test_fault`、`test_all`；
 - overall、per-stage、prediction、严格training-scope delta、Direct/Dynamic严格配对，以及
   Atomic-tail四折两个scope的刷新策略、逐样本与participant-seed严格配对结果。
@@ -147,10 +148,14 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 | `dynamic_epoch_shuffle_paired_deltas.csv` | 648 | Dynamic模型与对应静态/动态基线的严格配对 |
 | `dynamic_epoch_shuffle_aggregate.csv` | 54 | 2scope × 3 Dynamic模型 × 3split及其预注册比较 |
 | `outputs/at_ad/**/completed.json` | 72 | 4人 × 3seed × 2scope × 3刷新策略 × 1 Direct模型 |
-| `outputs/at_ad/**/*_metrics.json` | 216 | 72个训练任务 × 3测试split |
-| `outputs/at_ad/**/*_predictions.csv` | 216 | 每个Atomic-tail任务的逐样本三split预测 |
+| `outputs/at_ad/**/test_results/*_metrics.json` | 216 | 原固定Atomic-tail测试：72个训练任务 × 3split |
+| `outputs/at_ad/**/test_results/*_predictions.csv` | 216 | 原固定Atomic-tail测试的逐样本预测 |
 | 四折主结果网格 | **1152** | 原720条 + Direct 216条 + Dynamic 216条，共16个模型设置 |
-| 全部可用模型-split结果 | **1368** | 四折主网格1152条 + Atomic-tail Direct完整网格216条 |
+| 原训练协议的模型-split结果 | **1368** | 四折主网格1152条 + Atomic-tail Direct完整网格216条 |
+| `outputs/at_ad/**/test_results_actual_order/*_metrics.json` | **216** | 72个Atomic checkpoint × 3split的真实顺序重评估 |
+| `outputs/at_ad/**/test_results_actual_order/*_predictions.csv` | **216** | 真实顺序重评估的逐样本预测 |
+| `outputs/at_actual/atomic_actual_order_metrics.csv` | **216** | 真实顺序Atomic与对应M2 Direct的严格配对明细 |
+| 包含两个Atomic测试协议的全部评估记录 | **1584** | 原1368条 + 真实顺序重评估216条；训练任务数不变 |
 
 本次检查确认：
 
@@ -168,6 +173,8 @@ graph_history_rgb_cross_person_ADM_2026-07-22\outputs
 - Atomic-tail 72/72个训练任务、72个checkpoint、216份metrics和216份prediction均存在；
 - Atomic-tail的72份`test_all_metrics.json`与逐样本prediction重算结果完全一致，最大浮点差为
   `0`；72份shuffle audit的`atomic_tail_violations`总数为0，配置边界核验无异常。
+- 72/72个Atomic checkpoint均完成真实顺序重评估，产生216份metrics和216份prediction；
+  `outputs/at_actual/completed.json`确认participant、seed、scope、refresh policy和split网格均完整。
 
 ### 2.3 严格LOSO设置
 
@@ -948,8 +955,8 @@ Tier3 Accuracy：+1.20
 
 > 在严格四折三seed LOSO中，冻结Tier3预训练视觉表征并联合训练history fusion与新的node分类头，
 > 比通过delta修正旧分类头更有效。实际顺序加位置编码的M2 Direct在标准Direct网格中取得最高
-> Accuracy，显著减少相同动作在不同流程位置之间的混淆；Atomic once取得更高四折均值，但其
-> participant-seed优势不稳定，不能据此否定M2 Direct的稳健主配置地位。
+> Accuracy，显著减少相同动作在不同流程位置之间的混淆；统一使用真实测试顺序后，Atomic once
+> 取得`91.03/91.18%`的更高四折均值，但participant-seed仍为6胜6负，不能宣称稳定优于M2 Direct。
 
 ## 18. 结果来源
 
@@ -1292,7 +1299,7 @@ participant-first口径：先对每位participant的三个seed求均值，再对
 而在联合训练方案内，直接进行feature fusion又明显优于保留“base logits + delta”的结构。
 在Dynamic实验及此前标准网格内，最佳仍是all-runs M2 Direct的`90.57/90.64%` Node/Tier3
 Accuracy，Dynamic Direct没有刷新最佳结果；相对M2 Direct分别低`0.78/0.62`个百分点。后续补齐的
-Atomic once均值略高，详见第21节。
+Atomic once均值略高，原测试协议见第21节，真实顺序统一比较见第23节。
 
 ### 20.3 与固定重排及初始化方案的严格配对比较
 
@@ -1511,7 +1518,7 @@ Dynamic Direct准确率和校准都最好，但仍有近一半错误的置信度
 5. **完整Atomic-tail结果验证了局部顺序假设的一部分：**保护最新atomic前缀后，每epoch强增强在
    两个scope都不是最佳；all-runs偏好固定一次，normal-only偏好每10 epochs刷新。
 
-## 21. Atomic-tail Direct Fusion完整实验结果（2026-08-04）
+## 21. Atomic-tail Direct Fusion完整实验结果：原固定Atomic-tail测试协议（2026-08-04）
 
 ### 21.1 实际运行范围与实验边界
 
@@ -1536,7 +1543,7 @@ delta，RGB backbone仍通过Tier3 feature cache冻结。Atomic-tail构造不读
 | `refresh_every_1` | 50 | 每个epoch重新生成一次 |
 
 测试阶段三者都使用固定seeded atomic-tail顺序，因此三种Atomic策略之间的比较是干净的训练刷新频率
-比较。与M2/M3/Dynamic Direct比较时，测试history构造也不同，解释必须更谨慎。
+比较。本节保留首次评估结果以保证实验记录可追溯；统一使用真实测试顺序后的干净比较见第23节。
 
 ### 21.2 完整性与重排审计
 
@@ -1711,8 +1718,8 @@ every 10共有74个三seed一致错误，且错误数589，高于all-runs once�
    `+0.42/+0.47`个百分点；normal-only every 10相对M2 Direct为`+0.76/+0.66`。
 4. **均值领先不等于稳定领先。**all-runs Node配对仅6胜6负，且M折平均退化0.75个百分点；
    normal-only也存在A折退化。两个Node配对95%区间均跨0。
-5. **论文中宜同时报告两个结论。**Atomic once可作为“最高四折均值”的完整实验；M2 Direct仍是
-   更简单、使用实际历史顺序且跨配对证据更稳健的主模型。Atomic与M2的比较还混合了测试history构造差异。
+5. **本节结论已由真实顺序重评估复核。**测试history统一后的Atomic once仍保持最高均值，说明本节
+   的均值优势不是测试重排造成；但跨配对仍不稳定，完整结论见第23节。
 
 ## 22. 全模型统一失效分析
 
@@ -1722,7 +1729,7 @@ every 10共有74个三seed一致错误，且错误数589，高于all-runs once�
 
 - 四折模型：M0–M6、M1–M3 Direct、三个Dynamic模型、E2E Node Scratch和
   E2E Node From Tier3，共15个35-node模型、180份prediction；
-- Atomic-tail：A/D/J/M、三seed、三刷新策略，共36份`test_all` prediction；
+- Atomic-tail：A/D/J/M、三seed、三刷新策略，共36份真实顺序`test_all` prediction；
 - 合计216份prediction、`102,330`个样本-seed预测行；
 - E2E Tier3 Scratch没有35-node输出，因此不进入node失效表；
 - 所有模型均先在participant内平均seed，再对A/D/J/M等权；
@@ -1749,7 +1756,7 @@ every 10共有74个三seed一致错误，且错误数589，高于all-runs once�
 | Dynamic Direct | 89.79 | 565 | 2.3% | 13 |
 | M3 Direct | 90.05 | 552 | 2.2% | 12 |
 | M2 Direct | **90.57** | **524** | **0.8%** | **4** |
-| Atomic Direct / once | **90.99** | **499** | 1.0% | 5 |
+| Atomic Direct / once / actual-order | **91.03** | **496** | 1.6% | 7 |
 
 M0、E2E和M1主要仍在解决“同一动作属于哪个流程位置”；加入位置编码和graph history后，同Tier3
 错误快速下降。M2 Direct和Atomic once之后，几乎所有剩余错误已经是跨Tier3视觉语义错误。因此继续只强化流程
@@ -1776,7 +1783,7 @@ M0、E2E和M1主要仍在解决“同一动作属于哪个流程位置”；加�
 | Dynamic Direct | 1→4（62.2%） | 34→24（70.9%） | 4→1（74.2%） |
 | M3 Direct | 1→35（64.4%） | 34→24（73.0%） | 7→29（75.3%） |
 | M2 Direct | 1→35（62.5%） | 34→24（64.6%） | 4→1（75.8%） |
-| Atomic Direct / once | 34→24（60.0%） | 1→4（65.2%） | 8→28（75.8%） |
+| Atomic Direct / once / actual-order | 34→24（61.3%） | 1→4（65.2%） | 8→28（77.3%） |
 
 主要node含义：
 
@@ -1805,11 +1812,11 @@ table上的物体混淆；Direct模型进一步把难点压缩到低support的�
 | Dynamic Direct | 20→19 | 24 | grip sample→put sample |
 | Dynamic Direct | 24→12 | 23 | put sample→take plier |
 | Dynamic Direct | 24→25 | 22 | put sample→put plier |
-| Atomic once（四折） | 24→12 | 30 | A主导的table区域物体混淆 |
-| Atomic once（四折） | 19→20 | 21 | put sample→grip sample |
-| Atomic once（四折） | 34→24 | 20 | J主导的lock→sample物体混淆 |
-| Atomic once（四折） | 24→25 | 16 | sample→plier物体混淆 |
-| Atomic once（四折） | 18→23 | 13 | reverse sample→inspect sample |
+| Atomic once actual-order（四折） | 24→12 | 30 | A主导的table区域物体混淆 |
+| Atomic once actual-order（四折） | 19→20 | 21 | put sample→grip sample |
+| Atomic once actual-order（四折） | 34→24 | 19 | J主导的lock→sample物体混淆 |
+| Atomic once actual-order（四折） | 24→25 | 16 | sample→plier物体混淆 |
+| Atomic once actual-order（四折） | 18→23 | 13 | reverse sample→inspect sample |
 
 ### 22.5 Participant A
 
@@ -1820,7 +1827,7 @@ table上的物体混淆；Direct模型进一步把难点压缩到低support的�
 | M2 Direct | 89.56 | 24→12（40.3%）；30→6（55.6%）；1→4（66.7%） |
 | M3 Direct | 89.25 | 24→12（40.3%）；30→6（61.1%）；1→4（66.7%） |
 | Dynamic Direct | 87.63 | 24→12（36.1%）；30→6（50.0%）；1→4（66.7%） |
-| Atomic once | **90.87** | 24→12（47.2%）；1→4（66.7%）；8→6（72.2%） |
+| Atomic once / actual-order | **90.72** | 24→12（47.2%）；1→4（66.7%）；8→6（77.8%） |
 
 A是最明显的node 24困难折：该node有24个唯一测试样本，所有history/direct模型都主要把
 `put sample on table`错成node 12 `take plier from table`。这不是小样本偶然；它反映A在table区域
@@ -1836,7 +1843,7 @@ A的次要错误是设备关闭/开启及unlock/turn-on边界，说明setup/shut
 | M2 Direct | 88.53 | 18→23（50.0%）；6→30（55.6%）；35→32（60.0%） |
 | M3 Direct | 86.65 | 35→32（46.7%）；2→34（50.0%）；20→19（58.3%） |
 | Dynamic Direct | 87.37 | 18→23（41.7%）；6→30（55.6%）；35→32（60.0%） |
-| Atomic once | **88.82** | 18→23（48.6%）；2→34（55.6%）；6→30（55.6%） |
+| Atomic once / actual-order | **89.03** | 18→23（48.6%）；6→30（55.6%）；35→32（60.0%） |
 
 D的系统性弱点是node 18 `reverse sample`被预测为node 23 `inspect sample`，该node有24个唯一样本，
 比设备开关类低support错误更可信。两者都围绕sample、手部移动幅度小且可能处于相邻流程区间；
@@ -1852,9 +1859,9 @@ lock/turn-off状态方向混淆。
 | M2 Direct | 94.47 | 34→24（16.7%）；1→35（60.0%）；31→9（70.8%） |
 | M3 Direct | **94.59** | 34→24（29.2%）；1→35（66.7%）；4→1（73.3%） |
 | Dynamic Direct | **94.59** | 34→24（20.8%）；1→4（60.0%）；31→35（66.7%） |
-| Atomic once | **95.32** | 34→24（16.7%）；1→4（53.3%）；31→27（62.5%） |
+| Atomic once / actual-order | **95.56** | 34→24（16.7%）；1→4（53.3%）；31→27（62.5%） |
 
-J总体最容易，Atomic once相对M2 Direct平均提高0.84个百分点；但node 34 `take lock from table`
+J总体最容易，Atomic once actual-order相对M2 Direct平均提高1.08个百分点；但node 34 `take lock from table`
 始终非常困难，主要错成node 24 `put sample on table`。
 该node在J只有8个唯一样本，Recall因此很容易被一两个样本显著改变；不能据此说J整体很差。
 J的M0错误几乎完全由重复流程node驱动，history一加入就从74.89%跃升至92%以上，是task graph
@@ -1869,11 +1876,11 @@ J的M0错误几乎完全由重复流程node驱动，history一加入就从74.89%
 | M2 Direct | **89.71** | 1→35（40.0%）；4→1（46.7%）；7→29（60.0%） |
 | M3 Direct | **89.71** | 4→1（46.7%）；1→35（46.7%）；7→29（53.3%） |
 | Dynamic Direct | 89.56 | 1→4（33.3%）；4→1（46.7%）；7→29（60.0%） |
-| Atomic once | 88.96 | 1→35（53.3%）；4→1（53.3%）；7→29（60.0%） |
+| Atomic once / actual-order | 88.81 | 1→35（53.3%）；4→1（53.3%）；7→29（60.0%） |
 
 M在history解决重复node后，剩余困难集中于setup/shutdown设备状态：unlock、turn on crimper、
 turn on/off water pump。这些node各只有约5个唯一样本，低support和短暂状态切换共同造成较大seed
-波动。M的Stage 2主体动作已较稳定，Atomic once相对M2 Direct反而低0.75个百分点，新增历史排列
+波动。M的Stage 2主体动作已较稳定，Atomic once actual-order相对M2 Direct反而低0.89个百分点，新增历史排列
 没有给M带来平均收益。
 
 ### 22.9 错误node的共同特性
@@ -1894,18 +1901,160 @@ turn on/off water pump。这些node各只有约5个唯一样本，低support和�
    A的核心问题是node 24，D是node 18，J是node 34，M是setup/shutdown设备状态；统一模型无法用
    单一错误模式概括所有人。
 8. **高置信错误。**
-   M2 Direct、M3 Direct、Dynamic Direct和Atomic once仍分别有约48.1%、51.3%、46.4%和47.7%的
+   M2 Direct、M3 Direct、Dynamic Direct和Atomic once actual-order仍分别有约48.1%、51.3%、46.4%和46.8%的
    错误置信度≥0.9。最大softmax不能可靠识别失败。
 
 ### 22.10 针对失效模式的下一步建议
 
-1. **主模型仍建议使用四折M2 Direct，同时报告Atomic once的最高均值。**Atomic once平均高0.42
-   个百分点，但只有6/12个Node配对提高，且使用不同测试history；证据不足以稳定替换M2 Direct。
+1. **同时报告M2 Direct与Atomic once actual-order。**Atomic once平均高0.46个百分点，但只有
+   6/12个Node配对提高；真实顺序测试已排除协议差异，剩余不确定性来自participant与seed稳定性。
 2. **Atomic Direct网格已经补齐，无需再补J/M。**如果继续投入，应转向冻结/联合head的Atomic结构
-   消融，或统一M2与Atomic的测试history后再做干净比较；不建议继续投入every-1策略。
+   消融；M2与Atomic的真实测试history已经统一，无需重复该比较，也不建议继续投入every-1策略。
 3. **为node 24、12、25、34加入物体感知。**优先考虑hand-object crop、object token或桌面区域检测。
 4. **为on/off和grip/put加入短时运动信息。**使用更长clip、双向帧差、optical flow或动作前后状态差。
 5. **针对node 18/23增加动作边界监督。**区分reverse与inspect需要覆盖完整手部轨迹，而非单个稳定姿态。
 6. **报告低support类别时同时给support。**避免把J-node34或M-node1等小样本Recall当成稳定总体结论。
 7. **部署时加入结构化不确定性。**结合graph合法性、持续时间、预测跳变与多seed分歧，而非只设
    softmax阈值。
+
+## 23. Atomic-tail真实历史顺序重评估（2026-08-05）
+
+### 23.1 评估目的、协议与完整性
+
+本次不重新训练模型，而是读取第21节已经训练完成的72个Atomic-tail Direct Fusion checkpoint，
+将测试阶段history从固定seeded atomic-tail重排改为样本的真实时间顺序
+`actual_chronological`。训练阶段仍保持各自的Atomic-tail策略，因此本节回答的是：
+
+> 在训练增强不变的条件下，使用与M2 Direct相同的真实测试顺序，Atomic-tail是否仍有收益？
+
+评估覆盖：
+
+```text
+4 participants × 3 seeds × 2 train scopes × 3 refresh policies × 3 splits = 216 results
+```
+
+72/72个checkpoint均完成评估；每个任务均产生`test_normal`、`test_fault`和`test_all`的metrics与
+prediction，并独立保存在原模型目录的`test_results_actual_order`中，没有覆盖第21节的原测试结果。
+汇总文件位于`outputs/at_actual`：
+
+- `atomic_actual_order_metrics.csv`：216条逐participant-seed严格配对明细；
+- `atomic_actual_order_seed_aggregate.csv`：54条按seed汇总；
+- `atomic_actual_order_participant_aggregate.csv`：72条按participant汇总；
+- `atomic_actual_order_aggregate.csv`：18条四折总体汇总；
+- `completed.json`：网格完整性与`actual_chronological`协议标记。
+
+### 23.2 仅改变测试顺序带来的影响
+
+下表比较同一checkpoint在原固定Atomic-tail测试顺序与真实测试顺序下的`test_all`结果，单位为
+百分点，均采用participant-first聚合：
+
+| Train scope | 训练刷新策略 | 原Node | 真实顺序Node | ΔNode | 原Tier3 | 真实顺序Tier3 | ΔTier3 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| all-runs | every 1 | 89.119 | 89.184 | +0.065 | 89.343 | 89.445 | +0.103 |
+| all-runs | every 10 | 89.784 | 89.728 | -0.056 | 90.272 | 90.290 | +0.018 |
+| all-runs | once | 90.992 | 91.031 | +0.038 | 91.105 | 91.181 | +0.076 |
+| normal-only | every 1 | 87.611 | 87.430 | -0.181 | 88.305 | 88.089 | -0.216 |
+| normal-only | every 10 | 89.405 | 89.415 | +0.010 | 89.842 | 89.852 | +0.010 |
+| normal-only | once | 88.904 | 88.904 | 0.000 | 89.528 | 89.532 | +0.004 |
+
+全部变化都小于0.22个百分点，两个scope的最佳策略也没有改变。对主配置`all-runs + once`，
+5685个样本-seed预测中只有39个Node预测发生改变：17个由错变对、14个由对变错、8个错到另一错误，
+净增加3个正确预测。说明Atomic模型对这两种合法测试history较鲁棒；其平均优势不是测试阶段采用
+Atomic-tail重排人为造成的。
+
+### 23.3 与M2 Direct统一测试协议后的总体比较
+
+#### 23.3.1 六种训练配置的test_all结果
+
+| Train scope | Atomic训练刷新 | Atomic Node/Tier3 | M2 Direct Node/Tier3 | ΔNode/ΔTier3 |
+|---|---|---:|---:|---:|
+| all-runs | every 1 | 89.18 / 89.45 | 90.57 / 90.64 | -1.38 / -1.19 |
+| all-runs | every 10 | 89.73 / 90.29 | 90.57 / 90.64 | -0.84 / -0.35 |
+| all-runs | once | **91.03 / 91.18** | 90.57 / 90.64 | **+0.46 / +0.54** |
+| normal-only | every 1 | 87.43 / 88.09 | 88.64 / 89.18 | -1.21 / -1.09 |
+| normal-only | every 10 | **89.42 / 89.85** | 88.64 / 89.18 | **+0.77 / +0.67** |
+| normal-only | once | 88.90 / 89.53 | 88.64 / 89.18 | +0.26 / +0.35 |
+
+真实顺序测试保持了原刷新频率结论：all-runs最佳为`refresh_once`，normal-only最佳为
+`refresh_every_10`，每epoch刷新在两个scope都最差或接近最差。
+
+#### 23.3.2 两个scope最佳配置的三个split
+
+| Scope / Atomic策略 | Split | Atomic Node/Tier3 | M2 Direct Node/Tier3 | ΔNode/ΔTier3 |
+|---|---|---:|---:|---:|
+| all-runs / once | normal | 91.69 / 91.80 | 91.26 / 91.30 | +0.43 / +0.50 |
+| all-runs / once | fault | 90.19 / 90.37 | 89.75 / 89.86 | +0.44 / +0.51 |
+| all-runs / once | all | **91.03 / 91.18** | 90.57 / 90.64 | **+0.46 / +0.54** |
+| normal-only / every 10 | normal | 91.20 / 91.39 | 90.55 / 90.70 | +0.65 / +0.68 |
+| normal-only / every 10 | fault | 84.28 / 85.75 | 83.24 / 85.05 | +1.05 / +0.70 |
+| normal-only / every 10 | all | **89.42 / 89.85** | 88.64 / 89.18 | **+0.77 / +0.67** |
+
+均值上，两个最佳Atomic配置在normal、fault和all三个split均超过M2 Direct；但这只是四折等权均值，
+不能替代下面的participant-seed配对稳定性检查。
+
+### 23.4 Participant差异
+
+`test_all`逐participant三seed均值如下：
+
+| Scope / Atomic策略 | Participant | Atomic Node/Tier3 | M2 Direct Node/Tier3 | ΔNode/ΔTier3 |
+|---|---|---:|---:|---:|
+| all-runs / once | A | 90.72 / 91.03 | 89.56 / 89.64 | +1.16 / +1.39 |
+| all-runs / once | D | 89.03 / 89.18 | 88.53 / 88.67 | +0.51 / +0.51 |
+| all-runs / once | J | 95.56 / 95.56 | 94.47 / 94.53 | +1.08 / +1.02 |
+| all-runs / once | M | 88.81 / 88.96 | 89.71 / 89.71 | -0.89 / -0.75 |
+| normal-only / every 10 | A | 89.02 / 89.25 | 89.95 / 90.33 | -0.93 / -1.08 |
+| normal-only / every 10 | D | 87.88 / 88.53 | 87.81 / 88.46 | +0.07 / +0.07 |
+| normal-only / every 10 | J | 93.81 / 94.23 | 92.55 / 93.21 | +1.26 / +1.02 |
+| normal-only / every 10 | M | 86.95 / 87.40 | 84.27 / 84.71 | +2.68 / +2.68 |
+
+all-runs once在A、D、J提高，但M下降；normal-only every 10则主要由J、M拉高，A下降。两个scope的
+四折正均值都不是所有participant共同改善造成的。
+
+### 23.5 Seed与严格配对稳定性
+
+`test_all`四人等权的逐seed结果：
+
+| Scope / Atomic策略 | Seed | Atomic Node/Tier3 | M2 Direct Node/Tier3 | ΔNode/ΔTier3 |
+|---|---:|---:|---:|---:|
+| all-runs / once | 1 | 90.15 / 90.27 | 92.28 / 92.33 | -2.13 / -2.06 |
+| all-runs / once | 2 | 91.28 / 91.45 | 90.85 / 90.90 | +0.43 / +0.54 |
+| all-runs / once | 42 | 91.66 / 91.83 | 88.57 / 88.68 | +3.09 / +3.15 |
+| normal-only / every 10 | 1 | 88.83 / 89.10 | 87.68 / 88.29 | +1.15 / +0.81 |
+| normal-only / every 10 | 2 | 90.92 / 91.23 | 89.42 / 89.70 | +1.50 / +1.53 |
+| normal-only / every 10 | 42 | 88.49 / 89.23 | 88.82 / 89.55 | -0.33 / -0.32 |
+
+12个participant-seed严格配对中：
+
+- all-runs once的Node和Tier3均为`6胜/0平/6负`；Node均值差`+0.46`，描述性95%区间
+  `[-1.45, +2.37]`；
+- normal-only every 10的Node和Tier3均为`6胜/1平/5负`；Node均值差`+0.77`，描述性95%区间
+  `[-0.80, +2.34]`；
+- all-runs once在seed 1明显低于M2、seed 42明显高于M2，证明模型与seed存在较强交互。
+
+因此，统一测试协议强化了“Atomic平均值略高”的可信度，却没有强化“Atomic稳定更高”的证据。
+
+### 23.6 真实顺序下的失效模式
+
+all-runs once真实顺序测试共有5685个样本-seed预测、496次Node错误；participant-first Node Accuracy
+为91.03%。其中8次（1.6%）属于同Tier3错误，四组重复流程node双向错误共7次，说明流程位置消歧
+仍基本保留。错误平均置信度为80.5%，232/496（46.8%）错误置信度不低于0.9。
+
+最难node和主要去向为：node 34→24（Recall 61.3%）、1→4（65.2%）、8→28（77.3%）、
+4→1（78.8%）、6→30（78.8%）及24→12（82.2%）。最高频错误仍是24→12（30次）、
+19→20（21次）、34→24（19次）、24→25（16次）和18→23（13次），与第22节总结的物体、
+动作方向、开关状态和短时语义边界失效一致。
+
+三个seed全部错误的唯一样本共有63个，A/D/J/M分别为17/17/8/21个；最集中的真实node为24
+（10个）、34（7个）和18（5个）。因此真实测试顺序并未改变主要失效机制，只在少量边界样本上改变预测。
+
+### 23.7 更新后的Atomic-tail结论
+
+1. **真实顺序重评估完整且没有覆盖原结果。**72个checkpoint、216个split全部完成，原固定
+   Atomic-tail测试协议仍可复现。
+2. **测试顺序影响很小。**六种配置的`test_all` Node变化均不超过0.19个百分点，最佳策略不变。
+3. **Atomic once保持最高四折均值。**all-runs once达到`91.03/91.18%` Node/Tier3 Accuracy，
+   相对M2 Direct为`+0.46/+0.54`；这是一项统一测试协议后的真实平均收益。
+4. **均值优势仍不稳定。**all-runs为6胜6负且M下降0.89个百分点；normal-only也存在A下降，两个
+   Node配对区间均跨0。
+5. **最终推荐表述：**M2 Direct仍是更简单且跨seed行为更容易解释的主基线；Atomic all-runs once
+   是当前最高四折均值配置，应作为有希望的训练增强共同报告，但不能宣称稳定显著优于M2 Direct。
