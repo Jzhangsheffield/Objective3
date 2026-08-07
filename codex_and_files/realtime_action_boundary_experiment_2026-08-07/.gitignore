@@ -1,0 +1,6 @@
+cache/
+outputs/
+protocols/
+validation/
+__pycache__/
+*.pyc

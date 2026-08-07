@@ -1,0 +1,21 @@
+{
+  "extends": "base.json",
+  "experiment_name": "causal_boundary_smoke_stride4",
+  "features": {
+    "stride_frames": 4,
+    "batch_size": 4,
+    "boundary_label_radius_frames": 4
+  },
+  "model": {
+    "hidden_dim": 64,
+    "num_layers": 3,
+    "dropout": 0.1
+  },
+  "training": {
+    "epochs": 2,
+    "batch_size": 4,
+    "num_workers": 0,
+    "chunk_length_steps": 64,
+    "chunk_overlap_steps": 28
+  }
+}

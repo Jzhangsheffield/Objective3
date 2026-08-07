@@ -1,0 +1,86 @@
+{
+  "experiment_name": "causal_boundary_m3_atomic_tail_v1",
+  "paths": {
+    "experiment_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07",
+    "dataset_root": "D:\\Junxi_data\\MULTISENSOR_DATA_COLLECTION_Stage2_structured_data\\Action_Segmentation_Dataset",
+    "annotation_root": "D:\\Junxi_data\\MULTISENSOR_DATA_COLLECTION_Stage2_structured_data\\Action_Segmentation_Dataset\\annotations\\action_recognition_boundaries_with_background_v1",
+    "atomic_project_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22",
+    "protocol_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\protocols",
+    "feature_cache_template": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\cache\\features\\{heldout}_as_test\\{scope}\\seed_{seed}\\stride_{stride}",
+    "output_template": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\outputs\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_boundary_tcn_v1",
+    "backbone_checkpoint_template": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\{heldout}_as_test\\cam_001484412812\\seed_{seed}\\backbone\\{scope}\\last.pth",
+    "m3_checkpoint_template": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\at_ad\\{heldout}_s{seed}\\{scope}\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+    "atomic_protocol_template": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\{heldout}_as_test\\cam_001484412812\\protocols\\{scope}\\test_all.jsonl",
+    "task_graph": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\assets\\integrated_task_graph_latest.json"
+  },
+  "data": {
+    "camera_id": "001484412812",
+    "participants": ["A", "D", "J", "M"],
+    "seeds": [1, 2, 42],
+    "train_scopes": ["normal_only", "all_runs"],
+    "test_splits": ["test_normal", "test_fault", "test_all"],
+    "background_label": "background",
+    "annotation_policy": "recognition_boundaries_plus_restored_short_background_v1"
+  },
+  "features": {
+    "causal": true,
+    "clip_frames": 16,
+    "stride_frames": 1,
+    "rgb_size": 224,
+    "batch_size": 8,
+    "boundary_label_radius_frames": 2,
+    "mean": [0.5369, 0.5295, 0.5208],
+    "std": [0.2311, 0.2360, 0.2363]
+  },
+  "model": {
+    "name": "causal_boundary_tcn",
+    "feature_dim": 512,
+    "hidden_dim": 256,
+    "num_layers": 5,
+    "kernel_size": 3,
+    "dropout": 0.2,
+    "outputs": ["background_action_state", "start", "end"]
+  },
+  "training": {
+    "device": "auto",
+    "epochs": 40,
+    "batch_size": 8,
+    "num_workers": 4,
+    "chunk_length_steps": 256,
+    "chunk_overlap_steps": 124,
+    "validation_run_fraction": 0.15,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "loss": {
+      "weights": {"state": 1.0, "start": 0.5, "end": 0.5},
+      "positive_weights": {"start": 25.0, "end": 25.0},
+      "gradient_clip_norm": 5.0
+    }
+  },
+  "online": {
+    "start_threshold": 0.55,
+    "end_threshold": 0.55,
+    "action_threshold": 0.55,
+    "start_debounce": 2,
+    "end_debounce": 2,
+    "min_action_steps": 3,
+    "merge_gap_steps": 0
+  },
+  "m3": {
+    "model": "m3_atomic_tail_direct_fusion",
+    "checkpoint_policy": "refresh_once",
+    "history_order_at_inference": "actual_predicted_chronological_order",
+    "max_history": 35,
+    "use_ground_truth_history": false,
+    "use_ground_truth_boundaries": false,
+    "task_graph_hard_mask": false
+  },
+  "evaluation": {
+    "boundary_tolerance_frames": [3, 5, 10],
+    "segment_iou_thresholds": [0.1, 0.25, 0.5],
+    "report_frame_accuracy": true,
+    "report_edit_score": true,
+    "report_detection_latency": true,
+    "node_matching_iou": 0.5
+  }
+}
