@@ -46,7 +46,8 @@ def main() -> None:
         "backbone_checkpoints": checkpoint_count, "m3_checkpoints": m3_checkpoint_count,
         "problems": problems,
     }
-    target = Path(cfg["paths"]["experiment_root"]) / "validation" / "setup_validation.json"
+    validation_root = Path(cfg["paths"].get("validation_root", Path(cfg["paths"]["experiment_root"]) / "validation"))
+    target = validation_root / "setup_validation.json"
     write_json(target, report)
     print(report)
     if problems:

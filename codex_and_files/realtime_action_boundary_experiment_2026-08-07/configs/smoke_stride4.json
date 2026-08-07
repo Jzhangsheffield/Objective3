@@ -1,6 +1,14 @@
 {
   "extends": "base.json",
   "experiment_name": "causal_boundary_smoke_stride4",
+  "paths": {
+    "output_template": "%RAB_SMOKE_OUTPUTS_ROOT%\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_boundary_smoke_stride4"
+  },
+  "data": {
+    "participants": ["%RAB_SMOKE_HELDOUT%"],
+    "seeds": ["%RAB_SMOKE_SEED%"],
+    "train_scopes": ["%RAB_SMOKE_SCOPE%"]
+  },
   "features": {
     "stride_frames": 4,
     "batch_size": 4,
