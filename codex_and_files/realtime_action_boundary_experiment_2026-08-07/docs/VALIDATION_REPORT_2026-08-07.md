@@ -36,11 +36,12 @@
 
 ## 代码测试
 
-Python compileall 通过。4 个核心单元测试全部通过：
+Python compileall 通过。5 个核心单元测试全部通过：
 
 1. causal prefix invariance：在输入尾部追加未来特征不会改变此前输出；
 2. boundary event matching 为一对一；
 3. binary segment 重建正确；
 4. `merge_gap_steps=0` 时短 background 不被状态机合并。
+5. 两个DataLoader workers并行读取时，逐帧顺序、因果滚动窗口和anchor数量保持正确。
 
 尚未执行正式特征缓存、40 epochs 训练或 24 条件完整网格；这些属于下一步耗时实验，而不是实验包生成核查。

@@ -1,16 +1,35 @@
 from __future__ import annotations
 
 import sys
+from collections import deque
 from pathlib import Path
 from typing import Any
 
 import torch
-import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset
 from torchvision.io import read_image
 from torchvision.transforms.functional import resize
 
 from .annotations import RunInfo, dilate_binary_targets, load_frame_table
 from .utils import safe_torch_load, sha256_file
+
+
+class RGBFrameDataset(Dataset):
+    """Decode and normalize each source frame exactly once, in chronological order."""
+
+    def __init__(self, frame_paths: list[Path], size: int, mean: list[float], std: list[float]):
+        self.frame_paths = frame_paths
+        self.size = int(size)
+        self.mean = torch.tensor(mean, dtype=torch.float32)[:, None, None]
+        self.std = torch.tensor(std, dtype=torch.float32)[:, None, None]
+
+    def __len__(self) -> int:
+        return len(self.frame_paths)
+
+    def __getitem__(self, index: int) -> torch.Tensor:
+        image = read_image(str(self.frame_paths[index])).float().div_(255.0)
+        image = resize(image, [self.size, self.size], antialias=True)
+        return (image - self.mean) / self.std
 
 
 def _import_atomic_modules(project_root: str | Path):
@@ -87,22 +106,59 @@ def extract_run_features(
     anchors = list(range(0, len(table["frame_paths"]), stride))
     batch_size = int(feature_cfg["batch_size"])
     clip_frames = int(feature_cfg["clip_frames"])
+    num_workers = int(feature_cfg.get("num_workers", 0))
+    frame_loader_batch_size = int(feature_cfg.get("frame_loader_batch_size", max(batch_size, 1)))
+    pin_memory = bool(feature_cfg.get("pin_memory", True)) and device.type == "cuda"
+    loader_kwargs: dict[str, Any] = {
+        "batch_size": frame_loader_batch_size,
+        "shuffle": False,
+        "num_workers": num_workers,
+        "pin_memory": pin_memory,
+        "drop_last": False,
+    }
+    if num_workers > 0:
+        loader_kwargs["prefetch_factor"] = int(feature_cfg.get("prefetch_factor", 2))
+        loader_kwargs["persistent_workers"] = bool(feature_cfg.get("persistent_workers", True))
+    frame_loader = DataLoader(
+        RGBFrameDataset(
+            table["frame_paths"], int(feature_cfg["rgb_size"]),
+            list(feature_cfg["mean"]), list(feature_cfg["std"]),
+        ),
+        **loader_kwargs,
+    )
+
     features: list[torch.Tensor] = []
-    for batch_start in range(0, len(anchors), batch_size):
-        clips = []
-        for anchor in anchors[batch_start : batch_start + batch_size]:
-            frames = [
-                _load_rgb(
-                    table["frame_paths"][index],
-                    int(feature_cfg["rgb_size"]),
-                    list(feature_cfg["mean"]),
-                    list(feature_cfg["std"]),
-                )
-                for index in causal_clip_indices(anchor, clip_frames)
-            ]
-            clips.append(torch.stack(frames, dim=1))
-        batch = torch.stack(clips).to(device, non_blocking=True)
-        features.append(model.forward_features(batch).cpu())
+    rolling: deque[torch.Tensor] = deque(maxlen=clip_frames)
+    pending_clips: list[torch.Tensor] = []
+
+    def flush_pending() -> None:
+        if not pending_clips:
+            return
+        batch = torch.stack(pending_clips)
+        if pin_memory and not batch.is_pinned():
+            batch = batch.pin_memory()
+        features.append(model.forward_features(batch.to(device, non_blocking=pin_memory)).cpu())
+        pending_clips.clear()
+
+    row_index = 0
+    for frame_batch in frame_loader:
+        for frame in frame_batch:
+            if not rolling:
+                rolling.extend([frame] * clip_frames)
+            else:
+                rolling.append(frame)
+            if row_index % stride == 0:
+                pending_clips.append(torch.stack(list(rolling), dim=1))
+                if len(pending_clips) >= batch_size:
+                    flush_pending()
+            row_index += 1
+    flush_pending()
+    if row_index != len(table["frame_paths"]):
+        raise RuntimeError(f"Frame loader returned {row_index} frames, expected {len(table['frame_paths'])}")
+
+    feature_tensor = torch.cat(features, dim=0)
+    if feature_tensor.shape[0] != len(anchors):
+        raise RuntimeError(f"Extracted {feature_tensor.shape[0]} anchors, expected {len(anchors)}")
     anchor_tensor = torch.tensor(anchors, dtype=torch.long)
     radius_frames = int(feature_cfg.get("boundary_label_radius_frames", 0))
     radius_anchors = (radius_frames + stride - 1) // stride
@@ -112,7 +168,7 @@ def extract_run_features(
         "sample_name": info.sample_name,
         "participant": info.participant,
         "source_run": info.source_run,
-        "features": torch.cat(features, dim=0),
+        "features": feature_tensor,
         "anchor_row_index": anchor_tensor,
         "frame_idx": torch.from_numpy(table["frame_idx"][anchors]),
         "original_frame_idx": torch.from_numpy(table["original_frame_idx"][anchors]),
@@ -130,7 +186,12 @@ def extract_run_features(
             "clip_frames": clip_frames,
             "stride_frames": stride,
             "rgb_size": int(feature_cfg["rgb_size"]),
-            "feature_dim": int(torch.cat(features, dim=0).shape[1]),
+            "feature_dim": int(feature_tensor.shape[1]),
+            "extract_batch_size": batch_size,
+            "frame_loader_batch_size": frame_loader_batch_size,
+            "frame_loader_num_workers": num_workers,
+            "frame_loader_prefetch_factor": int(feature_cfg.get("prefetch_factor", 2)) if num_workers > 0 else None,
+            "frame_loader_pin_memory": pin_memory,
             "backbone_checkpoint": str(Path(checkpoint_path).resolve()),
             "backbone_checkpoint_sha256": sha256_file(checkpoint_path),
             "annotation_file": str(info.frame_annotation.resolve()),

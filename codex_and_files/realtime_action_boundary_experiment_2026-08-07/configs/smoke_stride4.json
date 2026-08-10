@@ -11,7 +11,7 @@
   },
   "features": {
     "stride_frames": 4,
-    "batch_size": 16,
+    "batch_size": "%RAB_SMOKE_EXTRACT_BATCH_SIZE%",
     "boundary_label_radius_frames": 4
   },
   "model": {

@@ -67,6 +67,11 @@ set "VALIDATION_ROOT=F:\boundary_runs\validation"
 | `SMOKE_OUTPUTS_ROOT` | stride-4 smoke 结果，与正式输出隔离 |
 | `VALIDATION_ROOT` | setup validation 报告 |
 | `NUM_WORKERS` | 正式训练 DataLoader workers |
+| `EXTRACT_NUM_WORKERS` | 特征提取时并行JPEG解码/resize workers，默认8 |
+| `EXTRACT_FRAME_LOADER_BATCH_SIZE` | CPU frame loader每批预取帧数，默认64 |
+| `EXTRACT_PREFETCH_FACTOR` | 每个提取worker预取的frame batches，默认2 |
+| `FORMAL_EXTRACT_BATCH_SIZE` | 正式stride-1的GPU 3D窗口batch，默认8 |
+| `SMOKE_EXTRACT_BATCH_SIZE` | Smoke stride-4的GPU 3D窗口batch，32G显存默认16 |
 | `RECOMMENDED_PARTICIPANTS/SEEDS/SCOPES` | 完整网格 BAT 的循环范围 |
 | `SMOKE_HELDOUT/SEED/SCOPE` | smoke 使用的单个 LOSO 条件，默认 A/1/all-runs |
 | `SMOKE_ONLINE_RUN` | `online` 阶段用于功能检查的连续 run |
@@ -95,6 +100,37 @@ scripts\run_smoke_stride4.bat extract
 如果绕过 BAT、直接运行 `python tools\*.py`，必须先执行 `call config_windows.bat`，否则 JSON 中的 `%RAB_*%` 变量无法解析。
 
 由于它与旧 M0–M6 配置一样采用 `if not defined`，从旧实验切换到本实验时建议打开一个新的 CMD 窗口，避免旧窗口中已经存在的 `DATASET_ROOT/PYTHON_BIN/OUTPUTS_ROOT` 被当成有意覆盖值。两个本实验启动脚本会强制把 `PACKAGE_ROOT` 校正为当前边界实验包，但其他机器变量仍尊重预先设置的值。
+
+### 2.2 多worker特征提取参数
+
+特征提取和Boundary TCN训练使用两套不同参数：
+
+```bat
+REM CPU并行读取、解码、resize和normalize JPEG
+set "EXTRACT_NUM_WORKERS=8"
+set "EXTRACT_FRAME_LOADER_BATCH_SIZE=64"
+set "EXTRACT_PREFETCH_FACTOR=2"
+
+REM GPU一次处理的16帧窗口数
+set "SMOKE_EXTRACT_BATCH_SIZE=16"
+set "FORMAL_EXTRACT_BATCH_SIZE=8"
+
+REM 仅用于后续Boundary TCN训练，不影响extract
+set "NUM_WORKERS=4"
+```
+
+32G GPU的推荐起点就是上述默认值。调参顺序：先保持 `EXTRACT_NUM_WORKERS=8/frame_loader_batch=64/prefetch=2`，测试 `SMOKE_EXTRACT_BATCH_SIZE=16`；显存仍低于24G且GPU利用率稳定时，再尝试20或24。出现CUDA OOM则降低GPU batch。
+
+`EXTRACT_NUM_WORKERS` 应根据CPU物理核心数和SSD速度调整，一般从4或8开始；worker过多可能因为Windows进程创建、JPEG竞争和磁盘争用而更慢。`EXTRACT_FRAME_LOADER_BATCH_SIZE × EXTRACT_PREFETCH_FACTOR × EXTRACT_NUM_WORKERS` 越大，CPU/pinned memory占用越高。
+
+修改后运行：
+
+```bat
+call config_windows.bat show
+scripts\run_smoke_stride4.bat extract
+```
+
+当前提取器的DataLoader按原始帧顺序返回数据；主进程维护最后16帧的因果滚动窗口，因此多worker只改变数据准备速度，不改变anchor、标签或未来帧约束。若要公平比较旧/新参数，请把 `FEATURE_CACHE_ROOT` 指向新的空目录；已有 `.pt` 会被跳过。
 
 ## 3. 安装与快速核查
 
@@ -230,7 +266,7 @@ scripts\run_smoke_stride4.bat validate
 
 这个阶段不提取特征、不训练模型，作用是确认新电脑上的环境和迁移文件完整：
 
-1. 运行4个单元测试，检查因果 prefix invariance、一对一边界匹配、segment 重建以及短 background 不合并；
+1. 运行5个单元测试，检查因果 prefix invariance、一对一边界匹配、segment 重建、短 background 不合并，以及多worker逐帧加载仍保持因果anchor顺序；
 2. 读取 `manifest.jsonl` 和103个逐帧标注；
 3. `--deep` 模式逐一确认251,132张标注 RGB 帧真实存在；
 4. 检查 `frame_idx` 连续、`original_frame_idx` 严格递增；
@@ -272,6 +308,8 @@ scripts\run_smoke_stride4.bat extract
 4. 正式版 stride 1 每帧产生一个512维特征；smoke stride 4 每4帧产生一个特征；
 5. 将 action/background、start、end 标签对齐到相同 anchor；
 6. 保存特征、原始帧号、timestamp、标签、checkpoint 哈希和 annotation 哈希。
+
+JPEG读取现在使用独立的多worker frame DataLoader：worker并行完成读取、解码、resize和normalize，主进程按原顺序维护16帧滚动窗口，再按 `FORMAL_EXTRACT_BATCH_SIZE` 或 `SMOKE_EXTRACT_BATCH_SIZE` 送入GPU。每张源JPEG只解码一次；`training.num_workers` 仍只控制后续Boundary TCN训练，与这里无关。
 
 它不会训练 boundary TCN，也不会调用 M3。不同 held-out/seed/scope 使用不同 backbone，因此必须分别建立 cache，不能混用。
 
@@ -374,7 +412,7 @@ validate → prepare → extract → train → evaluate → online
 
 ### 4.2 Smoke 各阶段的预期输出
 
-`validate` 成功时应看到4个单元测试均为 `ok`，并显示：
+`validate` 成功时应看到5个单元测试均为 `ok`，并显示：
 
 ```text
 status=ok

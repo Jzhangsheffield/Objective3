@@ -28,7 +28,12 @@
     "clip_frames": 16,
     "stride_frames": 1,
     "rgb_size": 224,
-    "batch_size": 8,
+    "batch_size": "%RAB_FORMAL_EXTRACT_BATCH_SIZE%",
+    "num_workers": "%RAB_EXTRACT_NUM_WORKERS%",
+    "frame_loader_batch_size": "%RAB_EXTRACT_FRAME_LOADER_BATCH_SIZE%",
+    "prefetch_factor": "%RAB_EXTRACT_PREFETCH_FACTOR%",
+    "pin_memory": true,
+    "persistent_workers": true,
     "boundary_label_radius_frames": 2,
     "mean": [0.5369, 0.5295, 0.5208],
     "std": [0.2311, 0.2360, 0.2363]
