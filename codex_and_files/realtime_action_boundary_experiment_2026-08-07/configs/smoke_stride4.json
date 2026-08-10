@@ -11,7 +11,7 @@
   },
   "features": {
     "stride_frames": 4,
-    "batch_size": 4,
+    "batch_size": 16,
     "boundary_label_radius_frames": 4
   },
   "model": {
@@ -22,7 +22,7 @@
   "training": {
     "epochs": 2,
     "batch_size": 4,
-    "num_workers": 0,
+    "num_workers": 12,
     "chunk_length_steps": 64,
     "chunk_overlap_steps": 28
   }

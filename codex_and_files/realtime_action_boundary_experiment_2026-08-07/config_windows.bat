@@ -5,9 +5,9 @@ REM Override any variable before calling a script, or edit the defaults below.
 for %%I in ("%~dp0.") do if not defined PACKAGE_ROOT set "PACKAGE_ROOT=%%~fI"
 
 REM Machine-specific inputs. These are the main values to edit after migration.
-if not defined DATASET_ROOT set "DATASET_ROOT=D:\Junxi_data\MULTISENSOR_DATA_COLLECTION_Stage2_structured_data\Action_Segmentation_Dataset"
-if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
-if not defined ATOMIC_PROJECT_ROOT set "ATOMIC_PROJECT_ROOT=D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22"
+if not defined DATASET_ROOT set "DATASET_ROOT=C:\MyFolder\mes19jz\Action_Segmentation_Dataset"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\mes19jz\AppData\Local\miniconda3\envs\pytorch\python.exe"
+if not defined ATOMIC_PROJECT_ROOT set "ATOMIC_PROJECT_ROOT=D:\junxi_data\Objective3\codex_and_files\graph_history_rgb_cross_person_ADM_2026-07-22"
 
 REM Annotation and camera fixed for this experiment version.
 if not defined ANNOTATION_ROOT set "ANNOTATION_ROOT=%DATASET_ROOT%\annotations\action_recognition_boundaries_with_background_v1"
@@ -25,7 +25,7 @@ if not defined BASE_CONFIG set "BASE_CONFIG=%PACKAGE_ROOT%\configs\base.json"
 if not defined SMOKE_CONFIG set "SMOKE_CONFIG=%PACKAGE_ROOT%\configs\smoke_stride4.json"
 
 REM Common experiment settings and launcher defaults.
-if not defined NUM_WORKERS set "NUM_WORKERS=4"
+if not defined NUM_WORKERS set "NUM_WORKERS=8"
 if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1 2 42"
 if not defined RECOMMENDED_PARTICIPANTS set "RECOMMENDED_PARTICIPANTS=A D J M"
 if not defined RECOMMENDED_SCOPES set "RECOMMENDED_SCOPES=normal_only all_runs"
