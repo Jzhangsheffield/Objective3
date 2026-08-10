@@ -1,0 +1,219 @@
+{
+  "experiment_name": "causal_boundary_smoke_stride4",
+  "paths": {
+    "experiment_root": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07",
+    "dataset_root": "C:\\MyFolder\\mes19jz\\Action_Segmentation_Dataset",
+    "annotation_root": "C:\\MyFolder\\mes19jz\\Action_Segmentation_Dataset\\annotations\\action_recognition_boundaries_with_background_v1",
+    "atomic_project_root": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22",
+    "protocol_root": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\protocols",
+    "feature_cache_template": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\cache\\features\\{heldout}_as_test\\{scope}\\seed_{seed}\\stride_{stride}",
+    "output_template": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\outputs_smoke_stride4\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_boundary_smoke_stride4",
+    "backbone_checkpoint_template": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\{heldout}_as_test\\cam_001484412812\\seed_{seed}\\backbone\\{scope}\\last.pth",
+    "m3_checkpoint_template": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\at_ad\\{heldout}_s{seed}\\{scope}\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+    "atomic_protocol_template": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\{heldout}_as_test\\cam_001484412812\\protocols\\{scope}\\test_all.jsonl",
+    "task_graph": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\assets\\integrated_task_graph_latest.json",
+    "validation_root": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\validation"
+  },
+  "data": {
+    "camera_id": "001484412812",
+    "participants": [
+      "A"
+    ],
+    "seeds": [
+      "1"
+    ],
+    "train_scopes": [
+      "all_runs"
+    ],
+    "test_splits": [
+      "test_normal",
+      "test_fault",
+      "test_all"
+    ],
+    "background_label": "background",
+    "annotation_policy": "recognition_boundaries_plus_restored_short_background_v1"
+  },
+  "features": {
+    "causal": true,
+    "clip_frames": 16,
+    "stride_frames": 4,
+    "rgb_size": 224,
+    "batch_size": "16",
+    "num_workers": "14",
+    "frame_loader_batch_size": "64",
+    "prefetch_factor": "2",
+    "pin_memory": true,
+    "persistent_workers": true,
+    "boundary_label_radius_frames": 4,
+    "mean": [
+      0.5369,
+      0.5295,
+      0.5208
+    ],
+    "std": [
+      0.2311,
+      0.236,
+      0.2363
+    ]
+  },
+  "model": {
+    "name": "causal_boundary_tcn",
+    "feature_dim": 512,
+    "hidden_dim": 64,
+    "num_layers": 3,
+    "kernel_size": 3,
+    "dropout": 0.1,
+    "outputs": [
+      "background_action_state",
+      "start",
+      "end"
+    ]
+  },
+  "training": {
+    "device": "auto",
+    "epochs": 2,
+    "batch_size": 4,
+    "num_workers": 12,
+    "chunk_length_steps": 64,
+    "chunk_overlap_steps": 28,
+    "validation_run_fraction": 0.15,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "loss": {
+      "weights": {
+        "state": 1.0,
+        "start": 0.5,
+        "end": 0.5
+      },
+      "positive_weights": {
+        "start": 25.0,
+        "end": 25.0
+      },
+      "gradient_clip_norm": 5.0
+    }
+  },
+  "online": {
+    "start_threshold": 0.55,
+    "end_threshold": 0.55,
+    "action_threshold": 0.55,
+    "start_debounce": 2,
+    "end_debounce": 2,
+    "min_action_steps": 3,
+    "merge_gap_steps": 0
+  },
+  "m3": {
+    "model": "m3_atomic_tail_direct_fusion",
+    "checkpoint_policy": "refresh_once",
+    "history_order_at_inference": "actual_predicted_chronological_order",
+    "max_history": 35,
+    "use_ground_truth_history": false,
+    "use_ground_truth_boundaries": false,
+    "task_graph_hard_mask": false
+  },
+  "evaluation": {
+    "boundary_tolerance_frames": [
+      3,
+      5,
+      10
+    ],
+    "segment_iou_thresholds": [
+      0.1,
+      0.25,
+      0.5
+    ],
+    "report_frame_accuracy": true,
+    "report_edit_score": true,
+    "report_detection_latency": true,
+    "node_matching_iou": 0.5
+  },
+  "condition": {
+    "config": "D:\\junxi_data\\Objective3\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\configs\\smoke_stride4.json",
+    "heldout": "A",
+    "seed": 1,
+    "scope": "all_runs",
+    "overwrite": false
+  },
+  "train_runs": [
+    "run_sample_000062",
+    "run_sample_000103",
+    "run_sample_000031",
+    "run_sample_000054",
+    "run_sample_000078",
+    "run_sample_000050",
+    "run_sample_000093",
+    "run_sample_000046",
+    "run_sample_000089",
+    "run_sample_000025",
+    "run_sample_000047",
+    "run_sample_000035",
+    "run_sample_000076",
+    "run_sample_000042",
+    "run_sample_000026",
+    "run_sample_000097",
+    "run_sample_000044",
+    "run_sample_000059",
+    "run_sample_000064",
+    "run_sample_000100",
+    "run_sample_000084",
+    "run_sample_000082",
+    "run_sample_000038",
+    "run_sample_000099",
+    "run_sample_000071",
+    "run_sample_000079",
+    "run_sample_000068",
+    "run_sample_000088",
+    "run_sample_000049",
+    "run_sample_000085",
+    "run_sample_000056",
+    "run_sample_000073",
+    "run_sample_000083",
+    "run_sample_000033",
+    "run_sample_000067",
+    "run_sample_000053",
+    "run_sample_000055",
+    "run_sample_000065",
+    "run_sample_000041",
+    "run_sample_000074",
+    "run_sample_000086",
+    "run_sample_000057",
+    "run_sample_000081",
+    "run_sample_000030",
+    "run_sample_000061",
+    "run_sample_000094",
+    "run_sample_000098",
+    "run_sample_000070",
+    "run_sample_000043",
+    "run_sample_000051",
+    "run_sample_000075",
+    "run_sample_000072",
+    "run_sample_000101",
+    "run_sample_000063",
+    "run_sample_000092",
+    "run_sample_000102",
+    "run_sample_000034",
+    "run_sample_000058",
+    "run_sample_000029",
+    "run_sample_000037",
+    "run_sample_000027",
+    "run_sample_000091",
+    "run_sample_000052",
+    "run_sample_000048",
+    "run_sample_000045",
+    "run_sample_000040",
+    "run_sample_000090"
+  ],
+  "validation_runs": [
+    "run_sample_000036",
+    "run_sample_000069",
+    "run_sample_000066",
+    "run_sample_000077",
+    "run_sample_000032",
+    "run_sample_000028",
+    "run_sample_000039",
+    "run_sample_000096",
+    "run_sample_000060",
+    "run_sample_000080",
+    "run_sample_000087",
+    "run_sample_000095"
+  ]
+}
