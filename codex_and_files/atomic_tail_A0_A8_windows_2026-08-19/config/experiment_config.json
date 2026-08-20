@@ -4,7 +4,7 @@
   "paths": {
     "python_executable": "C:\\Users\\mes19jz\\AppData\\Local\\miniconda3\\envs\\pytorch\\python.exe",
     "input_root": "{package_root}\\inputs",
-    "shared_artifacts_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs",
+    "shared_artifacts_root": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs",
     "output_root": "{package_root}\\outputs",
     "task_graph": "{package_root}\\assets\\integrated_task_graph_latest.json",
     "relation_matrix": "{package_root}\\assets\\integrated_feature_history_matrix.json",
