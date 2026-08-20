@@ -19,6 +19,7 @@
     "train_scopes": ["all_runs"],
     "camera_id": "001484412812",
     "test_splits": ["test_normal", "test_fault", "test_all"],
+    "default_experiments": ["A0", "A3-DualPos", "A4-DualPos"],
     "auto_run_dependencies": true,
     "skip_completed": true
   },
@@ -29,7 +30,8 @@
     "d_model": 256,
     "num_heads": 4,
     "max_history": 35,
-    "dropout": 0.1
+    "dropout": 0.1,
+    "shift_embedding_init_std": 0.02
   },
   "training": {
     "baseline_epochs": 50,
@@ -121,9 +123,39 @@
       "warm_start": null,
       "schedule": "scratch"
     },
+    "A3-full-shuffle": {
+      "name": "full_shuffle_true_recency",
+      "status": "deferred",
+      "description": "A1 的 broad graph-valid shuffle + A3 的真实 recency position；用于补齐 shuffle scope × position semantics 的 2×2 消融。",
+      "train_view": "augmented",
+      "position_mode": "actual_recency",
+      "active_tail_only": false,
+      "sampling": "uniform",
+      "paired_views": false,
+      "consistency": false,
+      "tail_order_aux": false,
+      "tier3_aux": false,
+      "warm_start": null,
+      "schedule": "scratch"
+    },
+    "A3-DualPos": {
+      "name": "active_tail_true_recency_plus_shift",
+      "description": "A3 + shuffle displacement embedding；同时保留真实 recency 并显式编码增强呈现位置。Direct Fusion 模型从头训练。",
+      "train_view": "augmented",
+      "position_mode": "true_plus_shift",
+      "active_tail_only": true,
+      "sampling": "uniform",
+      "paired_views": false,
+      "consistency": false,
+      "tail_order_aux": false,
+      "tier3_aux": false,
+      "warm_start": null,
+      "schedule": "scratch"
+    },
     "A4": {
       "name": "paired_warmstart_calibrated",
-      "description": "A3 + A0 热启动、actual/atomic 成对训练及末段真实顺序校准。",
+      "status": "deferred",
+      "description": "A3 + A0 热启动、actual/atomic 0.6/0.4 成对训练、每 2 epoch 刷新增强及末段真实顺序校准。",
       "train_view": "paired",
       "position_mode": "actual_recency",
       "active_tail_only": true,
@@ -133,10 +165,40 @@
       "tail_order_aux": false,
       "tier3_aux": false,
       "warm_start": "A0",
-      "schedule": "finetune_calibrate"
+      "schedule": "finetune_calibrate",
+      "mixed_finetune_epochs": 10,
+      "finetune_learning_rate": 0.0001,
+      "actual_calibration_epochs": 3,
+      "calibration_learning_rate": 0.00005,
+      "actual_ce_weight": 0.6,
+      "refresh_interval": 2
+    },
+    "A4-DualPos": {
+      "name": "dualpos_paired_warmstart_calibrated",
+      "description": "A0 热启动的完整 DualPos 方案：真实 recency + shuffle displacement，2 epoch 新分支预热、8 epoch paired 联合微调、3 epoch actual 校准。",
+      "train_view": "paired",
+      "position_mode": "true_plus_shift",
+      "active_tail_only": true,
+      "sampling": "uniform",
+      "paired_views": true,
+      "consistency": false,
+      "tail_order_aux": false,
+      "tier3_aux": false,
+      "warm_start": "A0",
+      "schedule": "dualpos_finetune_calibrate",
+      "shift_warmup_epochs": 2,
+      "shift_warmup_learning_rate": 0.0005,
+      "mixed_finetune_epochs": 8,
+      "finetune_learning_rate": 0.0001,
+      "shift_learning_rate": 0.0005,
+      "actual_calibration_epochs": 3,
+      "calibration_learning_rate": 0.00005,
+      "actual_ce_weight": 0.6,
+      "refresh_interval": 2
     },
     "A5": {
       "name": "paired_consistency",
+      "status": "deferred",
       "description": "A4 + actual/atomic 预测一致性正则。",
       "train_view": "paired",
       "position_mode": "actual_recency",
@@ -151,6 +213,7 @@
     },
     "A6": {
       "name": "plausible_tail_sampling",
+      "status": "deferred",
       "description": "A5 + 训练折转移概率加权、Kendall 距离约束和最近非 tail 锚点。",
       "train_view": "paired",
       "position_mode": "actual_recency",
@@ -165,6 +228,7 @@
     },
     "A7": {
       "name": "tail_order_auxiliary",
+      "status": "deferred",
       "description": "A6 + 仅训练期使用的 valid/corrupted tail 二分类辅助目标。",
       "train_view": "paired",
       "position_mode": "actual_recency",
@@ -179,6 +243,7 @@
     },
     "A8": {
       "name": "full_atomic_tail_method",
+      "status": "deferred",
       "description": "A7 + node-to-Tier3 概率聚合辅助损失。",
       "train_view": "paired",
       "position_mode": "actual_recency",

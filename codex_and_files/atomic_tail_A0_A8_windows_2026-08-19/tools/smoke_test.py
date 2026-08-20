@@ -19,7 +19,26 @@ def row(sample: str, node: int, position: int) -> dict:
 
 def main() -> int:
     config = load_config(PACKAGE_ROOT / "config" / "experiment_config.json")
+    assert normalize_experiment_ids(None, config) == ["A0", "A3-DualPos", "A4-DualPos"]
     assert normalize_experiment_ids("A5", config) == ["A0", "A5"]
+    assert normalize_experiment_ids("a3-FULL-shuffle,A4", config) == ["A0", "A3-full-shuffle", "A4"]
+    full_shuffle = config["experiments"]["A3-full-shuffle"]
+    assert full_shuffle["active_tail_only"] is False
+    assert full_shuffle["position_mode"] == "actual_recency"
+    assert full_shuffle["status"] == "deferred"
+    a4 = config["experiments"]["A4"]
+    assert a4["status"] == "deferred"
+    a3_dual = config["experiments"]["A3-DualPos"]
+    assert a3_dual["position_mode"] == "true_plus_shift"
+    assert a3_dual["schedule"] == "scratch"
+    a4_dual = config["experiments"]["A4-DualPos"]
+    assert a4_dual["position_mode"] == "true_plus_shift"
+    assert a4_dual["schedule"] == "dualpos_finetune_calibrate"
+    assert a4_dual["shift_warmup_epochs"] == 2
+    assert a4_dual["mixed_finetune_epochs"] == 8
+    assert a4_dual["actual_calibration_epochs"] == 3
+    assert a4_dual["actual_ce_weight"] == 0.6
+    assert a4_dual["refresh_interval"] == 2
     graph = TaskGraph(
         num_nodes=6,
         node_to_tier3=(0, 1, 2, 3, 4, 5),
@@ -45,7 +64,7 @@ def main() -> int:
     shuffled = list(active)
     random.Random(1).shuffle(shuffled)
     assert 0.0 <= result.normalized_kendall_distance <= 1.0
-    print("Smoke tests passed: config/dependency, active-tail gating, constrained sampling, graph validity.")
+    print("Smoke tests passed: DualPos selection/config, deferred flags, gating, sampling, graph validity.")
     return 0
 
 

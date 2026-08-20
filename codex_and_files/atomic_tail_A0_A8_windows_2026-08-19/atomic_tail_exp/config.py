@@ -6,7 +6,20 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-EXPERIMENT_IDS = tuple(f"A{i}" for i in range(9))
+EXPERIMENT_IDS = (
+    "A0",
+    "A1",
+    "A2",
+    "A3",
+    "A3-full-shuffle",
+    "A3-DualPos",
+    "A4",
+    "A4-DualPos",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+)
 
 
 def read_json(path: str | Path) -> Any:
@@ -40,14 +53,48 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError(f"Configuration is missing sections: {missing}")
     if tuple(config["experiments"].keys()) != EXPERIMENT_IDS:
         raise ValueError(f"experiments must be ordered exactly as {EXPERIMENT_IDS}")
+    default_experiments = config["grid"].get("default_experiments", EXPERIMENT_IDS)
+    unknown_defaults = [item for item in default_experiments if item not in EXPERIMENT_IDS]
+    if unknown_defaults:
+        raise ValueError(f"grid.default_experiments contains unknown IDs: {unknown_defaults}")
+    deferred_defaults = [
+        item for item in default_experiments
+        if config["experiments"][item].get("status") == "deferred"
+    ]
+    if deferred_defaults:
+        raise ValueError(f"Deferred experiments cannot be in grid.default_experiments: {deferred_defaults}")
     for experiment_id, experiment in config["experiments"].items():
+        if experiment.get("status") not in {None, "deferred"}:
+            raise ValueError(f"{experiment_id}.status is invalid")
         dependency = experiment.get("warm_start")
         if dependency is not None and dependency not in EXPERIMENT_IDS:
             raise ValueError(f"{experiment_id}.warm_start is invalid: {dependency}")
-        if experiment.get("position_mode") not in {"presented", "actual_recency"}:
+        if experiment.get("position_mode") not in {"presented", "actual_recency", "true_plus_shift"}:
             raise ValueError(f"{experiment_id}.position_mode is invalid")
         if experiment.get("sampling") not in {"none", "uniform", "plausibility_weighted"}:
             raise ValueError(f"{experiment_id}.sampling is invalid")
+        actual_ce_weight = float(experiment.get("actual_ce_weight", 0.5))
+        if not 0.0 <= actual_ce_weight <= 1.0:
+            raise ValueError(f"{experiment_id}.actual_ce_weight must be between 0 and 1")
+        refresh_interval = experiment.get("refresh_interval")
+        if refresh_interval is not None and str(refresh_interval).lower() != "once":
+            if int(refresh_interval) < 1:
+                raise ValueError(f"{experiment_id}.refresh_interval must be 'once' or a positive integer")
+        if experiment.get("schedule") == "dualpos_finetune_calibrate":
+            required_dualpos = {
+                "shift_warmup_epochs",
+                "shift_warmup_learning_rate",
+                "mixed_finetune_epochs",
+                "finetune_learning_rate",
+                "shift_learning_rate",
+                "actual_calibration_epochs",
+                "calibration_learning_rate",
+            }
+            missing_dualpos = sorted(required_dualpos - set(experiment))
+            if missing_dualpos:
+                raise ValueError(f"{experiment_id} is missing DualPos schedule fields: {missing_dualpos}")
+            if experiment.get("position_mode") != "true_plus_shift":
+                raise ValueError(f"{experiment_id} DualPos schedule requires position_mode=true_plus_shift")
 
 
 def parse_csv_values(raw: str | None, default: Iterable[Any], cast=str) -> list[Any]:
@@ -58,11 +105,16 @@ def parse_csv_values(raw: str | None, default: Iterable[Any], cast=str) -> list[
 
 
 def normalize_experiment_ids(raw: str | None, config: dict[str, Any]) -> list[str]:
-    selected = parse_csv_values(raw, config["experiments"].keys(), str)
-    selected = [value.upper() for value in selected]
-    unknown = sorted(set(selected) - set(EXPERIMENT_IDS))
+    selected = parse_csv_values(
+        raw,
+        config["grid"].get("default_experiments", config["experiments"].keys()),
+        str,
+    )
+    canonical = {experiment_id.casefold(): experiment_id for experiment_id in EXPERIMENT_IDS}
+    unknown = sorted(value for value in selected if value.casefold() not in canonical)
     if unknown:
-        raise ValueError(f"Unknown experiments: {unknown}; valid IDs are A0-A8")
+        raise ValueError(f"Unknown experiments: {unknown}; valid IDs are {', '.join(EXPERIMENT_IDS)}")
+    selected = [canonical[value.casefold()] for value in selected]
     ordered = [item for item in EXPERIMENT_IDS if item in selected]
     if config["grid"].get("auto_run_dependencies", True):
         dependencies = {

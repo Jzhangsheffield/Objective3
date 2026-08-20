@@ -1063,7 +1063,9 @@ def evaluate_caches(
     prediction_rows: list[dict[str, Any]] = []
     for run in runs:
         cache = load_feature_cache(Path(cache_root) / f"{run}.pt")
+        # 载入一个run提取的特征
         probabilities = infer_run(model, cache, device)
+        # 输出run中每一个时间步的state, start, end 预测状态，是一个字典。
         segments = run_state_machine(**probabilities, settings=online_cfg)
         pred_state = np.zeros(len(cache["state"]), dtype=np.int64)
         for segment in segments:
@@ -1101,3 +1103,6 @@ def evaluate_caches(
         for row in prediction_rows:
             handle.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
     return result
+
+
+

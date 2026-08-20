@@ -1,4 +1,4 @@
-# A0–A8 实验配置说明
+# Atomic-Tail DualPos 实验配置说明
 
 ## 1. 研究问题与固定条件
 
@@ -18,7 +18,21 @@
 
 ## 2. 共同模型
 
-当前 clip 特征为 `x ∈ R^512`。历史 clip 特征先投影到 256 维，与 position embedding 相加；当前 clip 作为单 query，通过 4-head attention 得到 history context `h ∈ R^256`。`[x; h]` 经线性融合回 512 维，再由 35-node 分类头输出 logits。融合层初始化为“保留当前特征、历史分量为零”，避免训练开始时随机 history 直接破坏视觉表征。
+当前 clip 特征为 `x ∈ R^512`。历史 clip 特征投影到 256 维；当前 clip 作为单 query，通过 4-head attention 得到 history context `h ∈ R^256`。`[x; h]` 经线性融合回 512 维，再由 35-node 分类头输出 logits。融合层初始化为“保留当前特征、历史分量为零”，避免训练开始时随机 history 直接破坏视觉表征。
+
+旧实验的历史 token 为：
+
+`token_i = W_f x_i + E_pos(position_i)`
+
+DualPos 定义真实 recency `r_i`、增强呈现位置 `p_i` 和位移 `Δ_i=p_i−r_i`：
+
+`token_i = W_f x_i + E_true(r_i) + E_shift(Δ_i)`
+
+- `E_true` 继续使用原 `position_embedding`，因此可读取已有 A0 权重；
+- `Δ` 范围为 `[-34,+34]`，对应 69 个 embedding 索引；
+- `Δ=0` 的 embedding 使用 padding row，固定为零且不更新；
+- actual/test view 中 `p=r`、`Δ=0`，因此新增分支不会改变 A0 的真实顺序路径；
+- augmented view 中被移动动作具有非零 `Δ`，使 shuffle 改变 token 集合而不篡改真实 recency。
 
 主要监督始终为 node cross-entropy。A8 另加入 Tier-3 聚合损失，但测试指标仍同时报告 node 和 Tier-3。
 
@@ -83,22 +97,97 @@
 
 A2 与 A3 的唯一区别是 position ID 语义，因此 A3−A2 可直接检验位置错配是否是旧方法的不稳定来源。
 
+### A3-full-shuffle — Broad shuffle with true recency
+
+> **状态：deferred，不建议运行。**在 true-recency 与 single-query attention 下，它主要只是重新排列保持相同“特征—位置”配对的 token 集合，语义扰动基本不可见。
+
+目的：补齐 shuffle scope × position semantics 的 2×2 消融，检验 A1 的下降主要来自 broad shuffle，还是来自 shuffle 后伪造的位置编码。
+
+- shuffle scope 与 A1 完全一致：`active_tail_only=false`；
+- 有 active incomplete atomic tail 时固定 tail，并对其余 graph-valid history 做 broad shuffle；
+- 没有 active tail 时仍对全部 graph-valid history 做 shuffle；
+- position semantics 与 A3 完全一致：每个历史元素始终携带 actual history 中的真实 recency ID；
+- uniform sampling，一个样本在整个训练中固定一个 shuffle；
+- 从头训练 50 epoch，LR `1e-3`；
+- 测试统一使用 actual chronological history。
+
+完整的 2×2 对照为：
+
+| Shuffle scope | Presented-order position | Actual-recency position |
+|---|---|---|
+| Broad / legacy | A1 | **A3-full-shuffle** |
+| Active-tail-only | A2 | A3 |
+
+- `A3-full-shuffle − A1`：broad shuffle 下真实 recency position 的作用；
+- `A3 − A3-full-shuffle`：真实 recency 下 active-tail-only gating 的作用；
+- 两组 position delta 的差异：scope 与 position semantics 的交互。
+
+### A3-DualPos — Active-tail true recency plus displacement
+
+目的：在保持 A3 真实 recency 的同时，用 shuffle displacement 显式表示增强呈现顺序，使重排对 attention 可学习。
+
+- active-tail-only，与 A3 使用相同 uniform graph-valid shuffle；
+- `position_mode=true_plus_shift`；
+- 对每个历史动作保留真实 recency `r`；
+- 根据 shuffle 后位置计算 `Δ=p−r`，加入独立 shift embedding；
+- actual/test view 的 `Δ` 全部为 0；
+- frozen R3D-18 特征继续复用；
+- Direct Fusion/history model、分类头、true-position 与 shift embedding 从头训练；
+- 50 epoch，AdamW，LR `1e-3`，weight decay `1e-4`；
+- 一个训练样本固定一个 shuffle，与 A3 的训练预算一致。
+
+主要对比：
+
+- `A3-DualPos − A3`：检验 shuffle displacement 是否让原本近似不可见的重排产生有效监督；
+- `A3-DualPos − A2`：检验将真实时间与增强呈现顺序解耦是否优于 presented-only 伪位置。
+
 ### A4 — Paired warm-start and calibration
+
+> **状态：deferred，不建议运行。**旧 A4 只有 true recency，actual/augmented 在当前 attention 下近似同一个 token 集合，paired shuffle 信号不足。
 
 目的：把增强从“替代训练分布”改为“局部正则化”。
 
 - 继承 A3；
 - 默认直接加载同 participant、seed、scope 的共享旧 M2-Direct `last.pth`；若关闭共享 A0，则加载新包本地 A0 `last.pth`；
-- 每个 batch 同时前向 actual 和 augmented，两者 node CE 等权平均；
-- mixed fine-tuning：20 epoch，LR `3e-4`；
-- 最后 actual-only calibration：5 epoch，LR `1e-4`；
+- 每个 batch 同时前向 actual 和 augmented，node CE 权重分别为 `0.6 / 0.4`；
+- 只对 A4 覆盖全局固定增强设置，每 2 epoch 刷新一次确定性 shuffle；
+- mixed fine-tuning：10 epoch，LR `1e-4`；
+- 最后 actual-only calibration：3 epoch，LR `5e-5`；
+- 分别保存 `after_mixed_finetune.pth`、`after_actual_calibration.pth`，最终权重仍保存为 `last.pth`；
 - 测试 actual。
 
 这一设置借鉴了“同一样本的多个增强视图共同训练、并控制增强强度”的一般思想。AugMix 展示了多视图与一致性正则对增强鲁棒性的价值；这里不使用其图像混合操作，只采用“保留原视图”的训练原则。[AugMix, ICLR 2020](https://openreview.net/pdf?id=S1gmrxHFvB)
 
+这些设置根据 A0–A3 的训练动态作了保守化调整：A1–A3 在第 2–4 epoch 已接近完全拟合训练集，A3 对 A0 的平均优势较小且存在明显 seed 交互，因此减少 warm-start 后的训练步数、降低学习率，并提高 actual view 权重以控制模型偏离真实顺序基线。
+
 注意：A4 相比 A3 同时引入 paired view、A0 warm-start 和 calibration，是一个面向性能的组合阶段。若需发表级机制拆分，可在配置复制出 A4a/A4b 补充实验，但不要改变主 A0–A8 编号。
 
+### A4-DualPos — Paired warm-started DualPos
+
+目的：从强 A0 基线出发，只让新增 displacement 分支先适配 atomic-tail perturbation，再进行保守的 paired 联合微调和 actual 校准。
+
+- 从同 participant、seed、scope 的共享 A0 `m2_direct/last.pth` 热启动；
+- A0 中兼容的 projection、attention、fusion、classifier 和 `position_embedding` 全部加载；
+- 新增 `shift_embedding` 以 `N(0,0.02)` 初始化，零位移行固定为零；
+- actual/augmented CE 权重为 `0.6 / 0.4`；
+- 每 2 epoch 刷新一次确定性 atomic-tail shuffle；
+- Phase 1 `dualpos_shift_warmup`：2 epoch，只训练 shift embedding，LR `5e-4`；
+- Phase 2 `dualpos_mixed_finetune`：8 epoch，全部模型解冻；旧参数 LR `1e-4`，shift embedding LR `5e-4`；
+- Phase 3 `actual_calibration`：3 epoch，只使用 actual view，冻结 shift embedding，旧参数 LR `5e-5`；
+- 测试始终 actual chronological history，所有 shift 为 0；
+- 阶段 checkpoint 分别为 `after_dualpos_shift_warmup.pth`、`after_dualpos_mixed_finetune.pth`、`after_actual_calibration.pth`，最终另存 `last.pth`。
+
+该设计保证 A4-DualPos 不是从头训练：只有新增 shift embedding 没有 A0 权重。Phase 1 先训练新分支，Phase 3 冻结它，避免 actual-only calibration 的 weight decay 冲淡非零 shift embedding。
+
+主要对比：
+
+- `A4-DualPos − A0`：完整方法相对实际顺序基线；
+- `A4-DualPos − A3-DualPos`：A0 warm-start、paired view 和 calibration 的组合贡献；
+- `A3-DualPos − A3`：与完整方法分开报告的核心编码机制贡献。
+
 ### A5 — Confidence-gated consistency
+
+> 当前状态：deferred。A5–A8 保留旧实验定义供后续修改，尚未迁移到 DualPos 数据与训练方案，不在默认运行列表中。
 
 目的：要求 actual 与合法 atomic shuffle 对同一当前 clip 给出稳定预测。
 
@@ -164,9 +253,11 @@ A8−A7 用于判断层级标签是否提供稳定增益。若 node accuracy 下
 
 `L_node = CE(y_node, z)`
 
-A4+ paired 阶段：
+A4-DualPos 的 warmup 与 paired 联合微调阶段：
 
-`L_pair = 0.5 CE(y, z_actual) + 0.5 CE(y, z_aug)`
+`L_pair = 0.6 CE(y, z_actual) + 0.4 CE(y, z_aug)`
+
+旧 A4 也保留 `0.6/0.4`，但已 deferred。A5–A8 未设置 `actual_ce_weight` 时使用原默认值 `0.5/0.5`，当前阶段均不建议运行。
 
 A5+：
 
@@ -192,30 +283,34 @@ A8：
 - win/tie/loss；
 - 各 participant 均值和最差 participant；
 - augmentation changed fraction、Kendall distance、A7 eligible fraction；
+- DualPos 的 shifted token fraction 与 mean absolute position shift；
 - 对 run 级预测进行 paired bootstrap 95% CI，避免把 clip 当作完全独立样本。
 
 主张方法有效的建议门槛：平均 node accuracy 比 A0 高至少 1 个百分点、12 个配对中至少 9 胜、且最差 participant 不明显退化。门槛是本项目的预注册建议，不是通用统计标准。
 
 ## 7. 推荐调参顺序
 
-1. 固定模型和训练预算，完成 A0–A3；
-2. 若 A3 优于 A2，固定 true-recency；否则检查 position ID 与 cache 对齐；
-3. A4 验证 paired + warm-start + calibration；
-4. A5 只调 consistency weight/threshold；
-5. A6 再调 candidate count、distance、anchor、temperature；
-6. A7/A8 最后加入，避免多损失同时搜索；
-7. 选择配置后完整跑 4 folds × 3 seeds，一次性冻结结果。
+1. 保留已有 A0–A3 结果，不覆盖已有输出；
+2. 先运行 `tools/test_dualpos_torch.py`，验证零位移兼容、true-only 排列不变和非零 shift 可见；
+3. 用 A、D folds × seed 1 对 A3-DualPos 与 A4-DualPos 做小规模运行检查；
+4. 若输入 audit、训练日志和实际顺序测试均正常，再完整运行 4 folds × 3 seeds；
+5. 重点比较 `A3-DualPos−A3`、`A4-DualPos−A0` 和 `A4-DualPos−A3-DualPos`；
+6. A3-full-shuffle、旧 A4、A5–A8 保持 deferred，待 DualPos 结果分析后再决定。
 
 ## 8. 集中配置字段速查
 
 - `paths.*`：所有 Python、输入、资产、输出路径模板；
 - `paths.shared_artifacts_root`：共享特征和既有 M2-Direct 权重的唯一根目录；
 - `grid.*`：participants、seeds、scope、测试 split、依赖和跳过策略；
-- `model.*`：模型维度；
-- `training.*`：epoch、batch、worker、LR、AMP 和 device；
-- `training.reuse_shared_a0_checkpoint`：`true` 时 A0 和 A4–A8 只读复用共享 M2-Direct 权重；
-- `augmentation.*`：采样与辅助损失超参数；
-- `experiments.A0...A8`：每个实验的不可歧义开关。
+- `model.*`：模型维度及 `shift_embedding_init_std`；
+- `training.*`：默认 epoch、batch、worker、LR、AMP 和 device；
+- `training.reuse_shared_a0_checkpoint`：`true` 时 A0 与 A4-DualPos 只读复用共享 M2-Direct 权重；
+- `augmentation.*`：默认采样、刷新和辅助损失超参数；A4-DualPos 使用实验级 `refresh_interval=2`；
+- `experiments.A4-DualPos.shift_warmup_*`：仅新 shift embedding 的预热阶段；
+- `experiments.A4-DualPos.shift_learning_rate`：联合微调时新分支学习率；
+- `experiments.A4-DualPos.actual_ce_weight`：actual CE 权重，augmented 权重自动取 `1-weight`；
+- `status=deferred`：定义保留但不进入默认运行列表；
+- `grid.default_experiments`：无显式 `-Experiments` 时运行的实验集合。
 
 路径模板支持：`{package_root}`、`{input_root}`、`{participant}`、`{seed}`、`{scope}`、`{cache_scope}`、`{camera_id}`。
 

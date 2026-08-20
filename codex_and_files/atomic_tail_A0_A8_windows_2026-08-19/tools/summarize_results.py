@@ -16,7 +16,7 @@ from atomic_tail_exp.config import load_config, write_json
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Summarize completed A0-A8 runs.")
+    parser = argparse.ArgumentParser(description="Summarize completed atomic-tail experiment runs.")
     parser.add_argument("--config", default=str(PACKAGE_ROOT / "config" / "experiment_config.json"))
     parser.add_argument("--split", default="test_all", choices=["test_normal", "test_fault", "test_all"])
     parser.add_argument("--output", default=None)
@@ -89,4 +89,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
