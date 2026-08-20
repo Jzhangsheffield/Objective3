@@ -53,6 +53,7 @@ def forward_view(model: torch.nn.Module, batch: dict[str, Any], view: str):
         batch[f"{view}_history_features"],
         batch[f"{view}_history_position_ids"],
         batch[f"{view}_history_padding_mask"],
+        batch[f"{view}_history_shift_ids"],
     )
 
 
@@ -106,6 +107,45 @@ def load_checkpoint_compatible(model: torch.nn.Module, checkpoint_path: str | Pa
     }
 
 
+def configure_trainable_parameters(model: torch.nn.Module, mode: str) -> None:
+    for parameter in model.parameters():
+        parameter.requires_grad = True
+    if mode == "shift_only":
+        for name, parameter in model.named_parameters():
+            parameter.requires_grad = name.startswith("shift_embedding.")
+    elif mode == "base_only":
+        for name, parameter in model.named_parameters():
+            if name.startswith("shift_embedding."):
+                parameter.requires_grad = False
+    elif mode != "all":
+        raise ValueError(f"Unsupported trainability mode: {mode}")
+
+
+def build_phase_optimizer(
+    model: torch.nn.Module,
+    learning_rate: float,
+    weight_decay: float,
+    shift_learning_rate: float | None = None,
+) -> torch.optim.Optimizer:
+    trainable = [(name, parameter) for name, parameter in model.named_parameters() if parameter.requires_grad]
+    if not trainable:
+        raise ValueError("Training phase has no trainable parameters")
+    if shift_learning_rate is None:
+        return torch.optim.AdamW(
+            [parameter for _, parameter in trainable],
+            lr=float(learning_rate),
+            weight_decay=float(weight_decay),
+        )
+    base_parameters = [parameter for name, parameter in trainable if not name.startswith("shift_embedding.")]
+    shift_parameters = [parameter for name, parameter in trainable if name.startswith("shift_embedding.")]
+    groups = []
+    if base_parameters:
+        groups.append({"params": base_parameters, "lr": float(learning_rate)})
+    if shift_parameters:
+        groups.append({"params": shift_parameters, "lr": float(shift_learning_rate)})
+    return torch.optim.AdamW(groups, weight_decay=float(weight_decay))
+
+
 def train_phase(
     model: torch.nn.Module,
     loader: DataLoader,
@@ -154,9 +194,11 @@ def train_phase(
                     actual_logits, actual_extra = forward_view(model, batch, "actual")
                     augmented_logits, augmented_extra = forward_view(model, batch, "augmented")
                     primary_logits = augmented_logits
-                    node_ce = 0.5 * (
-                        F.cross_entropy(actual_logits, batch["node_target"])
-                        + F.cross_entropy(augmented_logits, batch["node_target"])
+                    actual_ce_weight = float(experiment.get("actual_ce_weight", 0.5))
+                    augmented_ce_weight = 1.0 - actual_ce_weight
+                    node_ce = (
+                        actual_ce_weight * F.cross_entropy(actual_logits, batch["node_target"])
+                        + augmented_ce_weight * F.cross_entropy(augmented_logits, batch["node_target"])
                     )
                     consistency_component, selected = (
                         symmetric_kl_consistency(
@@ -359,23 +401,71 @@ def run_training(config: dict[str, Any], spec: dict[str, Any], overwrite: bool =
     if shared_a0_reuse:
         phases = []
     elif schedule == "baseline":
-        phases = [("baseline", int(config["training"]["baseline_epochs"]), float(config["training"]["learning_rate"]))]
+        phases = [{
+            "name": "baseline", "epochs": int(config["training"]["baseline_epochs"]),
+            "learning_rate": float(config["training"]["learning_rate"]), "trainability": "all",
+        }]
     elif schedule == "scratch":
-        phases = [("scratch", int(config["training"]["scratch_epochs"]), float(config["training"]["learning_rate"]))]
+        phases = [{
+            "name": "scratch", "epochs": int(config["training"]["scratch_epochs"]),
+            "learning_rate": float(config["training"]["learning_rate"]), "trainability": "all",
+        }]
+    elif schedule == "dualpos_finetune_calibrate":
+        phases = [
+            {
+                "name": "dualpos_shift_warmup",
+                "epochs": int(spec["shift_warmup_epochs"]),
+                "learning_rate": float(spec["shift_warmup_learning_rate"]),
+                "shift_learning_rate": float(spec["shift_warmup_learning_rate"]),
+                "trainability": "shift_only",
+            },
+            {
+                "name": "dualpos_mixed_finetune",
+                "epochs": int(spec["mixed_finetune_epochs"]),
+                "learning_rate": float(spec["finetune_learning_rate"]),
+                "shift_learning_rate": float(spec["shift_learning_rate"]),
+                "trainability": "all",
+            },
+            {
+                "name": "actual_calibration",
+                "epochs": int(spec["actual_calibration_epochs"]),
+                "learning_rate": float(spec["calibration_learning_rate"]),
+                "trainability": "base_only",
+            },
+        ]
     else:
         phases = [
-            ("mixed_finetune", int(config["training"]["mixed_finetune_epochs"]), float(config["training"]["finetune_learning_rate"])),
-            ("actual_calibration", int(config["training"]["actual_calibration_epochs"]), float(config["training"]["calibration_learning_rate"])),
+            {
+                "name": "mixed_finetune",
+                "epochs": int(spec.get("mixed_finetune_epochs", config["training"]["mixed_finetune_epochs"])),
+                "learning_rate": float(spec.get("finetune_learning_rate", config["training"]["finetune_learning_rate"])),
+                "trainability": "all",
+            },
+            {
+                "name": "actual_calibration",
+                "epochs": int(spec.get("actual_calibration_epochs", config["training"]["actual_calibration_epochs"])),
+                "learning_rate": float(spec.get("calibration_learning_rate", config["training"]["calibration_learning_rate"])),
+                "trainability": "all",
+            },
         ]
     write_json(output_dir / "resolved_run_config.json", {"global": config, "run": spec, "device": str(device), "warm_start_report": warm_start_report})
     audit = train_dataset.audit()
     write_json(output_dir / "augmentation_audit.json", audit)
     logs: list[dict[str, Any]] = []
     epoch_offset = 0
-    for phase_name, phase_epochs, learning_rate in phases:
+    for phase_spec in phases:
+        phase_name = str(phase_spec["name"])
+        phase_epochs = int(phase_spec["epochs"])
+        learning_rate = float(phase_spec["learning_rate"])
         if phase_epochs <= 0:
             continue
-        optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=float(config["training"]["weight_decay"]))
+        configure_trainable_parameters(model, str(phase_spec.get("trainability", "all")))
+        optimizer = build_phase_optimizer(
+            model,
+            learning_rate,
+            float(config["training"]["weight_decay"]),
+            float(phase_spec["shift_learning_rate"]) if "shift_learning_rate" in phase_spec else None,
+        )
         phase_logs = train_phase(
             model, train_loader, optimizer, device, graph, config["model"], config["training"],
             config["augmentation"], spec, phase_epochs, phase_name, epoch_offset,
@@ -383,6 +473,17 @@ def run_training(config: dict[str, Any], spec: dict[str, Any], overwrite: bool =
         logs.extend(phase_logs)
         epoch_offset += phase_epochs
         write_json(output_dir / "train_log.json", logs)
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "experiment_id": spec["experiment_id"],
+                "epochs": epoch_offset,
+                "completed_phase": phase_name,
+                "run_spec": spec,
+                "model_config": config["model"],
+            },
+            output_dir / f"after_{phase_name}.pth",
+        )
     write_json(output_dir / "train_log.json", logs)
     checkpoint_path = Path(spec["shared_a0_checkpoint"]) if shared_a0_reuse else output_dir / "last.pth"
     if not shared_a0_reuse:

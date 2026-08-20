@@ -117,7 +117,10 @@ class MultiViewHistoryDataset(Dataset):
         self.epoch = int(epoch)
 
     def _refresh_round(self) -> int:
-        interval = self.augmentation_config.get("refresh_interval", "once")
+        interval = self.experiment.get(
+            "refresh_interval",
+            self.augmentation_config.get("refresh_interval", "once"),
+        )
         if str(interval).lower() == "once":
             return 0
         interval = max(1, int(interval))
@@ -129,17 +132,31 @@ class MultiViewHistoryDataset(Dataset):
             features = self.features.index_select(0, indices)
         else:
             features = self.features.new_zeros((0, self.feature_dim))
-        if position_mode == "actual_recency":
-            actual_recency = {
-                str(row["sample_name"]): len(actual_rows) - index
-                for index, row in enumerate(actual_rows)
-            }
-            positions = torch.tensor([actual_recency[str(row["sample_name"])] for row in rows], dtype=torch.long)
+        actual_recency = {
+            str(row["sample_name"]): len(actual_rows) - index
+            for index, row in enumerate(actual_rows)
+        }
+        true_positions = torch.tensor(
+            [actual_recency[str(row["sample_name"])] for row in rows], dtype=torch.long
+        )
+        presented_positions = torch.arange(len(rows), 0, -1, dtype=torch.long)
+        if position_mode == "presented":
+            positions = presented_positions
+            shifts = torch.zeros_like(presented_positions)
+        elif position_mode == "actual_recency":
+            positions = true_positions
+            shifts = torch.zeros_like(true_positions)
+        elif position_mode == "true_plus_shift":
+            positions = true_positions
+            shifts = presented_positions - true_positions
         else:
-            positions = torch.arange(len(rows), 0, -1, dtype=torch.long)
+            raise ValueError(f"Unsupported position_mode: {position_mode}")
         return {
             "features": features,
             "position_ids": positions,
+            "true_position_ids": true_positions,
+            "presented_position_ids": presented_positions,
+            "shift_ids": shifts,
             "node_classes": torch.tensor([int(row["node_idx"]) - 1 for row in rows], dtype=torch.long),
             "sample_names": [str(row["sample_name"]) for row in rows],
         }
@@ -204,6 +221,9 @@ class MultiViewHistoryDataset(Dataset):
         changed = 0
         distances = []
         corruptible = 0
+        shifted_tokens = 0
+        history_tokens = 0
+        absolute_shift_sum = 0
         for index in range(len(self)):
             item = self._make_item(index)
             reason_counts[item["tail_reason"]] += 1
@@ -211,6 +231,10 @@ class MultiViewHistoryDataset(Dataset):
             changed += int(item["augmentation_changed"])
             distances.append(float(item["augmentation_distance"]))
             corruptible += int(item["corruption_valid"])
+            shifts = item["augmented"]["shift_ids"]
+            shifted_tokens += int((shifts != 0).sum())
+            history_tokens += int(shifts.numel())
+            absolute_shift_sum += int(shifts.abs().sum())
         total = max(1, len(self))
         return {
             "samples": len(self),
@@ -221,6 +245,10 @@ class MultiViewHistoryDataset(Dataset):
             "mean_normalized_kendall_distance": sum(distances) / total,
             "tail_aux_eligible": corruptible,
             "tail_aux_eligible_fraction": corruptible / total,
+            "history_tokens": history_tokens,
+            "shifted_history_tokens": shifted_tokens,
+            "shifted_history_token_fraction": shifted_tokens / max(1, history_tokens),
+            "mean_absolute_position_shift": absolute_shift_sum / max(1, history_tokens),
             "uses_current_target_for_reordering": False,
         }
 
@@ -230,6 +258,7 @@ def _collate_view(batch: list[dict[str, Any]], name: str) -> dict[str, torch.Ten
     max_length = max(int(item[name]["features"].shape[0]) for item in batch)
     features = torch.zeros((len(batch), max_length, feature_dim), dtype=torch.float32)
     positions = torch.zeros((len(batch), max_length), dtype=torch.long)
+    shifts = torch.zeros((len(batch), max_length), dtype=torch.long)
     nodes = torch.full((len(batch), max_length), -1, dtype=torch.long)
     padding = torch.ones((len(batch), max_length), dtype=torch.bool)
     for row_index, item in enumerate(batch):
@@ -237,11 +266,13 @@ def _collate_view(batch: list[dict[str, Any]], name: str) -> dict[str, torch.Ten
         if length:
             features[row_index, :length] = item[name]["features"]
             positions[row_index, :length] = item[name]["position_ids"]
+            shifts[row_index, :length] = item[name]["shift_ids"]
             nodes[row_index, :length] = item[name]["node_classes"]
             padding[row_index, :length] = False
     return {
         f"{name}_history_features": features,
         f"{name}_history_position_ids": positions,
+        f"{name}_history_shift_ids": shifts,
         f"{name}_history_node_classes": nodes,
         f"{name}_history_padding_mask": padding,
     }

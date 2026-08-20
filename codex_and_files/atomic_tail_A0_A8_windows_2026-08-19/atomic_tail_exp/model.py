@@ -15,12 +15,22 @@ class DirectHistoryClassifier(nn.Module):
         num_heads: int = 4,
         max_history: int = 35,
         dropout: float = 0.1,
+        shift_embedding_init_std: float = 0.02,
     ) -> None:
         super().__init__()
         self.max_history = int(max_history)
         self.current_projection = nn.Sequential(nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model))
         self.history_projection = nn.Sequential(nn.Linear(feature_dim, d_model), nn.LayerNorm(d_model))
         self.position_embedding = nn.Embedding(max_history + 1, d_model)
+        self.zero_shift_index = self.max_history - 1
+        self.shift_embedding = nn.Embedding(
+            2 * self.max_history - 1,
+            d_model,
+            padding_idx=self.zero_shift_index,
+        )
+        nn.init.normal_(self.shift_embedding.weight, std=float(shift_embedding_init_std))
+        with torch.no_grad():
+            self.shift_embedding.weight[self.zero_shift_index].zero_()
         self.null_history = nn.Parameter(torch.zeros(1, 1, d_model))
         nn.init.normal_(self.null_history, std=0.02)
         self.attention = nn.MultiheadAttention(d_model, num_heads, dropout=dropout, batch_first=True)
@@ -47,6 +57,7 @@ class DirectHistoryClassifier(nn.Module):
         history_features: torch.Tensor,
         history_position_ids: torch.Tensor,
         history_padding_mask: torch.Tensor,
+        history_shift_ids: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         current = self.current_projection(current_feature)
         history = self.history_projection(history_features)
@@ -54,6 +65,13 @@ class DirectHistoryClassifier(nn.Module):
             history = history + self.position_embedding(
                 history_position_ids.clamp(min=0, max=self.max_history)
             )
+            if history_shift_ids is not None:
+                maximum_shift = self.max_history - 1
+                shift_indices = (
+                    history_shift_ids.clamp(min=-maximum_shift, max=maximum_shift)
+                    + self.zero_shift_index
+                )
+                history = history + self.shift_embedding(shift_indices)
         null = self.null_history.expand(current_feature.shape[0], -1, -1)
         keys = torch.cat([null, history], dim=1)
         null_mask = torch.zeros((current_feature.shape[0], 1), dtype=torch.bool, device=current_feature.device)
@@ -79,5 +97,5 @@ def build_model(config: dict) -> DirectHistoryClassifier:
         num_heads=int(config["num_heads"]),
         max_history=int(config["max_history"]),
         dropout=float(config["dropout"]),
+        shift_embedding_init_std=float(config.get("shift_embedding_init_std", 0.02)),
     )
-

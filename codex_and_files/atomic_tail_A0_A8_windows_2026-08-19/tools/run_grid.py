@@ -39,9 +39,9 @@ def validate_run_inputs(spec: dict) -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run a selectable A0-A8 atomic-tail experiment grid.")
+    parser = argparse.ArgumentParser(description="Run a selectable atomic-tail experiment grid, including DualPos experiments.")
     parser.add_argument("--config", default=str(PACKAGE_ROOT / "config" / "experiment_config.json"))
-    parser.add_argument("--experiments", default=None, help="Comma-separated subset, e.g. A0,A4,A5")
+    parser.add_argument("--experiments", default=None, help="Comma-separated subset, e.g. A3-DualPos,A4-DualPos")
     parser.add_argument("--participants", default=None, help="Comma-separated outer test folds")
     parser.add_argument("--seeds", default=None, help="Comma-separated seeds")
     parser.add_argument("--scopes", default=None, help="Comma-separated train scopes")
@@ -68,7 +68,14 @@ def main() -> int:
         "participants": participants,
         "seeds": seeds,
         "scopes": scopes,
-        "auto_added_dependencies": args.experiments is not None and any(item not in [part.strip().upper() for part in args.experiments.split(",")] for item in experiments),
+        "auto_added_dependencies": args.experiments is not None and any(
+            item.casefold() not in [part.strip().casefold() for part in args.experiments.split(",")]
+            for item in experiments
+        ),
+        "deferred_selected": [
+            item for item in experiments
+            if config["experiments"][item].get("status") == "deferred"
+        ],
         "input_errors": errors,
         "jobs": [
             {
@@ -113,7 +120,7 @@ def main() -> int:
     if failed:
         print(json.dumps({"failed_jobs": failed}, ensure_ascii=False, indent=2), file=sys.stderr)
         return 1
-    print("Selected A0-A8 grid completed successfully.")
+    print("Selected atomic-tail experiment grid completed successfully.")
     return 0
 
 

@@ -1,5 +1,5 @@
 param(
-    [string]$Experiments = "A0,A1,A2,A3,A4,A5,A6,A7,A8",
+    [string]$Experiments = "A3-DualPos,A4-DualPos",
     [string]$Participants = "A,D,J,M",
     [string]$Seeds = "1,2,42",
     [string]$Scopes = "all_runs",
@@ -31,4 +31,3 @@ if ($Overwrite) { $arguments += "--overwrite" }
 if ($ContinueOnError) { $arguments += "--continue-on-error" }
 & $python @arguments
 exit $LASTEXITCODE
-
