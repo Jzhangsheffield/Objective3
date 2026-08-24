@@ -1,0 +1,4 @@
+# Training dependencies are intentionally inherited from atomic_tail_A0_A8_windows_2026-08-19.
+torch>=2.1
+numpy>=1.24
+

@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "package_name": "atomic_tail_sequence_disjoint_2026-08-24",
+  "paths": {
+    "python_executable": "python",
+    "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+    "legacy_graph_history_package_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22",
+    "legacy_atomic_package_root": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\atomic_tail_A0_A8_windows_2026-08-19",
+    "legacy_atomic_config": "{legacy_atomic_package_root}\\config\\experiment_config.json",
+    "source_protocol_root": "{legacy_atomic_package_root}\\inputs\\{participant}_as_test\\cam_{camera_id}\\protocols",
+    "protocol_root": "{package_root}\\inputs\\{participant}_as_test\\cam_{camera_id}\\protocols",
+    "legacy_train_backbone": "{legacy_graph_history_package_root}\\tools\\train_backbone.py",
+    "legacy_extract_features": "{legacy_graph_history_package_root}\\tools\\extract_features.py",
+    "upstream_root": "{package_root}\\outputs\\upstream\\{participant}_as_test\\cam_{camera_id}\\seed_{seed}",
+    "backbone_output": "{upstream_root}\\backbone\\all_runs",
+    "backbone_checkpoint": "{backbone_output}\\last.pth",
+    "feature_root": "{upstream_root}\\features\\retrained_all_runs",
+    "train_cache": "{feature_root}\\train_all.pt",
+    "test_cache": "{feature_root}\\test_all.pt",
+    "task_graph": "{legacy_atomic_package_root}\\assets\\integrated_task_graph_latest.json",
+    "relation_matrix": "{legacy_atomic_package_root}\\assets\\integrated_feature_history_matrix.json",
+    "history_output_root": "{package_root}\\outputs\\history_models",
+    "summary_root": "{package_root}\\outputs\\summary"
+  },
+  "grid": {
+    "participants": ["A", "D", "J", "M"],
+    "seeds": [1, 2, 42],
+    "train_scope": "all_runs",
+    "camera_id": "001484412812",
+    "test_splits": ["test_normal", "test_fault", "test_all"],
+    "default_experiments": [
+      "M2-Direct-RealOrder",
+      "A1-Legacy-Once",
+      "A1-Legacy-Every10-Replace",
+      "A3-DualPos-Once",
+      "A3-DualPos-Every10"
+    ],
+    "skip_completed": true
+  },
+  "sequence_isolation": {
+    "source_scope": "all_runs",
+    "source_test_split": "test_all",
+    "signature_field": "node_idx",
+    "collapse_consecutive_duplicates": false,
+    "removal_rule": "remove_entire_training_run_when_its_exact_observed_node_sequence_matches_any_test_run",
+    "tier3_signature_for_audit_only": true,
+    "allow_augmentation_to_match_test_order": true,
+    "test_guided_sampling": false
+  },
+  "training_overrides": {
+    "baseline_epochs": 50,
+    "scratch_epochs": 50,
+    "batch_size": 64,
+    "num_workers": 4,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "device": "auto",
+    "amp": false,
+    "deterministic": true,
+    "checkpoint_policy": "last_epoch",
+    "evaluation_history_order": "actual_chronological",
+    "reuse_shared_a0_checkpoint": false
+  },
+  "backbone_training": {
+    "architecture": "resnet3d_18",
+    "num_tier3_classes": 31,
+    "epochs": 100,
+    "batch_size": 16,
+    "num_workers": 8,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "device": "auto",
+    "amp": true,
+    "checkpoint_policy": "last_epoch",
+    "train_from_scratch_per_fold_seed": true
+  },
+  "feature_extraction": {
+    "feature_dim": 512,
+    "batch_size": 16,
+    "num_workers": 8,
+    "device": "auto",
+    "amp": true,
+    "train_manifest": "train.jsonl",
+    "test_manifest": "test_all.jsonl",
+    "reuse_old_feature_cache": false
+  },
+  "experiments": [
+    {
+      "id": "M2-Direct-RealOrder",
+      "base_experiment": "A0",
+      "train_order": "actual",
+      "refresh_interval": null,
+      "description": "M2-Direct fusion retrained from scratch on sequence-disjoint real training runs; no graph-valid shuffle."
+    },
+    {
+      "id": "A1-Legacy-Once",
+      "base_experiment": "A1",
+      "train_order": "legacy_atomic_tail_graph_valid_presented_position",
+      "refresh_interval": "once",
+      "description": "Legacy A1: graph-valid reorder first, then presented-order position IDs; fixed augmented history per sample."
+    },
+    {
+      "id": "A1-Legacy-Every10-Replace",
+      "base_experiment": "A1",
+      "train_order": "legacy_atomic_tail_graph_valid_presented_position",
+      "refresh_interval": 10,
+      "description": "Legacy A1 with presented-order positions; replace each sample's augmented history every 10 epochs while retaining model/optimizer state."
+    },
+    {
+      "id": "A3-DualPos-Once",
+      "base_experiment": "A3-DualPos",
+      "train_order": "atomic_tail_graph_valid",
+      "refresh_interval": "once",
+      "description": "A3-DualPos with true recency plus displacement embedding; fixed augmented histories."
+    },
+    {
+      "id": "A3-DualPos-Every10",
+      "base_experiment": "A3-DualPos",
+      "train_order": "atomic_tail_graph_valid",
+      "refresh_interval": 10,
+      "description": "A3-DualPos with true recency plus displacement embedding; refresh every 10 epochs."
+    }
+  ],
+  "augmentation_coverage_audit": {
+    "epochs": 50,
+    "experiment_ids": [
+      "A1-Legacy-Once",
+      "A1-Legacy-Every10-Replace",
+      "A3-DualPos-Once",
+      "A3-DualPos-Every10"
+    ],
+    "compare_history_prefixes": true,
+    "minimum_history_length": 1,
+    "posthoc_only": true
+  }
+}
