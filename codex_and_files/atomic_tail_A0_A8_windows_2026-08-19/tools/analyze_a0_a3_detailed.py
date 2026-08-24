@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 
-EXPERIMENTS = ("A0", "A1", "A2", "A3")
+EXPERIMENTS = ("A0", "A1", "A2", "A3", "A3-DualPos", "A4-DualPos")
 PARTICIPANTS = ("A", "D", "J", "M")
 SEEDS = (1, 2, 42)
 SPLITS = ("test_all", "test_normal", "test_fault")
@@ -22,6 +22,16 @@ COMPARISONS = (
     ("A2-A1", "A2", "A1"),
     ("A3-A2", "A3", "A2"),
     ("A3-A1", "A3", "A1"),
+    ("A3-DualPos-A3", "A3-DualPos", "A3"),
+    ("A3-DualPos-A0", "A3-DualPos", "A0"),
+    ("A4-DualPos-A0", "A4-DualPos", "A0"),
+    ("A4-DualPos-A3-DualPos", "A4-DualPos", "A3-DualPos"),
+    ("A4-DualPos-A3", "A4-DualPos", "A3"),
+)
+PREDICTION_COMPARISONS = (
+    ("A3-DualPos_vs_A3", "A3-DualPos", "A3"),
+    ("A4-DualPos_vs_A0", "A4-DualPos", "A0"),
+    ("A4-DualPos_vs_A3-DualPos", "A4-DualPos", "A3-DualPos"),
 )
 
 
@@ -104,6 +114,7 @@ def main() -> int:
     parser.add_argument("--package-root", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--bootstrap-repetitions", type=int, default=20000)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--brief", action="store_true")
     args = parser.parse_args()
     package_root = Path(args.package_root).resolve()
     output_root = package_root / "outputs"
@@ -187,10 +198,11 @@ def main() -> int:
         audit_summary[experiment] = {}
         for key in (
             "samples", "augmentation_changed_fraction", "mean_normalized_kendall_distance",
-            "tail_aux_eligible_fraction",
+            "tail_aux_eligible_fraction", "shifted_history_token_fraction",
+            "mean_absolute_position_shift",
         ):
             audit_summary[experiment][key] = summary([
-                float(audits[(experiment, participant, seed)][key])
+                float(audits[(experiment, participant, seed)].get(key, 0.0))
                 for participant in PARTICIPANTS for seed in SEEDS
             ])
         audit_summary[experiment]["active_tail_fraction"] = summary([
@@ -216,71 +228,83 @@ def main() -> int:
             "final_accuracy": summary([float(log[-1]["train_node_accuracy"]) for log in nonempty]) if nonempty else None,
             "final_loss": summary([float(log[-1]["train_loss"]) for log in nonempty]) if nonempty else None,
             "total_seconds": summary([sum(float(row["seconds"]) for row in log) for log in nonempty]) if nonempty else None,
+            "phase_epoch_counts": dict(Counter(
+                row["phase"] for log in nonempty for row in log
+            )),
+            "phase_end_accuracy": {
+                phase: summary([
+                    float([row for row in log if row["phase"] == phase][-1]["train_node_accuracy"])
+                    for log in nonempty if any(row["phase"] == phase for row in log)
+                ])
+                for phase in sorted({row["phase"] for log in nonempty for row in log})
+            },
         }
 
     prediction_analysis = {}
     node_names = load_node_names(package_root)
-    for split in SPLITS:
-        outcomes = Counter()
-        clusters: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
-        class_counts: dict[int, list[int]] = defaultdict(lambda: [0, 0, 0])
-        for participant in PARTICIPANTS:
-            for seed in SEEDS:
-                prediction_by_experiment = {}
-                for experiment in ("A0", "A3"):
-                    path = output_root / experiment / "all_runs" / f"{participant}_as_test" / f"seed_{seed}" / "test_results_actual_order" / f"{split}_predictions.csv"
-                    with path.open("r", encoding="utf-8", newline="") as handle:
-                        prediction_by_experiment[experiment] = {row["sample_name"]: row for row in csv.DictReader(handle)}
-                if set(prediction_by_experiment["A0"]) != set(prediction_by_experiment["A3"]):
-                    raise RuntimeError(f"Prediction sample mismatch: {participant} seed={seed} {split}")
-                for sample_name, row0 in prediction_by_experiment["A0"].items():
-                    row3 = prediction_by_experiment["A3"][sample_name]
-                    truth = int(row0["true_node_idx"])
-                    correct0 = int(row0["pred_node_idx"] == row0["true_node_idx"])
-                    correct3 = int(row3["pred_node_idx"] == row3["true_node_idx"])
-                    if correct0 and correct3:
-                        outcomes["both_correct"] += 1
-                    elif correct3:
-                        outcomes["A3_only_correct"] += 1
-                    elif correct0:
-                        outcomes["A0_only_correct"] += 1
-                    else:
-                        outcomes["both_wrong"] += 1
-                    outcomes["same_prediction"] += int(row0["pred_node_idx"] == row3["pred_node_idx"])
-                    outcomes["total"] += 1
-                    cluster = (participant, row0["run"])
-                    clusters[cluster][0] += correct3 - correct0
-                    clusters[cluster][1] += 1
-                    class_counts[truth][0] += correct3
-                    class_counts[truth][1] += correct0
-                    class_counts[truth][2] += 1
-        random_generator = random.Random(20260820)
-        cluster_values = list(clusters.values())
-        bootstrap = []
-        for _ in range(int(args.bootstrap_repetitions)):
-            sampled = [random_generator.choice(cluster_values) for _ in cluster_values]
-            bootstrap.append(sum(item[0] for item in sampled) / max(1, sum(item[1] for item in sampled)))
-        class_rows = [
-            {
-                "node_idx": node,
-                "node_name": node_names.get(node, f"node_{node}"),
-                "support_clip_seed": values[2],
-                "A0_accuracy": values[1] / values[2],
-                "A3_accuracy": values[0] / values[2],
-                "delta": (values[0] - values[1]) / values[2],
+    for comparison_label, left, right in PREDICTION_COMPARISONS:
+        prediction_analysis[comparison_label] = {}
+        for split in SPLITS:
+            outcomes = Counter()
+            clusters: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
+            class_counts: dict[int, list[int]] = defaultdict(lambda: [0, 0, 0])
+            for participant in PARTICIPANTS:
+                for seed in SEEDS:
+                    prediction_by_experiment = {}
+                    for experiment in (left, right):
+                        path = output_root / experiment / "all_runs" / f"{participant}_as_test" / f"seed_{seed}" / "test_results_actual_order" / f"{split}_predictions.csv"
+                        with path.open("r", encoding="utf-8", newline="") as handle:
+                            prediction_by_experiment[experiment] = {row["sample_name"]: row for row in csv.DictReader(handle)}
+                    if set(prediction_by_experiment[left]) != set(prediction_by_experiment[right]):
+                        raise RuntimeError(f"Prediction sample mismatch: {participant} seed={seed} {split}")
+                    for sample_name, left_row in prediction_by_experiment[left].items():
+                        right_row = prediction_by_experiment[right][sample_name]
+                        truth = int(left_row["true_node_idx"])
+                        left_correct = int(left_row["pred_node_idx"] == left_row["true_node_idx"])
+                        right_correct = int(right_row["pred_node_idx"] == right_row["true_node_idx"])
+                        if left_correct and right_correct:
+                            outcomes["both_correct"] += 1
+                        elif left_correct:
+                            outcomes["left_only_correct"] += 1
+                        elif right_correct:
+                            outcomes["right_only_correct"] += 1
+                        else:
+                            outcomes["both_wrong"] += 1
+                        outcomes["same_prediction"] += int(left_row["pred_node_idx"] == right_row["pred_node_idx"])
+                        outcomes["total"] += 1
+                        cluster = (participant, left_row["run"])
+                        clusters[cluster][0] += left_correct - right_correct
+                        clusters[cluster][1] += 1
+                        class_counts[truth][0] += left_correct
+                        class_counts[truth][1] += right_correct
+                        class_counts[truth][2] += 1
+            random_generator = random.Random(f"20260820:{comparison_label}:{split}")
+            cluster_values = list(clusters.values())
+            bootstrap = []
+            for _ in range(int(args.bootstrap_repetitions)):
+                sampled = [random_generator.choice(cluster_values) for _ in cluster_values]
+                bootstrap.append(sum(item[0] for item in sampled) / max(1, sum(item[1] for item in sampled)))
+            class_rows = [
+                {
+                    "node_idx": node,
+                    "node_name": node_names.get(node, f"node_{node}"),
+                    "support_clip_seed": values[2],
+                    "left_accuracy": values[0] / values[2],
+                    "right_accuracy": values[1] / values[2],
+                    "delta": (values[0] - values[1]) / values[2],
+                }
+                for node, values in class_counts.items()
+            ]
+            prediction_analysis[comparison_label][split] = {
+                "left": left, "right": right, **dict(outcomes),
+                "same_prediction_fraction": outcomes["same_prediction"] / outcomes["total"],
+                "accuracy_delta": (outcomes["left_only_correct"] - outcomes["right_only_correct"]) / outcomes["total"],
+                "participant_run_clusters": len(cluster_values),
+                "cluster_bootstrap_ci95_low": percentile(bootstrap, 0.025),
+                "cluster_bootstrap_ci95_high": percentile(bootstrap, 0.975),
+                "top_class_gains": sorted(class_rows, key=lambda row: (-row["delta"], -row["support_clip_seed"]))[:8],
+                "top_class_losses": sorted(class_rows, key=lambda row: (row["delta"], -row["support_clip_seed"]))[:8],
             }
-            for node, values in class_counts.items()
-        ]
-        prediction_analysis[split] = {
-            **dict(outcomes),
-            "same_prediction_fraction": outcomes["same_prediction"] / outcomes["total"],
-            "A3_minus_A0_accuracy": (outcomes["A3_only_correct"] - outcomes["A0_only_correct"]) / outcomes["total"],
-            "participant_run_clusters": len(cluster_values),
-            "cluster_bootstrap_ci95_low": percentile(bootstrap, 0.025),
-            "cluster_bootstrap_ci95_high": percentile(bootstrap, 0.975),
-            "top_class_gains": sorted(class_rows, key=lambda row: (-row["delta"], -row["support_clip_seed"]))[:8],
-            "top_class_losses": sorted(class_rows, key=lambda row: (row["delta"], -row["support_clip_seed"]))[:8],
-        }
 
     report = {
         "coverage": {experiment: {"completed": len(coverage[experiment]), "keys": coverage[experiment]} for experiment in EXPERIMENTS},
@@ -291,8 +315,39 @@ def main() -> int:
         "test_all_stage_paired": stages,
         "augmentation_audit": audit_summary,
         "training": training_summary,
-        "A3_vs_A0_predictions": prediction_analysis,
+        "prediction_comparisons": prediction_analysis,
     }
+    if args.brief:
+        report = {
+            "coverage": report["coverage"],
+            "aggregate": report["aggregate"],
+            "test_all_aggregate": report["aggregate"]["test_all"],
+            "participant_node_accuracy": {
+                split: {
+                    experiment: {
+                        participant: report["participant_summary"][split][experiment][participant]["node_accuracy"]
+                        for participant in PARTICIPANTS
+                    }
+                    for experiment in EXPERIMENTS
+                }
+                for split in SPLITS
+            },
+            "seed_node_accuracy": {
+                split: {
+                    experiment: {
+                        seed: report["seed_summary"][split][experiment][seed]["node_accuracy"]
+                        for seed in map(str, SEEDS)
+                    }
+                    for experiment in EXPERIMENTS
+                }
+                for split in SPLITS
+            },
+            "paired": report["paired"],
+            "test_all_stage_paired": report["test_all_stage_paired"],
+            "augmentation_audit": report["augmentation_audit"],
+            "training": report["training"],
+            "prediction_comparisons": report["prediction_comparisons"],
+        }
     text = json.dumps(report, ensure_ascii=False, indent=2)
     if args.output:
         output = Path(args.output)
