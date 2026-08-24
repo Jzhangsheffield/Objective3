@@ -1,0 +1,102 @@
+{
+  "source_checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_action_boundary_experiment_2026-08-07\\outputs\\A_as_test\\all_runs\\seed_1\\causal_boundary_tcn_v1\\best.pth",
+  "checkpoint_epoch": 4,
+  "initial_settings": {
+    "start_threshold": 0.55,
+    "end_threshold": 0.55,
+    "action_threshold": 0.55,
+    "start_debounce": 2,
+    "end_debounce": 2,
+    "min_action_steps": 3,
+    "merge_gap_steps": 0
+  },
+  "calibrated_settings": {
+    "start_threshold": 0.85,
+    "end_threshold": 0.85,
+    "action_threshold": 0.65,
+    "start_debounce": 2,
+    "end_debounce": 2,
+    "min_action_steps": 5,
+    "merge_gap_steps": 0
+  },
+  "calibrated_merge_gap": 3,
+  "selection_policy": "decoder parameters selected on the 12 training-side validation runs only",
+  "summary": {
+    "test_normal": {
+      "gt": 294,
+      "initial": 1855,
+      "calibrated": 289,
+      "initial_match": 178,
+      "calibrated_match": 176,
+      "initial_precision": 0.09595687331536389,
+      "initial_recall": 0.6054421768707483,
+      "initial_f1": 0.16565844578873898,
+      "calibrated_precision": 0.6089965397923875,
+      "calibrated_recall": 0.5986394557823129,
+      "calibrated_f1": 0.6037735849056604,
+      "initial_edit_macro": 16.86036850357586,
+      "calibrated_edit_macro": 87.2546707575438
+    },
+    "test_fault": {
+      "gt": 137,
+      "initial": 670,
+      "calibrated": 122,
+      "initial_match": 82,
+      "calibrated_match": 89,
+      "initial_precision": 0.12238805970149254,
+      "initial_recall": 0.5985401459854015,
+      "initial_f1": 0.20322180916976457,
+      "calibrated_precision": 0.7295081967213115,
+      "calibrated_recall": 0.6496350364963503,
+      "calibrated_f1": 0.6872586872586872,
+      "initial_edit_macro": 22.55677199932991,
+      "calibrated_edit_macro": 88.54857531804178
+    },
+    "test_all": {
+      "gt": 431,
+      "initial": 2525,
+      "calibrated": 411,
+      "initial_match": 260,
+      "calibrated_match": 265,
+      "initial_precision": 0.10297029702970296,
+      "initial_recall": 0.6032482598607889,
+      "initial_f1": 0.17591339648173207,
+      "calibrated_precision": 0.6447688564476886,
+      "calibrated_recall": 0.6148491879350348,
+      "calibrated_f1": 0.6294536817102138,
+      "initial_edit_macro": 18.99651981448363,
+      "calibrated_edit_macro": 87.73988496773053
+    }
+  },
+  "qualitative_runs": [
+    "run_sample_000001",
+    "run_sample_000007",
+    "run_sample_000020"
+  ],
+  "ground_truth_action_key": {
+    "1": "turn on · main switch",
+    "2": "turn on · water pump",
+    "3": "turn on · air compressor",
+    "4": "turn on · extractor fan",
+    "5": "unlock · crimper",
+    "6": "put · lock",
+    "7": "turn on · crimper",
+    "8": "remove · protection cover",
+    "9": "put · protection cover",
+    "10": "move · pedal",
+    "11": "adjust · parameters",
+    "12": "take · plier",
+    "13": "grip · sample",
+    "14": "place · sample",
+    "15": "press · pedal",
+    "16": "put · sample",
+    "17": "reverse · sample",
+    "18": "inspect · sample",
+    "19": "put · plier",
+    "20": "turn off · water pump",
+    "21": "turn off · extractor fan",
+    "22": "turn off · air compressor",
+    "23": "turn off · crimper",
+    "24": "take · protection cover"
+  }
+}

@@ -172,6 +172,8 @@ def extract_run_features(
         "anchor_row_index": anchor_tensor,
         "frame_idx": torch.from_numpy(table["frame_idx"][anchors]),
         "original_frame_idx": torch.from_numpy(table["original_frame_idx"][anchors]),
+        # 这里的是按照anchors来从原本的索引中进行取值，也就得到每个anchor对应的frame_idx和original_frame_idx
+        # 这里是因为原视频的开头和结尾被裁剪去了一部分，所以frame_idx是从1开始的，而original_frame_idx则是真实的frame_idx.
         "timestamps": [table["timestamps"][index] for index in anchors],
         "state": torch.from_numpy(table["state"][anchors]).long(),
         "start": torch.from_numpy(dilate_binary_targets(anchor_start.numpy(), radius_anchors)),
