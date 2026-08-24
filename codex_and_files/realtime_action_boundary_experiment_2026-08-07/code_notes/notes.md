@@ -612,7 +612,7 @@ def extract_run_features(
     # 判断是否遍历的所有的帧。
 
     feature_tensor = torch.cat(features, dim=0)
-    # feature中是一个一个的张量，维度为[b, feat_dim], 所以沿着第一维度进行拼接。
+    # feature中是一个一个的张量，维度为[b, feat_dim], 所以沿着第0维度进行拼接。
     if feature_tensor.shape[0] != len(anchors):
         raise RuntimeError(f"Extracted {feature_tensor.shape[0]} anchors, expected {len(anchors)}")
     # 如果拼接后第一维的大小和要提取的stride帧数量不一样则报错。
@@ -667,6 +667,19 @@ def extract_run_features(
     return payload["metadata"]
     # 将一个run提取的特征保存下来。
 ```
+这里要强调一下"start": torch.from_numpy(dilate_binary_targets(anchor_start.numpy(), radius_anchors)), "end": torch.from_numpy(dilate_binary_targets(anchor_end.numpy(), radius_anchors)), 这两个位置。
+```text
+def dilate_binary_targets(target: np.ndarray, radius: int) -> np.ndarray:
+    if radius <= 0:
+        return target.astype(np.float32, copy=True)
+    result = np.zeros_like(target, dtype=np.float32)
+    for index in np.flatnonzero(target > 0):
+        result[max(0, index - radius) : min(len(result), index + radius + 1)] = 1.0
+    return result
+```
+该函数如下，他的作用是将原本精确anchor_end和anchor_start, 在小范围内进行扩张，让其附近几帧都是标注为start 和 end.
+这是因为动作的标注首先是有一定误差的，且动作之间往往存在着转换的中间态，中间态时其开始或结束语义也已经足够精准。另外，也缓解标签不平衡的问题。
+
 
 ## 阶段7：检查feature cache
 ### 一个run_sample_000001.pt内包含的内容
@@ -899,7 +912,7 @@ class CausalBoundaryTCN(nn.Module):
         # 构建5个CausalResidualBlock
         self.state_head = nn.Conv1d(hidden_dim, 2, 1)
         self.boundary_head = nn.Conv1d(hidden_dim, 2, 1)
-        # 构建状态头和分类头
+        # 构建状态头和分类头, 最后的输出维度是2维的。
 
     @property
     def receptive_field_steps(self) -> int:
@@ -1045,7 +1058,7 @@ def infer_run(model: torch.nn.Module, cache: dict[str, Any], device: torch.devic
         "end_probability": torch.sigmoid(outputs["end_logits"])[0].cpu().numpy(),
     }
 ```
-用于测试模型，cache["features"]维度为[T, D]，所以要unsqueeze()增加一个维度让其变成[B, T, D]
+用于测试模型，cache["features"]维度为[T, D]，所以要unsqueeze()增加一个维度让其变成[B, T, D]，对于"state_probability" 其维度是[B, T, 2], 2中第一个元素表示是background的概率，第二个元素是动作的概率。
 
 ```python
 def evaluate_caches(
@@ -1067,22 +1080,31 @@ def evaluate_caches(
         probabilities = infer_run(model, cache, device)
         # 输出run中每一个时间步的state, start, end 预测状态，是一个字典。
         segments = run_state_machine(**probabilities, settings=online_cfg)
+        # segments现在是一个列表，里面的内容是一个一个字典。字典是DetectedSegment数据类转换来的。
         pred_state = np.zeros(len(cache["state"]), dtype=np.int64)
+        # 创建一个和anchor序列一样长的全0张量，用于后续填充。
         for segment in segments:
             pred_state[segment["start_index"] : segment["end_index"] + 1] = 1
+            # 根据 segment 中的起止索引，将全0张量中对应的位置设置为1，1表明这些是动作片段。
         original = cache["original_frame_idx"].numpy()
         gt_state = cache["state"].numpy()
+        # 这里的"state"和"original_frame_idx" 已经和anchor对齐了。
         gt_segments = []
         start = None
         for index, value in enumerate(list(gt_state) + [0]):
+            # 补一个0，防止是最后一个是1，而没有动作的结束。
             if value and start is None:
                 start = index
+                # "state"是1，但还没有start, 那就将该帧设置为起始帧。
             elif not value and start is not None:
                 gt_segments.append((start, index - 1)); start = None
-        gt_starts = [int(original[index]) for index in np.flatnonzero(cache["exact_start"].numpy() > 0)]
+                # 如果"state"是0，并且start还有值，那就将一个这个元组放进gt_segments中，并将start重新设置为None。
+        gt_starts = [int(original[index]) for index in np.flatnonzero(cache["exact_start"].numpy() > 0)] # 这里exact_start, exact_end都是anchor对其了的
         gt_ends = [int(original[index]) for index in np.flatnonzero(cache["exact_end"].numpy() > 0)]
+        # 这里取出cache中anchor对应的1的位置索引，然后从original中找到原始的真实索引。因为original已经是和anchor对齐的了。
         pred_segments_anchor = [(int(x["start_index"]), int(x["end_index"])) for x in segments]
         pred_segments_frames = [(int(original[x["start_index"]]), int(original[x["end_index"]])) for x in segments]
+        # 获得预测的anchor的片段和真实帧对应的片段。
         per_run[run] = evaluate_run(
             gt_state, pred_state, gt_starts, gt_ends, pred_segments_anchor,
             [int(x) for x in evaluation_cfg["boundary_tolerance_frames"]],
@@ -1103,6 +1125,357 @@ def evaluate_caches(
         for row in prediction_rows:
             handle.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
     return result
+```
+segments现在一个列表，里面的内容是一个一个字典。
+evaluate_run()函数代码如下：
+```python
+def evaluate_run(
+    target_state: np.ndarray,
+    pred_state: np.ndarray,
+    gt_starts: list[int],
+    gt_ends: list[int],
+    pred_segments: list[tuple[int, int]],
+    tolerances: list[int],
+    pred_starts_for_boundary: list[int] | None = None,
+    pred_ends_for_boundary: list[int] | None = None,
+) -> dict:
+    gt_segments = segments_from_binary(target_state)
+    # 这里这个函数和前面的一样，获得ground truth的 segments的片段划分。
+    pred_starts = [segment[0] for segment in pred_segments] if pred_starts_for_boundary is None else pred_starts_for_boundary
+    pred_ends = [segment[1] for segment in pred_segments] if pred_ends_for_boundary is None else pred_ends_for_boundary
+    # 获得预测片段的起止
+    return {
+        "frame_state": binary_classification_metrics(target_state, pred_state),
+        "boundary": {
+            str(tolerance): {
+                "start": match_events(gt_starts, pred_starts, tolerance),
+                "end": match_events(gt_ends, pred_ends, tolerance),
+            }
+            for tolerance in tolerances
+        },
+        "segmental_f1": {str(int(t * 100)): segmental_f1(gt_segments, pred_segments, t) for t in (0.1, 0.25, 0.5)},
+        "edit_score": edit_score(target_state, pred_state),
+        "gt_segment_count": len(gt_segments),
+        "pred_segment_count": len(pred_segments),
+    }
+```
+下面是metrics.py中的一些评估函数：
+## metrics.py
+```python
+def binary_classification_metrics(target: np.ndarray, prediction: np.ndarray) -> dict[str, float]:
+    target = np.asarray(target).astype(bool)
+    prediction = np.asarray(prediction).astype(bool)
+    tp = int(np.sum(target & prediction))
+    # 实际为真预测也为真的数目
+    fp = int(np.sum(~target & prediction))
+    # 预测为真但是实际为假的数目
+    fn = int(np.sum(target & ~prediction))
+    # 实际为真但是预测为假的数目
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    return {"precision": precision, "recall": recall, "f1": f1, "accuracy": float(np.mean(target == prediction))}
+    # 
+
+
+def match_events(gt: Iterable[int], pred: Iterable[int], tolerance: int) -> dict[str, float | int]:
+    gt = sorted(int(x) for x in gt)
+    pred = sorted(int(x) for x in pred)
+    # 将预测的为起始的帧和实际为起始的帧进行排序。
+    candidates = sorted(
+        (abs(p - g), p_index, g_index)
+        for p_index, p in enumerate(pred)
+        for g_index, g in enumerate(gt)
+        if abs(p - g) <= tolerance
+    )
+    # 里面是一个生成器表达式，如果预测为起始的帧和实际为起始的帧之间的差距小于等于tolerance, 就变成一个元组。sorted是对生成器中的元组进行排序。
+    used_pred: set[int] = set()
+    used_gt: set[int] = set()
+    errors: list[int] = []
+    for _, p_index, g_index in candidates:
+        if p_index not in used_pred and g_index not in used_gt:
+            used_pred.add(p_index)
+            used_gt.add(g_index)
+            errors.append(pred[p_index] - gt[g_index])
+    tp, fp, fn = len(errors), len(pred) - len(errors), len(gt) - len(errors)
+    # len(pred) - len(errors)就是预测为真但是实际为假的。 len(gt) - len(errors)，就是实际为真但是预测为假的。
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    return {
+        "tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall, "f1": f1,
+        "mean_signed_error_frames": float(np.mean(errors)) if errors else float("nan"),
+        "mean_absolute_error_frames": float(np.mean(np.abs(errors))) if errors else float("nan"),
+    }
+
+
+def segments_from_binary(labels: Iterable[int]) -> list[tuple[int, int]]:
+    labels = [int(value) for value in labels]
+    result: list[tuple[int, int]] = []
+    start = None
+    for index, value in enumerate(labels + [0]):
+        if value and start is None:
+            start = index
+        elif not value and start is not None:
+            result.append((start, index - 1))
+            start = None
+    return result
+
+
+def segment_iou(first: tuple[int, int], second: tuple[int, int]) -> float:
+    intersection = max(0, min(first[1], second[1]) - max(first[0], second[0]) + 1)
+    # 找预测片段和真实片段的交集
+    union = max(first[1], second[1]) - min(first[0], second[0]) + 1
+    # 找预测片段和真实片段的并集
+    return intersection / union
+
+
+def segmental_f1(gt: list[tuple[int, int]], pred: list[tuple[int, int]], threshold: float) -> dict[str, float]:
+    candidates = sorted(
+        (-segment_iou(p, g), p_index, g_index)
+        for p_index, p in enumerate(pred)
+        for g_index, g in enumerate(gt)
+        if segment_iou(p, g) >= threshold
+    )
+    # 获得满足交并比的片段
+    used_p, used_g = set(), set()
+    for _, p_index, g_index in candidates:
+        if p_index not in used_p and g_index not in used_g:
+            used_p.add(p_index); used_g.add(g_index)
+    tp, fp, fn = len(used_p), len(pred) - len(used_p), len(gt) - len(used_g)
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    # 计算满足交并比的片段的precison, recall 和 f1 score。
+    return {"precision": precision, "recall": recall, "f1": f1}
+
+
+def levenshtein(first: list[int], second: list[int]) -> int:
+    previous = list(range(len(second) + 1))
+    # [0， 1，..., len(second)]
+    for i, left in enumerate(first, 1):
+        current = [i]
+        for j, right in enumerate(second, 1):
+            current.append(min(current[-1] + 1, previous[j] + 1, previous[j - 1] + (left != right)))
+        previous = current
+    return previous[-1]
+
+
+def edit_score(gt_binary: Iterable[int], pred_binary: Iterable[int]) -> float:
+    # 关注真实序列和预测序列的状态变化是否一致，而不关具体帧的匹配程度。
+        output = []
+        for value in values:
+            value = int(value)
+            if not output or output[-1] != value:
+                output.append(value)
+        return output
+    gt, pred = collapse(gt_binary), collapse(pred_binary)
+    # 将连续的00001111110000变为010
+    denominator = max(len(gt), len(pred), 1)
+    return 100.0 * (1.0 - levenshtein(gt, pred) / denominator)
+```
+这里要重点说明的是edit score. 其强调预测序列状态变化和真实的序列状态变化之间的差异。其核心是levenshtein距离，也就是最少要进行多少步操作，可以将预测序列变成真实序列一样的状态变化情况。
+edit score则是将levenshtein距离转化到0-100这个区间中。
+Levenshtein 距离只允许三种基本操作：插入、删除、替换，每次操作成本都是 1。
+这里的关键是Levenshtein 距离矩阵，举例如下: 其每个位置的元素表示将序列1的前i个元素，变成序列2的前j个元素需要多少次操作。
+
+|   |  空 |  0 |     0 |
+| - | -: | -: | ----: |
+| 空 |  0 |  1 |     2 |
+| 0 |  1 |  0 |     1 |
+| 1 |  2 |  1 | **1** |
+
+其第零行 空，0，0表示预测的序列，第零列的空，0，1表示真实的序列。
+第零行表示，真实序列是空，预测序列分别是空；0；0，0；分别需要多少次操作。
+第一行表示，真实序列是0；预测序列分别是空；0；0，0分别需要多少次操作。
+第二行表示，真实序列是0，1；预测序列分别是空；0；0，0分别需要多少次操作。
+
+回到levenshteim函数：
+```text
+previous = list(range(len(second) + 1)) 相当于构建了第一行，表示真实序列是空，预测序列是second, 则将空序列变成空序列需要0次操作，将空序列，变成second序列第一个元素，只需要插入一个元素，变成second序列前2个元素，只需要插入两个元素。
+
+for i, left in enumerate(first, 1):
+    current = [i]
+表示从第一行开始，current = [i]表示预测序列为空，含有i个元素的真实序列，要变成空预测序列需要的操作次数。相当于每一行的第0个元素。
+
+for j, right in enumerate(second, 1):
+    current.append(min(current[-1] + 1, previous[j] + 1, previous[j - 1] + (left != right)))
+这里必须要按顺序来逐步计算。
+我们以真实序列[A, B], 预测序列为[C, D]为例。
+首先刚开始 previous=[0, 1, 2], 表示真实序列如果为空，变成预测序列为空，[C], [C, D]所需要的操作数。
+首先i=1, j=1, 表示真实序列含有1个元素[A]，预测序列含有1个元素[C]，current[-1] = 1, previous[j] = 1；
+current[-1]+1表示将真实序列变成空，再添加一个元素变成预测序列所需要的操作数，目前结果是2.
+previous[j]+1, 表示将真实序列添加一个元素[C], 变成[A, C], 再删除一个元素[A], 操作数为2.
+previous[j - 1] + (left != right)，对于前j-1个元素，将真实序列和预测序列变成一样的需要的操作数，也就是空的真实序列变成空的预测序列所需操作数为0，然后最后一个元素，如果是相同的，则什么也不用变，总操作数为0；如果最后一个是不同的则直接替换就好也就是[A]直接替换成[C]，那总操作数为1.
+current变成[1, 1]
+
+下面i=1, j=2, 表示真实序列含有1个元素[A]，而预测序列含有两个元素[C, D]，current=[1, 1]
+现在current[-1] + 1, 因为前面i=1, j=1时，表明两个序列第一个元素已经不同了，所以current[-1]，表示将第一个元素变成相同的，需要进行替换，也就是一个操作步，然后添加一个变成两个元素，所以总操作数为2.
+previous[j] + 1， 这里previous[2]=2, 表示真实列表删除一个元素，再添加两个元素，变成预测列表。
+previous[j - 1] + (left != right)，这里真实列表时[A], 预测列表时[C, D], (left != right)表示，让A和D变成一样的需要几个操作数（也就是两个序列最后元素变成一样的），previous[j - 1]表示最后一个元素变成一样的之后，前面的元素变成一样的需要多少操作数。
+此时current=[1, 1, 2]
+
+下面是i=2, j=2, 表示真实序列含有2个元素[A, B]，而预测序列含有一个元素[C, D]。 previous=[1, 1, 2], 而current=[2, 2]
+现在current[-1] + 1，表示[A, C], 先删除一个,再替换一个，在添加一个。
+而previous[j] + 1，则表示真实序列第一个元素直接替换成[C], 然后删除掉B，需要的操作数。
+最后previous[j - 1] + (left != right)，最后一个元素变成一样的，也就是[A,B]->[A, C], 然后删除[A] 共2个操作数。
+此时current = [2, 2]
+
+
+
+## 阶段11： 理解概率如何变成动作片段
+### infer_run.py
+```python
+@torch.inference_mode()
+def infer_run(model: torch.nn.Module, cache: dict[str, Any], device: torch.device) -> dict[str, np.ndarray]:
+    features = cache["features"].float().unsqueeze(0).to(device)
+    outputs = model(features)
+    return {
+        "state_probability": torch.softmax(outputs["state_logits"], dim=-1)[0, :, 1].cpu().numpy(),
+        "start_probability": torch.sigmoid(outputs["start_logits"])[0].cpu().numpy(),
+        "end_probability": torch.sigmoid(outputs["end_logits"])[0].cpu().numpy(),
+    }
+```
+用于测试模型，cache["features"]维度为[T, D]，所以要unsqueeze()增加一个维度让其变成[B, T, D]，对于outputs["state_logits"], 其维度是[B, T, 2], 2中第一个元素表示是background的logits，第二个元素是动作的logits。
+这在前面已经讲解过了。
+最后返回的数据中"state_probability"中是取出了是动作元素的概率，是一个[T] 维张量。对于"start_probability"和"end_probability"，其维度也都是[T]，表示是起始帧和结束帧的概率。
+
+### online.py
+```python
+@dataclass
+class DetectedSegment:
+    start_index: int
+    end_index: int
+    emitted_at_index: int
+    start_score: float
+    end_score: float
+```
+构建一个数据类
+
+```python
+class CausalBoundaryStateMachine:
+    """Online BACKGROUND/CANDIDATE/ACTION state machine; no future frames are used."""
+
+    def __init__(
+        self,
+        start_threshold: float = 0.55,
+        end_threshold: float = 0.55,
+        action_threshold: float = 0.55,
+        start_debounce: int = 2,
+        end_debounce: int = 2,
+        min_action_steps: int = 3,
+        merge_gap_steps: int = 0,
+    ):
+        self.start_threshold = start_threshold
+        self.end_threshold = end_threshold
+        self.action_threshold = action_threshold
+        self.start_debounce = start_debounce
+        self.end_debounce = end_debounce
+        self.min_action_steps = min_action_steps
+        self.merge_gap_steps = merge_gap_steps
+        self.reset()
+        # 初始化参数
+
+    def reset(self) -> None:
+        self.mode = "background"
+        self.start_candidate = -1
+        self.start_count = 0
+        self.end_count = 0
+        self.current_start = -1
+        self.current_start_score = 0.0
+        self.last_segment: DetectedSegment | None = None
+
+    def update(self, index: int, action_probability: float, start_probability: float, end_probability: float) -> list[DetectedSegment]:
+        emitted: list[DetectedSegment] = []
+        start_evidence = start_probability >= self.start_threshold or action_probability >= self.action_threshold
+        # start_evidence是一个布尔值
+        if self.mode == "background":
+            # 如果当前的模式是"background"
+            if start_evidence:
+                # 如果start_evidence是真
+                if self.start_count == 0:
+                    # 如果是动作的第一帧
+                    self.start_candidate = index
+                    self.current_start_score = start_probability
+                self.start_count += 1
+                self.current_start_score = max(self.current_start_score, start_probability)
+                # 如果不是当前的第一帧，就增加帧计数，并设置当前帧的开始概率
+                if self.start_count >= self.start_debounce:
+                    # 只有一定数量的帧都被认为是开始帧才设定维动作模式。
+                    self.mode = "action"
+                    self.current_start = self.start_candidate
+                    # 连续被认为是动作帧的第一帧设置为动作开始帧
+                    self.end_count = 0
+            else:
+                self.start_count = 0
+                self.start_candidate = -1
+                # 没有证据表明是开始帧，保持值为开始的初始化的值。
+            return emitted
+
+        duration = index - self.current_start + 1
+        # 如果模式不是"background"，则统计动作开始帧到当前帧一共有多少帧。
+        end_evidence = end_probability >= self.end_threshold or action_probability < (1.0 - self.action_threshold)
+        # 判断当前帧是否是结束帧？
+        self.end_count = self.end_count + 1 if end_evidence else 0
+        # 如果是结束帧，则结束帧的统计值加1，否则为0
+        if self.end_count >= self.end_debounce and duration >= self.min_action_steps:
+            # 如果连续self.end_debounce帧都是结束帧，并且动作持续帧数超过设定的阈值，则认为动作结束了。
+            end_index = index - self.end_debounce + 1
+            # 结束帧应该是被连续认为是结束帧的第一帧，这里要加1，因为索引是从0开始的，当前帧索引是8，self.end_debounce=2, 则结束帧是7, 所以应该是8-2+1.
+            segment = DetectedSegment(
+                start_index=self.current_start,
+                end_index=max(self.current_start, end_index),
+                emitted_at_index=index,
+                start_score=self.current_start_score,
+                end_score=end_probability,
+            )
+            if self.last_segment and self.merge_gap_steps > 0 and segment.start_index - self.last_segment.end_index - 1 <= self.merge_gap_steps:
+                # 如果有最后一个片段，并且当前片段起始帧和前一个片段的结束帧小于self.merge_gap_steps
+                segment.start_index = self.last_segment.start_index
+                emitted.append(segment)
+                # 将当前片段的起始帧设置为前一个片段的起始帧
+                # 将当前片段添加到emitted列表中。
+            else:
+                emitted.append(segment)
+            self.last_segment = segment
+            # 将当前片段设置为最后一个last_segment.
+            self.mode = "background"
+            self.start_count = 0
+            self.end_count = 0
+            self.current_start = -1
+            # 重置参数
+        return emitted
+
+    def flush(self, final_index: int) -> list[DetectedSegment]:
+        if self.mode != "action" or self.current_start < 0:
+            return []
+        segment = DetectedSegment(
+            start_index=self.current_start,
+            end_index=final_index,
+            emitted_at_index=final_index,
+            start_score=self.current_start_score,
+            end_score=0.0,
+        )
+        self.reset()
+        return [segment]
+```
+这一个flush()函数，用于如果整个序列结束时，最后一个片段没有闭合的情况。
+如果当前状态机并不在"动作模式"，或者当前片段起始帧小于0，表明当前片段已经闭合，则返回一个空列表。
+如果当前仍在"动作模式"，则构造一个片段，该片段的开始帧是之前的动作开始帧，结束帧就是序列的最后一帧，并强制设置结束帧的end_score为0.0，表示是强制结束的，并不是模型判断生成的。
+
+```python
+def run_state_machine(state_probability, start_probability, end_probability, settings: dict) -> list[dict]:
+    machine = CausalBoundaryStateMachine(**settings)
+    segments: list[DetectedSegment] = []
+    for index, values in enumerate(zip(state_probability, start_probability, end_probability)):
+        segments.extend(machine.update(index, *(float(value) for value in values)))
+    segments.extend(machine.flush(len(state_probability) - 1))
+    return [asdict(segment) for segment in segments]
+```
+列表中一个个元素是dataclass 类，将他们转换成字典。
+
+
+
 
 
 

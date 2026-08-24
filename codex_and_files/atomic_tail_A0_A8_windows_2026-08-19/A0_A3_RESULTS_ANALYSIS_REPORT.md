@@ -1,4 +1,9 @@
-# Atomic-Tail A0–A3 实验结果详细分析报告
+# Atomic-Tail 实验结果分析报告（A0–A3 历史版；已更新 DualPos）
+
+> **2026-08-20 更新：** A3-DualPos 与 A4-DualPos 的完整分析已写入
+> [A0_A4_DUALPOS_RESULTS_ANALYSIS_REPORT.md](A0_A4_DUALPOS_RESULTS_ANALYSIS_REPORT.md)。
+> 新结论：A3-DualPos 相对 A3 为 `-0.57 pp`（2胜10负），A4-DualPos 相对 A0 为
+> `+0.45 pp`（8胜1平3负）。以下内容保留为 A0–A3 的历史分析，避免覆盖原始比较记录。
 
 **分析日期：** 2026-08-20  
 **结果目录：** `outputs/A0`–`outputs/A3`  

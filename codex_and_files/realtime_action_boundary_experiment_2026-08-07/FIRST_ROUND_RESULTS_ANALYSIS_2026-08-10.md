@@ -384,7 +384,68 @@ Test-all边界微平均F1也明显改善：
 
 校准后预测片段减少83.72%，M3调用次数理论上由2525降至411，约减少到原来的1/6.14。这不仅能减少false positives和history污染，也会显著降低端到端M3计算量。
 
-### 8.4 不能直接当作正式新结果的原因
+### 8.4 论文中的合理表现形式与本报告选择
+
+这个需求是合理的，而且仅给出平均指标是不够的。边界检测必须同时回答两个问题：
+
+1. 预测片段在时间轴上是否覆盖了正确动作；
+2. 错误来自边界偏移、漏检，还是把一个动作切成了很多碎片。
+
+动作分割论文常用同一时间轴上的多行彩色条带，将Ground Truth、基线和改进方法上下对齐；例如[SSTDA的补充材料](https://openaccess.thecvf.com/content_CVPR_2020/supplemental/Chen_Action_Segmentation_With_CVPR_2020_supplemental.pdf)以及[Boundary-Aware Cascade Networks](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123700035.pdf)中的定性图。MS-TCN把过分割列为核心问题，并通过平滑项抑制相邻帧概率的剧烈变化，支持同时展示完整时间轴和局部概率曲线的做法：[MS-TCN, CVPR 2019](https://openaccess.thecvf.com/content_CVPR_2019/papers/Abu_Farha_MS-TCN_Multi-Stage_Temporal_Convolutional_Network_for_Action_Segmentation_CVPR_2019_paper.pdf)。ASRF则显式结合逐帧动作分割和边界回归分支，说明把分段条带与start/end概率放在同一局部图中是有依据的：[ASRF, WACV 2021](https://openaccess.thecvf.com/content/WACV2021/html/Ishikawa_Alleviating_Over-Segmentation_Errors_by_Detecting_Action_Boundaries_WACV_2021_paper.html)。
+
+结合本项目当前只输出action/background边界、尚未对校准片段重新运行M3 node分类的事实，本报告采用以下编码：
+
+- 灰色：background；
+- 蓝色：Ground Truth动作片段；
+- 橙色：初始decoder中在IoU 0.5下一对一匹配成功的片段；
+- 绿色：校准decoder中在IoU 0.5下一对一匹配成功的片段；
+- 红色：在IoU 0.5下一对一匹配中未匹配的预测片段；它可能与GT局部重叠，只是没有达到匹配阈值，因此不能简单理解为完全位于background中的误报；
+- 淡蓝色竖线：GT start/end位置；
+- 每个蓝色GT片段内的白色数字：该片段的动作类别编号；图下方的`Ground-truth action key`给出编号与`action · object`的对应关系。编号直接依据特征缓存中的`action`、`object`和`segment_no`生成；同一动作—对象类别在不同片段和不同run中使用相同编号；
+- 局部图中的蓝/紫/橙曲线：state/start/end概率，横线为初始和校准阈值。
+
+红/橙/绿是**评估后的可视化着色**，需要使用GT完成匹配，不进入模型推理，也不构成任何oracle输入。暂不使用“每种node一个颜色”的传统动作类别色带，是为了避免把boundary质量与尚未重跑的M3 node分类结果混在一起。
+
+### 8.5 完整时间轴：GT、初始结果与校准结果
+
+下图选择三个具有不同表现的held-out A测试run：一个普通改善样例、一个困难样例和一个fault强改善样例。三行共享相同帧轴，因此可以直接观察预测片段的起止、数量和GT覆盖情况。每个Ground Truth片段内部仅保留数字类别标签，所有数字与动作—对象类别的对应关系集中列在图下方，从而避免长动作名称遮挡相邻片段。
+
+![三个代表性run的Ground Truth、初始decoder和校准decoder完整时间轴](docs/boundary_timeline_full_runs.png)
+
+观察结果：
+
+- `run_sample_000001`（normal）：25个GT，初始194个预测，Segment F1由12.8%提高到61.8%。校准后前半段大多数动作与GT对齐，但约2300帧及3500–4100帧附近仍有过长或错位片段；这说明校准显著有效，但不是“挑选完美样例”。
+- `run_sample_000007`（normal困难样例）：14个GT，初始120个预测，F1由7.5%提高到38.7%。校准清除了大量短碎片，但仍存在跨越background的长片段、部分漏检和边界偏移，是后续模型或decoder仍需处理的失败模式。
+- `run_sample_000020`（fault强改善样例）：13个GT，初始58个预测，校准后为12个，F1由25.4%提高到96.0%。绿色片段几乎逐段对应GT，说明当前TCN在部分fault run中已经产生了清晰可分的时序概率。
+
+完整时间轴最直观地确认了第一轮的主要问题不是“所有动作都没有检测到”，而是初始decoder在动作内部和边界附近反复启停，产生密集红色短片段。
+
+### 8.6 局部放大：概率、边界与阈值的关系
+
+下图放大`run_sample_000001`中一个同时包含多个动作和background的650帧窗口。上半部分显示三套分段，下半部分显示同一冻结checkpoint输出的state/start/end概率。
+
+![run_sample_000001局部边界与state、start、end概率](docs/boundary_timeline_zoom_run_sample_000001.png)
+
+局部图表明：
+
+- 初始`0.55`阈值会把边界附近的次峰和短时波动转成大量3帧左右的片段；
+- validation选择的`state=0.65`、`start/end=0.85`，再配合最短5帧和3帧短间隔合并，可把同一动作附近的多次启停压缩为单个连续片段；
+- start概率通常先于state平台上升，end概率在动作尾部升高，符合当前三头模型的设计意图；
+- 在约600帧附近能看到state概率短峰未形成稳定动作片段，说明校准本质上在Precision与Recall、误报与延迟之间做取舍。
+
+这张局部图适合论文中解释“为什么校准有效”；完整时间轴适合展示整体分段结构。二者不能互相替代。
+
+### 8.7 聚合前后对比
+
+下图将Normal、Fault和All三个split的预测片段数、Segment F1@IoU 0.5和macro Edit Score放在一起。这里初始与校准结果来自同一个epoch-4 checkpoint，差异只来自validation-only选择的decoder设置和正确短间隔合并。
+
+![初始decoder与validation校准decoder的聚合指标对比](docs/boundary_aggregate_before_after.png)
+
+Test-all中，预测片段数由2525降至411，接近431个GT；Segment F1由17.6%升至62.9%，macro Edit由19.0升至87.7。Normal和Fault都改善，且Fault的校准F1更高（68.7% vs 60.4%）。这与完整时间轴一致：校准的最大收益是抑制系统性过分割，而不是单纯扩大动作覆盖率。
+
+绘图脚本为`tools/plot_first_round_boundary_comparison.py`，数值摘要为`docs/boundary_visualization_summary.json`。脚本从现有`best.pth`、stride-1 cache和初始`predicted_segments.jsonl`重建图表，不修改checkpoint、cache或正式evaluation输出。
+
+### 8.8 不能直接当作正式新结果的原因
 
 上述校准结果是诊断性派生结果，尚不能替代正式输出，因为：
 
@@ -486,3 +547,8 @@ outputs_decoder_calibration_v1/
 - Boundary指标定义：`boundary_experiment/metrics.py`、`boundary_experiment/engine.py`
 - End-to-end匹配和Node Accuracy定义：`tools/evaluate_end_to_end.py`
 - M3在线history更新：`boundary_experiment/m3_adapter.py`
+- 边界可视化生成：`tools/plot_first_round_boundary_comparison.py`
+- 边界可视化数值摘要：`docs/boundary_visualization_summary.json`
+- 完整时间轴图：`docs/boundary_timeline_full_runs.png`
+- 局部概率与边界图：`docs/boundary_timeline_zoom_run_sample_000001.png`
+- 初始/校准聚合图：`docs/boundary_aggregate_before_after.png`
