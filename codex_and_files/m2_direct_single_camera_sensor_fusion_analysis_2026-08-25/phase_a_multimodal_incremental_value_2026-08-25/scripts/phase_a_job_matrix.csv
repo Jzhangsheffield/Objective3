@@ -1,0 +1,175 @@
+job_id,stage,depends_on_stage,command
+1,signal_cache,audit,python tools/build_signal_cache.py --participant A
+2,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant A --seed 1 --device cuda --execute
+3,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant A --seed 1 --device cuda
+4,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant A --seed 1 --device cuda
+5,train,signal_cache,python tools/train_condition.py --condition A4 --participant A --seed 1 --device cuda
+6,train,signal_cache,python tools/train_condition.py --condition A5 --participant A --seed 1 --device cuda
+7,train,signal_cache,python tools/train_condition.py --condition A6 --participant A --seed 1 --device cuda
+8,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant A --seed 1 --device cuda
+9,A2,A1,python tools/evaluate_a2_late_fusion.py --participant A --seed 1
+10,stress,A3,python tools/run_stress_tests.py --condition A3 --participant A --seed 1 --device cuda
+11,stress,A4,python tools/run_stress_tests.py --condition A4 --participant A --seed 1 --device cuda
+12,stress,A5,python tools/run_stress_tests.py --condition A5 --participant A --seed 1 --device cuda
+13,stress,A6,python tools/run_stress_tests.py --condition A6 --participant A --seed 1 --device cuda
+14,stress,A7,python tools/run_stress_tests.py --condition A7 --participant A --seed 1 --device cuda
+15,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant A --seed 2 --device cuda --execute
+16,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant A --seed 2 --device cuda
+17,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant A --seed 2 --device cuda
+18,train,signal_cache,python tools/train_condition.py --condition A4 --participant A --seed 2 --device cuda
+19,train,signal_cache,python tools/train_condition.py --condition A5 --participant A --seed 2 --device cuda
+20,train,signal_cache,python tools/train_condition.py --condition A6 --participant A --seed 2 --device cuda
+21,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant A --seed 2 --device cuda
+22,A2,A1,python tools/evaluate_a2_late_fusion.py --participant A --seed 2
+23,stress,A3,python tools/run_stress_tests.py --condition A3 --participant A --seed 2 --device cuda
+24,stress,A4,python tools/run_stress_tests.py --condition A4 --participant A --seed 2 --device cuda
+25,stress,A5,python tools/run_stress_tests.py --condition A5 --participant A --seed 2 --device cuda
+26,stress,A6,python tools/run_stress_tests.py --condition A6 --participant A --seed 2 --device cuda
+27,stress,A7,python tools/run_stress_tests.py --condition A7 --participant A --seed 2 --device cuda
+28,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant A --seed 42 --device cuda --execute
+29,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant A --seed 42 --device cuda
+30,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant A --seed 42 --device cuda
+31,train,signal_cache,python tools/train_condition.py --condition A4 --participant A --seed 42 --device cuda
+32,train,signal_cache,python tools/train_condition.py --condition A5 --participant A --seed 42 --device cuda
+33,train,signal_cache,python tools/train_condition.py --condition A6 --participant A --seed 42 --device cuda
+34,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant A --seed 42 --device cuda
+35,A2,A1,python tools/evaluate_a2_late_fusion.py --participant A --seed 42
+36,stress,A3,python tools/run_stress_tests.py --condition A3 --participant A --seed 42 --device cuda
+37,stress,A4,python tools/run_stress_tests.py --condition A4 --participant A --seed 42 --device cuda
+38,stress,A5,python tools/run_stress_tests.py --condition A5 --participant A --seed 42 --device cuda
+39,stress,A6,python tools/run_stress_tests.py --condition A6 --participant A --seed 42 --device cuda
+40,stress,A7,python tools/run_stress_tests.py --condition A7 --participant A --seed 42 --device cuda
+41,signal_cache,audit,python tools/build_signal_cache.py --participant D
+42,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant D --seed 1 --device cuda --execute
+43,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant D --seed 1 --device cuda
+44,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant D --seed 1 --device cuda
+45,train,signal_cache,python tools/train_condition.py --condition A4 --participant D --seed 1 --device cuda
+46,train,signal_cache,python tools/train_condition.py --condition A5 --participant D --seed 1 --device cuda
+47,train,signal_cache,python tools/train_condition.py --condition A6 --participant D --seed 1 --device cuda
+48,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant D --seed 1 --device cuda
+49,A2,A1,python tools/evaluate_a2_late_fusion.py --participant D --seed 1
+50,stress,A3,python tools/run_stress_tests.py --condition A3 --participant D --seed 1 --device cuda
+51,stress,A4,python tools/run_stress_tests.py --condition A4 --participant D --seed 1 --device cuda
+52,stress,A5,python tools/run_stress_tests.py --condition A5 --participant D --seed 1 --device cuda
+53,stress,A6,python tools/run_stress_tests.py --condition A6 --participant D --seed 1 --device cuda
+54,stress,A7,python tools/run_stress_tests.py --condition A7 --participant D --seed 1 --device cuda
+55,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant D --seed 2 --device cuda --execute
+56,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant D --seed 2 --device cuda
+57,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant D --seed 2 --device cuda
+58,train,signal_cache,python tools/train_condition.py --condition A4 --participant D --seed 2 --device cuda
+59,train,signal_cache,python tools/train_condition.py --condition A5 --participant D --seed 2 --device cuda
+60,train,signal_cache,python tools/train_condition.py --condition A6 --participant D --seed 2 --device cuda
+61,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant D --seed 2 --device cuda
+62,A2,A1,python tools/evaluate_a2_late_fusion.py --participant D --seed 2
+63,stress,A3,python tools/run_stress_tests.py --condition A3 --participant D --seed 2 --device cuda
+64,stress,A4,python tools/run_stress_tests.py --condition A4 --participant D --seed 2 --device cuda
+65,stress,A5,python tools/run_stress_tests.py --condition A5 --participant D --seed 2 --device cuda
+66,stress,A6,python tools/run_stress_tests.py --condition A6 --participant D --seed 2 --device cuda
+67,stress,A7,python tools/run_stress_tests.py --condition A7 --participant D --seed 2 --device cuda
+68,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant D --seed 42 --device cuda --execute
+69,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant D --seed 42 --device cuda
+70,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant D --seed 42 --device cuda
+71,train,signal_cache,python tools/train_condition.py --condition A4 --participant D --seed 42 --device cuda
+72,train,signal_cache,python tools/train_condition.py --condition A5 --participant D --seed 42 --device cuda
+73,train,signal_cache,python tools/train_condition.py --condition A6 --participant D --seed 42 --device cuda
+74,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant D --seed 42 --device cuda
+75,A2,A1,python tools/evaluate_a2_late_fusion.py --participant D --seed 42
+76,stress,A3,python tools/run_stress_tests.py --condition A3 --participant D --seed 42 --device cuda
+77,stress,A4,python tools/run_stress_tests.py --condition A4 --participant D --seed 42 --device cuda
+78,stress,A5,python tools/run_stress_tests.py --condition A5 --participant D --seed 42 --device cuda
+79,stress,A6,python tools/run_stress_tests.py --condition A6 --participant D --seed 42 --device cuda
+80,stress,A7,python tools/run_stress_tests.py --condition A7 --participant D --seed 42 --device cuda
+81,signal_cache,audit,python tools/build_signal_cache.py --participant J
+82,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant J --seed 1 --device cuda --execute
+83,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant J --seed 1 --device cuda
+84,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant J --seed 1 --device cuda
+85,train,signal_cache,python tools/train_condition.py --condition A4 --participant J --seed 1 --device cuda
+86,train,signal_cache,python tools/train_condition.py --condition A5 --participant J --seed 1 --device cuda
+87,train,signal_cache,python tools/train_condition.py --condition A6 --participant J --seed 1 --device cuda
+88,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant J --seed 1 --device cuda
+89,A2,A1,python tools/evaluate_a2_late_fusion.py --participant J --seed 1
+90,stress,A3,python tools/run_stress_tests.py --condition A3 --participant J --seed 1 --device cuda
+91,stress,A4,python tools/run_stress_tests.py --condition A4 --participant J --seed 1 --device cuda
+92,stress,A5,python tools/run_stress_tests.py --condition A5 --participant J --seed 1 --device cuda
+93,stress,A6,python tools/run_stress_tests.py --condition A6 --participant J --seed 1 --device cuda
+94,stress,A7,python tools/run_stress_tests.py --condition A7 --participant J --seed 1 --device cuda
+95,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant J --seed 2 --device cuda --execute
+96,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant J --seed 2 --device cuda
+97,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant J --seed 2 --device cuda
+98,train,signal_cache,python tools/train_condition.py --condition A4 --participant J --seed 2 --device cuda
+99,train,signal_cache,python tools/train_condition.py --condition A5 --participant J --seed 2 --device cuda
+100,train,signal_cache,python tools/train_condition.py --condition A6 --participant J --seed 2 --device cuda
+101,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant J --seed 2 --device cuda
+102,A2,A1,python tools/evaluate_a2_late_fusion.py --participant J --seed 2
+103,stress,A3,python tools/run_stress_tests.py --condition A3 --participant J --seed 2 --device cuda
+104,stress,A4,python tools/run_stress_tests.py --condition A4 --participant J --seed 2 --device cuda
+105,stress,A5,python tools/run_stress_tests.py --condition A5 --participant J --seed 2 --device cuda
+106,stress,A6,python tools/run_stress_tests.py --condition A6 --participant J --seed 2 --device cuda
+107,stress,A7,python tools/run_stress_tests.py --condition A7 --participant J --seed 2 --device cuda
+108,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant J --seed 42 --device cuda --execute
+109,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant J --seed 42 --device cuda
+110,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant J --seed 42 --device cuda
+111,train,signal_cache,python tools/train_condition.py --condition A4 --participant J --seed 42 --device cuda
+112,train,signal_cache,python tools/train_condition.py --condition A5 --participant J --seed 42 --device cuda
+113,train,signal_cache,python tools/train_condition.py --condition A6 --participant J --seed 42 --device cuda
+114,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant J --seed 42 --device cuda
+115,A2,A1,python tools/evaluate_a2_late_fusion.py --participant J --seed 42
+116,stress,A3,python tools/run_stress_tests.py --condition A3 --participant J --seed 42 --device cuda
+117,stress,A4,python tools/run_stress_tests.py --condition A4 --participant J --seed 42 --device cuda
+118,stress,A5,python tools/run_stress_tests.py --condition A5 --participant J --seed 42 --device cuda
+119,stress,A6,python tools/run_stress_tests.py --condition A6 --participant J --seed 42 --device cuda
+120,stress,A7,python tools/run_stress_tests.py --condition A7 --participant J --seed 42 --device cuda
+121,signal_cache,audit,python tools/build_signal_cache.py --participant M
+122,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant M --seed 1 --device cuda --execute
+123,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant M --seed 1 --device cuda
+124,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant M --seed 1 --device cuda
+125,train,signal_cache,python tools/train_condition.py --condition A4 --participant M --seed 1 --device cuda
+126,train,signal_cache,python tools/train_condition.py --condition A5 --participant M --seed 1 --device cuda
+127,train,signal_cache,python tools/train_condition.py --condition A6 --participant M --seed 1 --device cuda
+128,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant M --seed 1 --device cuda
+129,A2,A1,python tools/evaluate_a2_late_fusion.py --participant M --seed 1
+130,stress,A3,python tools/run_stress_tests.py --condition A3 --participant M --seed 1 --device cuda
+131,stress,A4,python tools/run_stress_tests.py --condition A4 --participant M --seed 1 --device cuda
+132,stress,A5,python tools/run_stress_tests.py --condition A5 --participant M --seed 1 --device cuda
+133,stress,A6,python tools/run_stress_tests.py --condition A6 --participant M --seed 1 --device cuda
+134,stress,A7,python tools/run_stress_tests.py --condition A7 --participant M --seed 1 --device cuda
+135,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant M --seed 2 --device cuda --execute
+136,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant M --seed 2 --device cuda
+137,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant M --seed 2 --device cuda
+138,train,signal_cache,python tools/train_condition.py --condition A4 --participant M --seed 2 --device cuda
+139,train,signal_cache,python tools/train_condition.py --condition A5 --participant M --seed 2 --device cuda
+140,train,signal_cache,python tools/train_condition.py --condition A6 --participant M --seed 2 --device cuda
+141,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant M --seed 2 --device cuda
+142,A2,A1,python tools/evaluate_a2_late_fusion.py --participant M --seed 2
+143,stress,A3,python tools/run_stress_tests.py --condition A3 --participant M --seed 2 --device cuda
+144,stress,A4,python tools/run_stress_tests.py --condition A4 --participant M --seed 2 --device cuda
+145,stress,A5,python tools/run_stress_tests.py --condition A5 --participant M --seed 2 --device cuda
+146,stress,A6,python tools/run_stress_tests.py --condition A6 --participant M --seed 2 --device cuda
+147,stress,A7,python tools/run_stress_tests.py --condition A7 --participant M --seed 2 --device cuda
+148,secondary_upstream,audit,python tools/prepare_secondary_camera.py --participant M --seed 42 --device cuda --execute
+149,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A1 --participant M --seed 42 --device cuda
+150,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A3 --participant M --seed 42 --device cuda
+151,train,signal_cache,python tools/train_condition.py --condition A4 --participant M --seed 42 --device cuda
+152,train,signal_cache,python tools/train_condition.py --condition A5 --participant M --seed 42 --device cuda
+153,train,signal_cache,python tools/train_condition.py --condition A6 --participant M --seed 42 --device cuda
+154,train,signal_cache+secondary_upstream,python tools/train_condition.py --condition A7 --participant M --seed 42 --device cuda
+155,A2,A1,python tools/evaluate_a2_late_fusion.py --participant M --seed 42
+156,stress,A3,python tools/run_stress_tests.py --condition A3 --participant M --seed 42 --device cuda
+157,stress,A4,python tools/run_stress_tests.py --condition A4 --participant M --seed 42 --device cuda
+158,stress,A5,python tools/run_stress_tests.py --condition A5 --participant M --seed 42 --device cuda
+159,stress,A6,python tools/run_stress_tests.py --condition A6 --participant M --seed 42 --device cuda
+160,stress,A7,python tools/run_stress_tests.py --condition A7 --participant M --seed 42 --device cuda
+161,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A1
+162,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A2
+163,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A3
+164,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A4
+165,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A5
+166,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A6
+167,bootstrap,all fold×seed results,python tools/paired_bootstrap.py --condition A7
+168,latency,A1,python tools/benchmark_latency.py --condition A1 --participant A --seed 1 --device cuda
+169,latency,A3,python tools/benchmark_latency.py --condition A3 --participant A --seed 1 --device cuda
+170,latency,A4,python tools/benchmark_latency.py --condition A4 --participant A --seed 1 --device cuda
+171,latency,A5,python tools/benchmark_latency.py --condition A5 --participant A --seed 1 --device cuda
+172,latency,A6,python tools/benchmark_latency.py --condition A6 --participant A --seed 1 --device cuda
+173,latency,A7,python tools/benchmark_latency.py --condition A7 --participant A --seed 1 --device cuda
+174,summary,bootstrap+stress+latency,python tools/summarize_phase_a.py

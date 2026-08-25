@@ -1,0 +1,21 @@
+﻿true_node_id,true_label,pred_node_id,pred_label,mean_errors_per_seed,fraction_of_true_class
+20,grip sample from machine table,19,put sample on machine table,12.66666667,0.12794613
+24,put sample on table,12,take plier from table,11.00000000,0.10679612
+16,put sample on machine table,17,grip sample from machine table,7.33333333,0.07407407
+24,put sample on table,25,put plier on table,6.66666667,0.06472492
+34,take lock from table,24,put sample on table,5.33333333,0.21333333
+7,turn on water pump,29,turn off water pump,4.66666667,0.21212121
+18,reverse sample,23,inspect sample,4.66666667,0.04713805
+6,turn on air compressor,30,turn off air compressor,4.33333333,0.19696970
+8,turn on extractor fan,28,turn off extractor fan,4.33333333,0.19696970
+1,unlock crimper,35,lock crimper,4.00000000,0.18181818
+24,put sample on table,34,take lock from table,4.00000000,0.03883495
+12,take plier from table,25,put plier on table,3.66666667,0.03559871
+12,take plier from table,34,take lock from table,3.66666667,0.03559871
+1,unlock crimper,4,turn on crimper,3.33333333,0.15151515
+30,turn off air compressor,6,turn on air compressor,3.00000000,0.11538462
+4,turn on crimper,1,unlock crimper,2.66666667,0.12121212
+20,grip sample from machine table,18,reverse sample,2.66666667,0.02693603
+12,take plier from table,24,put sample on table,2.66666667,0.02588997
+2,put lock on table,34,take lock from table,2.33333333,0.10606061
+27,put protection cover on crimper,10,remove protection cover from crimper,2.00000000,0.08000000

@@ -1,0 +1,13 @@
+condition,label_space,rank,true_id,pred_id,count
+A0,node,1,20,19,38
+A0,node,2,24,12,33
+A0,node,3,16,17,22
+A0,node,4,24,25,20
+A0,node,5,34,24,16
+A0,node,6,7,29,14
+A0,node,7,18,23,14
+A0,node,8,6,30,13
+A0,node,9,8,28,13
+A0,node,10,1,35,12
+A0,node,11,24,34,12
+A0,node,12,12,25,11
