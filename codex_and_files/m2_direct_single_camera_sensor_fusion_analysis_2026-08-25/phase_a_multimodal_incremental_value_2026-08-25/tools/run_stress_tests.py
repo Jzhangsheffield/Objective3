@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from phase_a.config import load_config, validate_condition
 from phase_a.data import MultimodalHistoryDataset, collate_multimodal
 from phase_a.engine import evaluate
+from phase_a.io import write_json
 from phase_a.models import PhaseAM2Direct
 from phase_a.paths import model_dir, primary_feature_cache, protocol_dir, secondary_feature_cache, signal_cache
 
@@ -67,6 +68,11 @@ def main() -> None:
             evaluate(model, loader, device, checkpoint["node_to_tier3"],
                      model_dir(config, condition, args.participant, args.seed) / "stress_results" / name, split)
         print(f"completed stress scenario: {name}", flush=True)
+    write_json(model_dir(config, condition, args.participant, args.seed) / "stress_completed.json", {
+        "condition": condition, "participant": args.participant, "seed": args.seed,
+        "scenarios": [name for name, _, _, _ in scenarios],
+        "splits": ["test_all", "test_fault"],
+    })
 
 
 if __name__ == "__main__":

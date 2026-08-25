@@ -12,6 +12,8 @@
 
 ## 快速入口
 
+如果要在一台 Windows 训练机上按依赖顺序自动运行全部实验，请先阅读 [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)，然后使用 `scripts/run_all_phase_a.ps1`。脚本支持完成标记检测、自动续跑、逐任务日志和最终汇总。
+
 1. 阅读 [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md)，尤其是 A0-A7 forward、统计单位和停止/通过规则。
 2. 在训练环境执行全张量审计：
 
