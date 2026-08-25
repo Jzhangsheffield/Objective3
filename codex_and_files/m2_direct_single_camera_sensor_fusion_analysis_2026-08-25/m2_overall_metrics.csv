@@ -1,0 +1,4 @@
+﻿split,participants,node_accuracy,node_accuracy_participant_sd,node_macro_f1,node_macro_f1_participant_sd,node_balanced_accuracy,node_balanced_accuracy_participant_sd,tier3_accuracy,tier3_accuracy_participant_sd,tier3_macro_f1,tier3_macro_f1_participant_sd,tier3_balanced_accuracy,tier3_balanced_accuracy_participant_sd
+all,4,0.90567737,0.02656872,0.87809943,0.02789619,0.88284115,0.02539405,0.90638162,0.02640210,0.87063003,0.02996734,0.87590823,0.02735246
+fault,4,0.89747351,0.04190072,0.86335655,0.05038601,0.88001632,0.04280909,0.89857782,0.04107582,0.85377095,0.05442955,0.87247232,0.04595065
+normal,4,0.91259093,0.03398143,0.88190048,0.04669056,0.88704708,0.04515552,0.91300760,0.03349624,0.87438563,0.05138680,0.87993539,0.04964090

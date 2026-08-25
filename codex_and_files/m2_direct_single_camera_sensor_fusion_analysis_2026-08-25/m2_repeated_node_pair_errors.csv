@@ -1,0 +1,9 @@
+﻿true_node,true_label,pred_node,pred_label,errors_across_3_seeds,mean_errors_per_seed,support_per_seed,error_rate
+14,place sample under electrodes,21,place sample under electrodes,0,0.00000000,103,0.00000000
+21,place sample under electrodes,14,place sample under electrodes,0,0.00000000,99,0.00000000
+15,press pedal,22,press pedal,0,0.00000000,103,0.00000000
+22,press pedal,15,press pedal,0,0.00000000,99,0.00000000
+16,put sample on machine table,19,put sample on machine table,3,1.00000000,99,0.01010101
+19,put sample on machine table,16,put sample on machine table,0,0.00000000,99,0.00000000
+17,grip sample from machine table,20,grip sample from machine table,1,0.33333333,99,0.00336700
+20,grip sample from machine table,17,grip sample from machine table,0,0.00000000,99,0.00000000

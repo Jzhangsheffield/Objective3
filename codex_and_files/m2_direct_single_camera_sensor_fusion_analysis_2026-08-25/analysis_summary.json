@@ -1,0 +1,284 @@
+{
+  "experiment": {
+    "camera": "001484412812",
+    "model": "m2_direct",
+    "train_scope": "all_runs",
+    "participants": [
+      "A",
+      "D",
+      "J",
+      "M"
+    ],
+    "seeds": [
+      1,
+      2,
+      42
+    ],
+    "prediction_files": 36,
+    "test_all_unique_clips_per_seed": 1895
+  },
+  "ambiguity": {
+    "rows_across_3_seeds": 5685,
+    "unique_clips_per_seed": 1895,
+    "node_errors_across_3_seeds": 524,
+    "same_tier3_node_errors_across_3_seeds": 4,
+    "same_tier3_fraction_of_node_errors": 0.007633587786259542,
+    "repeated_pair_errors_across_3_seeds": 4,
+    "repeated_pair_fraction_of_node_errors": 0.007633587786259542,
+    "tier3_correct_but_node_wrong_fraction_of_all_predictions": 0.0007036059806508355
+  },
+  "inventory": [
+    {
+      "participant": "A",
+      "seed": 1,
+      "split": "all",
+      "rows": 431,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 2,
+      "split": "all",
+      "rows": 431,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 42,
+      "split": "all",
+      "rows": 431,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 1,
+      "split": "all",
+      "rows": 462,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 2,
+      "split": "all",
+      "rows": 462,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 42,
+      "split": "all",
+      "rows": 462,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 1,
+      "split": "all",
+      "rows": 555,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 2,
+      "split": "all",
+      "rows": 555,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 42,
+      "split": "all",
+      "rows": 555,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 1,
+      "split": "all",
+      "rows": 447,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 2,
+      "split": "all",
+      "rows": 447,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 42,
+      "split": "all",
+      "rows": 447,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_all_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 1,
+      "split": "normal",
+      "rows": 294,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 2,
+      "split": "normal",
+      "rows": 294,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 42,
+      "split": "normal",
+      "rows": 294,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 1,
+      "split": "normal",
+      "rows": 400,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 2,
+      "split": "normal",
+      "rows": 400,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 42,
+      "split": "normal",
+      "rows": 400,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 1,
+      "split": "normal",
+      "rows": 387,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 2,
+      "split": "normal",
+      "rows": 387,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 42,
+      "split": "normal",
+      "rows": 387,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 1,
+      "split": "normal",
+      "rows": 360,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 2,
+      "split": "normal",
+      "rows": 360,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 42,
+      "split": "normal",
+      "rows": 360,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_normal_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 1,
+      "split": "fault",
+      "rows": 137,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 2,
+      "split": "fault",
+      "rows": 137,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "A",
+      "seed": 42,
+      "split": "fault",
+      "rows": 137,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 1,
+      "split": "fault",
+      "rows": 62,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 2,
+      "split": "fault",
+      "rows": 62,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "D",
+      "seed": 42,
+      "split": "fault",
+      "rows": 62,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 1,
+      "split": "fault",
+      "rows": 168,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 2,
+      "split": "fault",
+      "rows": 168,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "J",
+      "seed": 42,
+      "split": "fault",
+      "rows": 168,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 1,
+      "split": "fault",
+      "rows": 87,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 2,
+      "split": "fault",
+      "rows": 87,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    },
+    {
+      "participant": "M",
+      "seed": 42,
+      "split": "fault",
+      "rows": 87,
+      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\history_models\\direct_head_fusion\\all_runs\\m2_direct\\test_results\\test_fault_predictions.csv"
+    }
+  ]
+}

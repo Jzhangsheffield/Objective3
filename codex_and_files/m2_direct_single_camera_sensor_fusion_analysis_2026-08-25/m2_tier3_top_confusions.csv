@@ -1,0 +1,21 @@
+﻿true_tier3_id,true_label,pred_tier3_id,pred_label,mean_errors_per_seed,fraction_of_true_class
+1,grip sample from machine table,13,put sample on machine table,16.00000000,0.08080808
+14,put sample on table,18,take plier from table,11.00000000,0.10679612
+13,put sample on machine table,1,grip sample from machine table,9.66666667,0.04882155
+14,put sample on table,10,put plier on table,6.66666667,0.06472492
+17,take lock from table,14,put sample on table,5.33333333,0.21333333
+29,turn on water pump,24,turn off water pump,4.66666667,0.21212121
+16,reverse sample,3,inspect sample,4.66666667,0.04713805
+25,turn on air compressor,20,turn off air compressor,4.33333333,0.19696970
+27,turn on extractor fan,22,turn off extractor fan,4.33333333,0.19696970
+1,grip sample from machine table,16,reverse sample,4.33333333,0.02188552
+30,unlock crimper,4,lock crimper,4.00000000,0.18181818
+14,put sample on table,17,take lock from table,4.00000000,0.03883495
+18,take plier from table,10,put plier on table,3.66666667,0.03559871
+18,take plier from table,17,take lock from table,3.66666667,0.03559871
+30,unlock crimper,26,turn on crimper,3.33333333,0.15151515
+20,turn off air compressor,25,turn on air compressor,3.00000000,0.11538462
+8,press pedal,7,place sample under electrodes,3.00000000,0.01485149
+26,turn on crimper,30,unlock crimper,2.66666667,0.12121212
+18,take plier from table,14,put sample on table,2.66666667,0.02588997
+9,put lock on table,17,take lock from table,2.33333333,0.10606061

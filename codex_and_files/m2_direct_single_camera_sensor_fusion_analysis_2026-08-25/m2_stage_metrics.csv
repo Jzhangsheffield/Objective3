@@ -1,0 +1,4 @@
+﻿stage,samples_per_seed,node_accuracy,node_accuracy_participant_sd,tier3_accuracy,tier3_accuracy_participant_sd
+1,242,0.83484848,0.07053129,0.83484848,0.07053129
+2,1397,0.92451053,0.03228187,0.92546783,0.03182814
+3,256,0.87336539,0.04236436,0.87336539,0.04236436
