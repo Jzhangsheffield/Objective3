@@ -28,6 +28,17 @@ Set-Location -LiteralPath 'D:\Junxi_data\Objective3_thermal_crimp\codex_and_file
 
 A0 不重新训练；脚本直接读取已有 12 次 A0 结果。
 
+如果实验包被复制到另一台电脑，必须先打开 `config/phase_a.json`，把以下路径改成该电脑上的真实绝对路径：
+
+```json
+{
+  "dataset_root": "C:/.../Stage_2_Mapstyle_Dataset",
+  "m2_project_root": "D:/.../graph_history_rgb_cross_person_ADM_2026-07-22"
+}
+```
+
+主控脚本现在会在启动 Python 前检查这两个目录；路径错误时直接给出明确提示。
+
 ## 2. 自动续跑
 
 `Resume` 默认是 `$true`。重新执行同一命令时，脚本检查每项任务的 checkpoint/cache/`completed.json`，已经完成的任务显示 `[SKIP]`，只继续缺失任务。
@@ -92,6 +103,16 @@ logs/run_YYYYMMDD_HHMMSS/
   40_A7_M_s42.log
   ...
 ```
+
+每个任务保留三类日志：
+
+```text
+TASK_NAME.log          # 合并后的命令、exit code、stdout、stderr
+TASK_NAME.stdout.txt   # Python 原始标准输出
+TASK_NAME.stderr.txt   # Python 原始 traceback/标准错误
+```
+
+即使 Python 失败，完整 traceback 也会保留在 `.stderr.txt` 和合并后的 `.log`，不会再被 PowerShell 的 `NativeCommandError` 截断。
 
 `run_status.csv` 记录每项任务的 `COMPLETED`、`SKIPPED_COMPLETE`、`FAILED` 和耗时。
 

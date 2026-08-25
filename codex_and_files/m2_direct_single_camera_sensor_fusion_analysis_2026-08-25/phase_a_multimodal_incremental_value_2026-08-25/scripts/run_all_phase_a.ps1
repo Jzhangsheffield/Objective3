@@ -76,6 +76,8 @@ function Invoke-PhasePython {
     )
     $SafeName = $Task -replace '[^A-Za-z0-9_.-]', '_'
     $LogPath = Join-Path $LogRoot "$SafeName.log"
+    $StdoutPath = Join-Path $LogRoot "$SafeName.stdout.txt"
+    $StderrPath = Join-Path $LogRoot "$SafeName.stderr.txt"
     if ($Resume -and (Test-AllPaths -Paths $CompletionPaths)) {
         Write-Host "[SKIP] $Task" -ForegroundColor DarkGray
         Add-Status -Task $Task -Stage $Stage -Status 'SKIPPED_COMPLETE' -Seconds 0 -Log $LogPath -Message 'Completion files already exist.'
@@ -91,9 +93,49 @@ function Invoke-PhasePython {
     Write-Host "[RUN ] $Task" -ForegroundColor Cyan
     Write-Host ("      {0} {1}" -f $Python, ($Arguments -join ' '))
     $Started = Get-Date
-    & $Python @Arguments 2>&1 | Tee-Object -FilePath $LogPath
-    $ExitCode = $LASTEXITCODE
+    try {
+        $Process = Start-Process `
+            -FilePath $Python `
+            -ArgumentList $Arguments `
+            -WorkingDirectory $PackageRoot `
+            -NoNewWindow `
+            -Wait `
+            -PassThru `
+            -RedirectStandardOutput $StdoutPath `
+            -RedirectStandardError $StderrPath
+        $ExitCode = $Process.ExitCode
+    } catch {
+        $Seconds = ((Get-Date) - $Started).TotalSeconds
+        $Message = "Unable to start Python process: $($_.Exception.Message)"
+        @(
+            "TASK: $Task",
+            "COMMAND: $Python $($Arguments -join ' ')",
+            "START_PROCESS_ERROR:",
+            $Message
+        ) | Set-Content -LiteralPath $LogPath -Encoding utf8
+        $script:FailureCount += 1
+        Add-Status -Task $Task -Stage $Stage -Status 'FAILED_TO_START' -Seconds $Seconds -Log $LogPath -Message $Message
+        if (-not $ContinueOnError) { throw "Task failed to start: $Task. See $LogPath" }
+        return
+    }
     $Seconds = ((Get-Date) - $Started).TotalSeconds
+
+    @(
+        "TASK: $Task",
+        "COMMAND: $Python $($Arguments -join ' ')",
+        "EXIT_CODE: $ExitCode",
+        "",
+        "===== STDOUT ====="
+    ) | Set-Content -LiteralPath $LogPath -Encoding utf8
+    if (Test-Path -LiteralPath $StdoutPath) {
+        Get-Content -LiteralPath $StdoutPath | Add-Content -LiteralPath $LogPath -Encoding utf8
+        Get-Content -LiteralPath $StdoutPath | ForEach-Object { Write-Host $_ }
+    }
+    "`n===== STDERR =====" | Add-Content -LiteralPath $LogPath -Encoding utf8
+    if (Test-Path -LiteralPath $StderrPath) {
+        Get-Content -LiteralPath $StderrPath | Add-Content -LiteralPath $LogPath -Encoding utf8
+        Get-Content -LiteralPath $StderrPath | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+    }
 
     if ($ExitCode -ne 0) {
         $script:FailureCount += 1
@@ -134,9 +176,18 @@ Write-Host "Resume:        $Resume"
 Write-Host "Plan only:     $PlanOnly"
 Write-Host "Logs:          $LogRoot"
 
+# Fail early with a clear message when a copied package still contains paths from another computer.
+$DatasetRoot = [string]$Config.dataset_root
+if (-not (Test-Path -LiteralPath $DatasetRoot -PathType Container)) {
+    throw "dataset_root does not exist on this computer: $DatasetRoot. Edit config\phase_a.json before running."
+}
+if (-not (Test-Path -LiteralPath $M2Root -PathType Container)) {
+    throw "m2_project_root does not exist on this computer: $M2Root. Edit config\phase_a.json before running."
+}
+
 # Stage 0: runtime and immutable data/protocol audit.
 Invoke-PhasePython -Task '00_runtime_check' -Stage 'runtime' -Arguments @(
-    '-c', 'import torch,numpy; print("torch",torch.__version__); print("cuda",torch.cuda.is_available()); print("numpy",numpy.__version__)'
+    'tools/check_runtime.py', '--device', $Device
 )
 Invoke-PhasePython -Task '00_model_smoke' -Stage 'runtime' -Arguments @(
     'tools/smoke_test.py'
