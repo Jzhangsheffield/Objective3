@@ -1,0 +1,10 @@
+{
+  "model": "e2e_tier3_scratch",
+  "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\atomic_tail_sequence_disjoint_2026-08-24\\outputs\\upstream\\D_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+  "train_scope": "all_runs",
+  "tested_splits": [
+    "test_normal",
+    "test_fault",
+    "test_all"
+  ]
+}

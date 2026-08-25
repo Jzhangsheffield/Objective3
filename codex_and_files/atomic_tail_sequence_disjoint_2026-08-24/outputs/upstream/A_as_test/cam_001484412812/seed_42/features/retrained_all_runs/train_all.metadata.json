@@ -1,0 +1,16 @@
+{
+  "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+  "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\atomic_tail_sequence_disjoint_2026-08-24\\inputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+  "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\atomic_tail_sequence_disjoint_2026-08-24\\outputs\\upstream\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+  "camera_id": "001484412812",
+  "feature_dim": 512,
+  "n_frames": 16,
+  "rgb_size": 224,
+  "load_report": {
+    "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\atomic_tail_sequence_disjoint_2026-08-24\\outputs\\upstream\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+    "loaded_keys": 122,
+    "model_keys": 122,
+    "missing_keys": [],
+    "unexpected_keys": []
+  }
+}

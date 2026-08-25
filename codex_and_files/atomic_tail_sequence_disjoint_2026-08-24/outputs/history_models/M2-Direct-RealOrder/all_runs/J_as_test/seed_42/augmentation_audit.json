@@ -1,0 +1,37 @@
+{
+  "samples": 698,
+  "tail_reason_counts": {
+    "active_incomplete_atomic_prefix": 403,
+    "atomic_sequence_complete": 57,
+    "empty_history": 33,
+    "latest_node_not_atomic": 174,
+    "observed_atomic_nodes_not_prefix": 15,
+    "repeated_node_fallback": 16
+  },
+  "tail_length_counts": {
+    "0": 295,
+    "1": 87,
+    "2": 33,
+    "3": 33,
+    "4": 33,
+    "5": 25,
+    "6": 25,
+    "7": 25,
+    "8": 25,
+    "9": 25,
+    "10": 25,
+    "11": 25,
+    "12": 21,
+    "13": 21
+  },
+  "augmentation_changed": 0,
+  "augmentation_changed_fraction": 0.0,
+  "mean_normalized_kendall_distance": 0.0,
+  "tail_aux_eligible": 316,
+  "tail_aux_eligible_fraction": 0.45272206303724927,
+  "history_tokens": 7821,
+  "shifted_history_tokens": 0,
+  "shifted_history_token_fraction": 0.0,
+  "mean_absolute_position_shift": 0.0,
+  "uses_current_target_for_reordering": false
+}
