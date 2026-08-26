@@ -287,3 +287,5 @@ def collate_multimodal(batch: list[dict[str, Any]]) -> dict[str, Any]:
     "tier3_target": [B],
     ...
 }
+
+# models.py
