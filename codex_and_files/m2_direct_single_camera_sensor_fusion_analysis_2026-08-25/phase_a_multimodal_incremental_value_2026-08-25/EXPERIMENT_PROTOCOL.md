@@ -1,5 +1,7 @@
 # Phase A 实验说明与预注册协议
 
+> 2026-08-26 补充：A3 与右手 EMG/IMU 的 S1–S12 扩展实验已单独预注册在 `SUPPLEMENTARY_EXPERIMENT_PROTOCOL.md`，并由同一个 `scripts/run_all_phase_a.ps1` 调度。补充实验不包含两个单摄像头 scratch M2-Direct；原 A0–A7 定义及实现保持不变。
+
 ## 1. 固定问题
 
 训练范围固定为 `all_runs`；外层评估固定为 A/D/J/M 四折 leave-one-subject-out；每折固定 seed 1、2、42。A0 直接引用已有 `001484412812/M2-Direct` 结果。所有条件必须使用相同 sample 集、相同 run 内实际历史顺序、相同 node/Tier3/stage 映射。禁止 graph-valid shuffle，禁止 validation/test 驱动的 best epoch 或超参数选择。

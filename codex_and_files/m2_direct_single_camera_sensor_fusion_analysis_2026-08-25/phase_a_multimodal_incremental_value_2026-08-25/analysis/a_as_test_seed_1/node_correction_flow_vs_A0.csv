@@ -1,0 +1,6 @@
+﻿condition,fixed_A0_errors,harmed_A0_correct,net_correct,both_correct,both_wrong,prediction_changed
+A1,26,14,12,381,10,47
+A2,19,4,15,391,17,27
+A4,4,3,1,392,32,7
+A5,5,2,3,393,31,8
+A6,3,1,2,394,33,4

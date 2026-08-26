@@ -1,0 +1,827 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4460" height="1509" viewBox="0 0 4460 1509" role="img" aria-labelledby="title desc">
+<title id="title">35 Node 类别 Recall 与 F1 变化热图</title>
+<desc id="desc">上图是每个模型的绝对 Recall，下图是各候选相对 A0 的 F1 变化。类别按 A0 Recall 从低到高排列。</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>text{font-family:Arial,"Microsoft YaHei",sans-serif;fill:#111} .title{font-size:34px;font-weight:600}.subtitle{font-size:23px;font-weight:600}.row{font-size:21px;font-weight:600}.cell{font-size:17px;font-weight:600}.axis{font-size:18px}.note{font-size:18px;fill:#333}</style>
+<text class="title" x="40" y="48">35 Node 类别预测影响总览（A_as_test, seed 1）</text>
+<text class="note" x="40" y="79">类别按 A0 Recall 从低到高排序；粗框表示 Recall &lt; 80%；单元格为百分比/百分点。</text>
+<text class="subtitle" x="40" y="132">绝对 Recall（%）：看该类别自身样本识别率</text>
+<text class="row" x="312" y="185" text-anchor="end">A0  主相机 M2-Direct</text>
+<rect x="330" y="150" width="116" height="54" fill="#de7665" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="388.0" y="184" text-anchor="middle" style="fill:#111111">33</text>
+<rect x="446" y="150" width="116" height="54" fill="#e98e74" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="184" text-anchor="middle" style="fill:#111111">42</text>
+<rect x="562" y="150" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="184" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="150" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="736.0" y="184" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="794" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1026" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1142" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1258" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="150" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="184" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1490" y="150" width="116" height="54" fill="#b8dcc7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="184" text-anchor="middle" style="fill:#111111">86</text>
+<rect x="1606" y="150" width="116" height="54" fill="#5bb481" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="184" text-anchor="middle" style="fill:#111111">94</text>
+<rect x="1722" y="150" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="184" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1838" y="150" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="184" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1954" y="150" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="184" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2070" y="150" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="184" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2186" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2302" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2534" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2650" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3462" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3694" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3926" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4158" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="150" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="184" text-anchor="middle" style="fill:#ffffff">100</text>
+<text class="row" x="312" y="239" text-anchor="end">A1  第二相机单独 M2-Direct</text>
+<rect x="330" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="446" y="204" width="116" height="54" fill="#f7f5f4" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="238" text-anchor="middle" style="fill:#111111">79</text>
+<rect x="562" y="204" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="238" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="794" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1026" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1142" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1258" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1490" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1606" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1722" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1838" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1954" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2070" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2186" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="2302" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="204" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="2476.0" y="238" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="2534" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="2650" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3462" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="204" width="116" height="54" fill="#f7f5f4" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="3636.0" y="238" text-anchor="middle" style="fill:#111111">79</text>
+<rect x="3694" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="204" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="238" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="3926" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="204" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="238" text-anchor="middle" style="fill:#111111">80</text>
+<rect x="4158" y="204" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="238" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="204" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="238" text-anchor="middle" style="fill:#111111">80</text>
+<text class="row" x="312" y="293" text-anchor="end">A2  双相机 0.5/0.5 概率后融合</text>
+<rect x="330" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="446" y="258" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="292" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="562" y="258" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="292" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="794" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1026" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1142" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1258" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1490" y="258" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="292" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1606" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1722" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1838" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1954" y="258" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="292" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2070" y="258" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="292" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2186" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2302" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2534" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="2650" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3462" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="258" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="292" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="3694" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="258" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="292" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="3926" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4158" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="258" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="292" text-anchor="middle" style="fill:#ffffff">100</text>
+<text class="row" x="312" y="347" text-anchor="end">A4  主相机 + 右手 IMU</text>
+<rect x="330" y="312" width="116" height="54" fill="#f4a582" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="388.0" y="346" text-anchor="middle" style="fill:#111111">50</text>
+<rect x="446" y="312" width="116" height="54" fill="#e98e74" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="346" text-anchor="middle" style="fill:#111111">42</text>
+<rect x="562" y="312" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="346" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="312" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="736.0" y="346" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="794" y="312" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="346" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="312" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="346" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1026" y="312" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="346" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1142" y="312" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="346" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1258" y="312" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="346" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1490" y="312" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="346" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1606" y="312" width="116" height="54" fill="#5bb481" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="346" text-anchor="middle" style="fill:#111111">94</text>
+<rect x="1722" y="312" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="346" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1838" y="312" width="116" height="54" fill="#b8dcc7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="346" text-anchor="middle" style="fill:#111111">86</text>
+<rect x="1954" y="312" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="346" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2070" y="312" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="346" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2186" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2302" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2534" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2650" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3462" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3694" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3926" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4158" y="312" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="346" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="312" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="346" text-anchor="middle" style="fill:#111111">80</text>
+<text class="row" x="312" y="401" text-anchor="end">A5  主相机 + 右手 EMG</text>
+<rect x="330" y="366" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="388.0" y="400" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="446" y="366" width="116" height="54" fill="#e98e74" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="400" text-anchor="middle" style="fill:#111111">42</text>
+<rect x="562" y="366" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="400" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="366" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="736.0" y="400" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="794" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1026" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1142" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1258" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1490" y="366" width="116" height="54" fill="#83c5a0" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="400" text-anchor="middle" style="fill:#111111">90</text>
+<rect x="1606" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1722" y="366" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="400" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1838" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1954" y="366" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="400" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2070" y="366" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="400" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2186" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2302" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2534" y="366" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="400" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="2650" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="366" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="400" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="3462" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3694" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3926" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4158" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="366" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="400" text-anchor="middle" style="fill:#ffffff">100</text>
+<text class="row" x="312" y="455" text-anchor="end">A6  主相机 + 右手 EMG + IMU</text>
+<rect x="330" y="420" width="116" height="54" fill="#de7665" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="388.0" y="454" text-anchor="middle" style="fill:#111111">33</text>
+<rect x="446" y="420" width="116" height="54" fill="#e98e74" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="504.0" y="454" text-anchor="middle" style="fill:#111111">42</text>
+<rect x="562" y="420" width="116" height="54" fill="#f6d3c3" stroke="#111111" stroke-width="3"/>
+<text class="cell" x="620.0" y="454" text-anchor="middle" style="fill:#111111">67</text>
+<rect x="678" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="794" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="910" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1026" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1142" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1258" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1374" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="1490" y="420" width="116" height="54" fill="#83c5a0" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="454" text-anchor="middle" style="fill:#111111">90</text>
+<rect x="1606" y="420" width="116" height="54" fill="#5bb481" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="454" text-anchor="middle" style="fill:#111111">94</text>
+<rect x="1722" y="420" width="116" height="54" fill="#4faf78" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="454" text-anchor="middle" style="fill:#111111">95</text>
+<rect x="1838" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="1954" y="420" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="454" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2070" y="420" width="116" height="54" fill="#48ac73" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="454" text-anchor="middle" style="fill:#111111">96</text>
+<rect x="2186" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2302" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2418" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2534" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2650" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2766" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2882" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="2998" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3114" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3230" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3346" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3462" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3578" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3694" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="3810" y="420" width="116" height="54" fill="#d2e7db" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="454" text-anchor="middle" style="fill:#111111">83</text>
+<rect x="3926" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4042" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4158" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<rect x="4274" y="420" width="116" height="54" fill="#1a9850" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="454" text-anchor="middle" style="fill:#ffffff">100</text>
+<text class="subtitle" x="40" y="601">相对 A0 的 F1 变化（pp）：Recall 不变时，变化来自 Precision/误报数量</text>
+<text class="row" x="312" y="654" text-anchor="end">A1  第二相机单独 M2-Direct</text>
+<rect x="330" y="619" width="116" height="54" fill="#3070b1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="653" text-anchor="middle" style="fill:#ffffff">+46.5</text>
+<rect x="446" y="619" width="116" height="54" fill="#719cc8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="504.0" y="653" text-anchor="middle" style="fill:#111111">+31.2</text>
+<rect x="562" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="620.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="678" y="619" width="116" height="54" fill="#e9edf2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="653" text-anchor="middle" style="fill:#111111">+3.3</text>
+<rect x="794" y="619" width="116" height="54" fill="#e7c2c6" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="653" text-anchor="middle" style="fill:#111111">-11.9</text>
+<rect x="910" y="619" width="116" height="54" fill="#c2d3e4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="653" text-anchor="middle" style="fill:#111111">+12.5</text>
+<rect x="1026" y="619" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="653" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="1142" y="619" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="653" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="1258" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1374" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1490" y="619" width="116" height="54" fill="#eaeef2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="653" text-anchor="middle" style="fill:#111111">+3.1</text>
+<rect x="1606" y="619" width="116" height="54" fill="#eaeef2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="653" text-anchor="middle" style="fill:#111111">+3.0</text>
+<rect x="1722" y="619" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="653" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1838" y="619" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="653" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1954" y="619" width="116" height="54" fill="#bdd0e3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="653" text-anchor="middle" style="fill:#111111">+13.5</text>
+<rect x="2070" y="619" width="116" height="54" fill="#eef1f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="653" text-anchor="middle" style="fill:#111111">+2.1</text>
+<rect x="2186" y="619" width="116" height="54" fill="#d07882" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="653" text-anchor="middle" style="fill:#111111">-28.6</text>
+<rect x="2302" y="619" width="116" height="54" fill="#ecd5d8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="653" text-anchor="middle" style="fill:#111111">-7.7</text>
+<rect x="2418" y="619" width="116" height="54" fill="#db9ea5" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="653" text-anchor="middle" style="fill:#111111">-20.0</text>
+<rect x="2534" y="619" width="116" height="54" fill="#ebcfd2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="653" text-anchor="middle" style="fill:#111111">-9.0</text>
+<rect x="2650" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2766" y="619" width="116" height="54" fill="#d6e1eb" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="653" text-anchor="middle" style="fill:#111111">+7.7</text>
+<rect x="2882" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2998" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3114" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3230" y="619" width="116" height="54" fill="#c9d8e7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="653" text-anchor="middle" style="fill:#111111">+10.6</text>
+<rect x="3346" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3462" y="619" width="116" height="54" fill="#edf0f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="653" text-anchor="middle" style="fill:#111111">+2.3</text>
+<rect x="3578" y="619" width="116" height="54" fill="#e7c3c8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="653" text-anchor="middle" style="fill:#111111">-11.6</text>
+<rect x="3694" y="619" width="116" height="54" fill="#d6e1eb" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="653" text-anchor="middle" style="fill:#111111">+7.7</text>
+<rect x="3810" y="619" width="116" height="54" fill="#f5f1f1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="653" text-anchor="middle" style="fill:#111111">-1.4</text>
+<rect x="3926" y="619" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="653" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4042" y="619" width="116" height="54" fill="#e8c5ca" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="653" text-anchor="middle" style="fill:#111111">-11.1</text>
+<rect x="4158" y="619" width="116" height="54" fill="#edd5d8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="653" text-anchor="middle" style="fill:#111111">-7.6</text>
+<rect x="4274" y="619" width="116" height="54" fill="#dfe7ef" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="653" text-anchor="middle" style="fill:#111111">+5.6</text>
+<text class="row" x="312" y="708" text-anchor="end">A2  双相机 0.5/0.5 概率后融合</text>
+<rect x="330" y="673" width="116" height="54" fill="#3070b1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="707" text-anchor="middle" style="fill:#ffffff">+46.5</text>
+<rect x="446" y="673" width="116" height="54" fill="#9ebad8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="504.0" y="707" text-anchor="middle" style="fill:#111111">+20.9</text>
+<rect x="562" y="673" width="116" height="54" fill="#d8e2ec" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="620.0" y="707" text-anchor="middle" style="fill:#111111">+7.3</text>
+<rect x="678" y="673" width="116" height="54" fill="#e9edf2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="707" text-anchor="middle" style="fill:#111111">+3.3</text>
+<rect x="794" y="673" width="116" height="54" fill="#eedadd" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="707" text-anchor="middle" style="fill:#111111">-6.4</text>
+<rect x="910" y="673" width="116" height="54" fill="#acc4dd" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="707" text-anchor="middle" style="fill:#111111">+17.5</text>
+<rect x="1026" y="673" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="707" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="1142" y="673" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="707" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="1258" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1374" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1490" y="673" width="116" height="54" fill="#e1e8ef" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="707" text-anchor="middle" style="fill:#111111">+5.3</text>
+<rect x="1606" y="673" width="116" height="54" fill="#eaeef2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="707" text-anchor="middle" style="fill:#111111">+3.0</text>
+<rect x="1722" y="673" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="707" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1838" y="673" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="707" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1954" y="673" width="116" height="54" fill="#cddbe8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="707" text-anchor="middle" style="fill:#111111">+9.8</text>
+<rect x="2070" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2186" y="673" width="116" height="54" fill="#e3b7bd" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="707" text-anchor="middle" style="fill:#111111">-14.3</text>
+<rect x="2302" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2418" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2534" y="673" width="116" height="54" fill="#ebcfd2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="707" text-anchor="middle" style="fill:#111111">-9.0</text>
+<rect x="2650" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2766" y="673" width="116" height="54" fill="#d6e1eb" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="707" text-anchor="middle" style="fill:#111111">+7.7</text>
+<rect x="2882" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2998" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3114" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3230" y="673" width="116" height="54" fill="#d3dfeb" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="707" text-anchor="middle" style="fill:#111111">+8.3</text>
+<rect x="3346" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3462" y="673" width="116" height="54" fill="#edf0f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="707" text-anchor="middle" style="fill:#111111">+2.3</text>
+<rect x="3578" y="673" width="116" height="54" fill="#f4eeee" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="707" text-anchor="middle" style="fill:#111111">-2.1</text>
+<rect x="3694" y="673" width="116" height="54" fill="#d6e1eb" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="707" text-anchor="middle" style="fill:#111111">+7.7</text>
+<rect x="3810" y="673" width="116" height="54" fill="#f5f1f1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="707" text-anchor="middle" style="fill:#111111">-1.4</text>
+<rect x="3926" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4042" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4158" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4274" y="673" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="707" text-anchor="middle" style="fill:#111111">+0.0</text>
+<text class="row" x="312" y="762" text-anchor="end">A4  主相机 + 右手 IMU</text>
+<rect x="330" y="727" width="116" height="54" fill="#b4cae0" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="761" text-anchor="middle" style="fill:#111111">+15.6</text>
+<rect x="446" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="504.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="562" y="727" width="116" height="54" fill="#d8e2ec" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="620.0" y="761" text-anchor="middle" style="fill:#111111">+7.3</text>
+<rect x="678" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="794" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="910" y="727" width="116" height="54" fill="#e5ebf1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="761" text-anchor="middle" style="fill:#111111">+4.2</text>
+<rect x="1026" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1142" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1258" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1374" y="727" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="761" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="1490" y="727" width="116" height="54" fill="#e1e8ef" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="761" text-anchor="middle" style="fill:#111111">+5.3</text>
+<rect x="1606" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1722" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1838" y="727" width="116" height="54" fill="#f0e0e2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="761" text-anchor="middle" style="fill:#111111">-5.3</text>
+<rect x="1954" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2070" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2186" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2302" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2418" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2534" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2650" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2766" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2882" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2998" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3114" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3230" y="727" width="116" height="54" fill="#e6ebf1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="761" text-anchor="middle" style="fill:#111111">+4.0</text>
+<rect x="3346" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3462" y="727" width="116" height="54" fill="#f1e4e5" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="761" text-anchor="middle" style="fill:#111111">-4.3</text>
+<rect x="3578" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3694" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3810" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3926" y="727" width="116" height="54" fill="#ecd5d8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="761" text-anchor="middle" style="fill:#111111">-7.7</text>
+<rect x="4042" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4158" y="727" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="761" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4274" y="727" width="116" height="54" fill="#e8c8cc" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="761" text-anchor="middle" style="fill:#111111">-10.6</text>
+<text class="row" x="312" y="816" text-anchor="end">A5  主相机 + 右手 EMG</text>
+<rect x="330" y="781" width="116" height="54" fill="#7ea5cd" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="815" text-anchor="middle" style="fill:#111111">+28.3</text>
+<rect x="446" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="504.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="562" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="620.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="678" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="794" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="910" y="781" width="116" height="54" fill="#d1ddea" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="815" text-anchor="middle" style="fill:#111111">+8.9</text>
+<rect x="1026" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1142" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1258" y="781" width="116" height="54" fill="#edd5d8" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="815" text-anchor="middle" style="fill:#111111">-7.6</text>
+<rect x="1374" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1490" y="781" width="116" height="54" fill="#ebeff3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="815" text-anchor="middle" style="fill:#111111">+2.7</text>
+<rect x="1606" y="781" width="116" height="54" fill="#eaeef2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="815" text-anchor="middle" style="fill:#111111">+3.0</text>
+<rect x="1722" y="781" width="116" height="54" fill="#f4edee" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="815" text-anchor="middle" style="fill:#111111">-2.3</text>
+<rect x="1838" y="781" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="815" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1954" y="781" width="116" height="54" fill="#f5f2f2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="815" text-anchor="middle" style="fill:#111111">-1.2</text>
+<rect x="2070" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2186" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2302" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2418" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2534" y="781" width="116" height="54" fill="#ebcfd2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="815" text-anchor="middle" style="fill:#111111">-9.0</text>
+<rect x="2650" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2766" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2882" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2998" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3114" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3230" y="781" width="116" height="54" fill="#e6ebf1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="815" text-anchor="middle" style="fill:#111111">+4.0</text>
+<rect x="3346" y="781" width="116" height="54" fill="#f4eced" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="815" text-anchor="middle" style="fill:#111111">-2.4</text>
+<rect x="3462" y="781" width="116" height="54" fill="#edf0f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="815" text-anchor="middle" style="fill:#111111">+2.3</text>
+<rect x="3578" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3694" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3810" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3926" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4042" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4158" y="781" width="116" height="54" fill="#d0dde9" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="815" text-anchor="middle" style="fill:#111111">+9.1</text>
+<rect x="4274" y="781" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="815" text-anchor="middle" style="fill:#111111">+0.0</text>
+<text class="row" x="312" y="870" text-anchor="end">A6  主相机 + 右手 EMG + IMU</text>
+<rect x="330" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="388.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="446" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="504.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="562" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="620.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="678" y="835" width="116" height="54" fill="#e9edf2" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="736.0" y="869" text-anchor="middle" style="fill:#111111">+3.3</text>
+<rect x="794" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="852.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="910" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="968.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1026" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1084.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1142" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1200.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1258" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1316.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1374" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1432.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1490" y="835" width="116" height="54" fill="#ebeff3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1548.0" y="869" text-anchor="middle" style="fill:#111111">+2.7</text>
+<rect x="1606" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1664.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1722" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1780.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="1838" y="835" width="116" height="54" fill="#edf0f3" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="1896.0" y="869" text-anchor="middle" style="fill:#111111">+2.4</text>
+<rect x="1954" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2012.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2070" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2128.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2186" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2244.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2302" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2360.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2418" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2476.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2534" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2592.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2650" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2708.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2766" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2824.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2882" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="2940.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="2998" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3056.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3114" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3172.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3230" y="835" width="116" height="54" fill="#eff1f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3288.0" y="869" text-anchor="middle" style="fill:#111111">+1.9</text>
+<rect x="3346" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3404.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3462" y="835" width="116" height="54" fill="#edf0f4" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3520.0" y="869" text-anchor="middle" style="fill:#111111">+2.3</text>
+<rect x="3578" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3636.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3694" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3752.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="3810" y="835" width="116" height="54" fill="#f5f1f1" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3868.0" y="869" text-anchor="middle" style="fill:#111111">-1.4</text>
+<rect x="3926" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="3984.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4042" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4100.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4158" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4216.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<rect x="4274" y="835" width="116" height="54" fill="#f7f7f7" stroke="#ffffff" stroke-width="1"/>
+<text class="cell" x="4332.0" y="869" text-anchor="middle" style="fill:#111111">+0.0</text>
+<text class="axis" transform="translate(388.0,917) rotate(62)" text-anchor="start">N30 turn_off_air_compressor (n=6)</text>
+<text class="axis" transform="translate(504.0,917) rotate(62)" text-anchor="start">N24 put_sample_on_table (n=24)</text>
+<text class="axis" transform="translate(620.0,917) rotate(62)" text-anchor="start">N1 unlock_crimper (n=6)</text>
+<text class="axis" transform="translate(736.0,917) rotate(62)" text-anchor="start">N8 turn_on_extractor_fan (n=6)</text>
+<text class="axis" transform="translate(852.0,917) rotate(62)" text-anchor="start">N4 turn_on_crimper (n=6)</text>
+<text class="axis" transform="translate(968.0,917) rotate(62)" text-anchor="start">N6 turn_on_air_compressor (n=6)</text>
+<text class="axis" transform="translate(1084.0,917) rotate(62)" text-anchor="start">N10 remove_protection_cover_from_crimper (n=6)</text>
+<text class="axis" transform="translate(1200.0,917) rotate(62)" text-anchor="start">N26 take_protection_cover_from_ground (n=6)</text>
+<text class="axis" transform="translate(1316.0,917) rotate(62)" text-anchor="start">N29 turn_off_water_pump (n=6)</text>
+<text class="axis" transform="translate(1432.0,917) rotate(62)" text-anchor="start">N32 turn_off_crimper (n=6)</text>
+<text class="axis" transform="translate(1548.0,917) rotate(62)" text-anchor="start">N17 grip_sample_from_machine_table_2 (n=21)</text>
+<text class="axis" transform="translate(1664.0,917) rotate(62)" text-anchor="start">N23 inspect_sample (n=17)</text>
+<text class="axis" transform="translate(1780.0,917) rotate(62)" text-anchor="start">N20 grip_sample_from_machine_table_3 (n=21)</text>
+<text class="axis" transform="translate(1896.0,917) rotate(62)" text-anchor="start">N22 press_pedal_2 (n=21)</text>
+<text class="axis" transform="translate(2012.0,917) rotate(62)" text-anchor="start">N12 take_plier_from_table (n=24)</text>
+<text class="axis" transform="translate(2128.0,917) rotate(62)" text-anchor="start">N13 grip_sample_from_table_1 (n=24)</text>
+<text class="axis" transform="translate(2244.0,917) rotate(62)" text-anchor="start">N2 put_lock_on_table (n=6)</text>
+<text class="axis" transform="translate(2360.0,917) rotate(62)" text-anchor="start">N3 turn_on_main_switch (n=6)</text>
+<text class="axis" transform="translate(2476.0,917) rotate(62)" text-anchor="start">N5 adjust_parameters (n=6)</text>
+<text class="axis" transform="translate(2592.0,917) rotate(62)" text-anchor="start">N7 turn_on_water_pump (n=6)</text>
+<text class="axis" transform="translate(2708.0,917) rotate(62)" text-anchor="start">N9 move_pedal_to_safe_location (n=6)</text>
+<text class="axis" transform="translate(2824.0,917) rotate(62)" text-anchor="start">N11 put_protection_cover_on_ground (n=6)</text>
+<text class="axis" transform="translate(2940.0,917) rotate(62)" text-anchor="start">N14 put_sample_under_electrodes_1 (n=24)</text>
+<text class="axis" transform="translate(3056.0,917) rotate(62)" text-anchor="start">N15 press_pedal_1 (n=24)</text>
+<text class="axis" transform="translate(3172.0,917) rotate(62)" text-anchor="start">N16 put_sample_on_machine_table_1 (n=21)</text>
+<text class="axis" transform="translate(3288.0,917) rotate(62)" text-anchor="start">N18 reverse_sample (n=21)</text>
+<text class="axis" transform="translate(3404.0,917) rotate(62)" text-anchor="start">N19 put_sample_on_machine_table_2 (n=21)</text>
+<text class="axis" transform="translate(3520.0,917) rotate(62)" text-anchor="start">N21 put_sample_under_electrodes_2 (n=21)</text>
+<text class="axis" transform="translate(3636.0,917) rotate(62)" text-anchor="start">N25 put_plier_on_table (n=24)</text>
+<text class="axis" transform="translate(3752.0,917) rotate(62)" text-anchor="start">N27 put_protection_cover_on_crimper (n=6)</text>
+<text class="axis" transform="translate(3868.0,917) rotate(62)" text-anchor="start">N28 turn_off_extractor_fan (n=6)</text>
+<text class="axis" transform="translate(3984.0,917) rotate(62)" text-anchor="start">N31 move_pedal_to_original_place (n=6)</text>
+<text class="axis" transform="translate(4100.0,917) rotate(62)" text-anchor="start">N33 turn_off_main_switch (n=5)</text>
+<text class="axis" transform="translate(4216.0,917) rotate(62)" text-anchor="start">N34 take_lock_from_table (n=5)</text>
+<text class="axis" transform="translate(4332.0,917) rotate(62)" text-anchor="start">N35 lock_crimper (n=5)</text>
+<text class="note" x="45" y="1429">颜色：Recall 红=低、绿=高；ΔF1 红=下降、白≈不变、蓝=提升。粗框类别的样本索引见报告下方。</text>
+</svg>

@@ -1,0 +1,222 @@
+{
+  "A1": {
+    "node_accuracy": {
+      "mean_delta": 0.027992343387471,
+      "ci_low": 0.0,
+      "ci_high": 0.05568445475638051,
+      "probability_positive": 0.9716
+    },
+    "node_macro_f1": {
+      "mean_delta": 0.0182792964821024,
+      "ci_low": -0.02384880881888484,
+      "ci_high": 0.05807508428798659,
+      "probability_positive": 0.8083
+    },
+    "node_macro_recall": {
+      "mean_delta": 0.013958976621676484,
+      "ci_low": -0.02590531807394516,
+      "ci_high": 0.050606773222450795,
+      "probability_positive": 0.7709
+    },
+    "tier3_accuracy": {
+      "mean_delta": 0.027992343387471,
+      "ci_low": 0.0,
+      "ci_high": 0.05568445475638051,
+      "probability_positive": 0.9716
+    },
+    "tier3_macro_f1": {
+      "mean_delta": 0.018815941184566743,
+      "ci_low": -0.028766919818283398,
+      "ci_high": 0.06349993613901446,
+      "probability_positive": 0.7873
+    },
+    "normal_node_macro_f1": {
+      "mean_delta": -0.0012266646962166734,
+      "ci_low": -0.05448037717677512,
+      "ci_high": 0.04808315534185754,
+      "probability_positive": 0.4904
+    },
+    "fault_node_macro_f1": {
+      "mean_delta": 0.06817712881123905,
+      "ci_low": -7.267317268649751e-06,
+      "ci_high": 0.1351814202582152,
+      "probability_positive": 0.9749
+    }
+  },
+  "A2": {
+    "node_accuracy": {
+      "mean_delta": 0.03481136890951276,
+      "ci_low": 0.0139211136890951,
+      "ci_high": 0.058004640371229654,
+      "probability_positive": 0.9994
+    },
+    "node_macro_f1": {
+      "mean_delta": 0.03866599399832253,
+      "ci_low": 0.004029021873840226,
+      "ci_high": 0.0727848848056604,
+      "probability_positive": 0.9846
+    },
+    "node_macro_recall": {
+      "mean_delta": 0.03697535658480818,
+      "ci_low": 0.005614531389478831,
+      "ci_high": 0.06747747272088007,
+      "probability_positive": 0.9873
+    },
+    "tier3_accuracy": {
+      "mean_delta": 0.03481136890951276,
+      "ci_low": 0.0139211136890951,
+      "ci_high": 0.058004640371229654,
+      "probability_positive": 0.9994
+    },
+    "tier3_macro_f1": {
+      "mean_delta": 0.04151489877476516,
+      "ci_low": 0.0028155865439623423,
+      "ci_high": 0.07955397456975426,
+      "probability_positive": 0.9808
+    },
+    "normal_node_macro_f1": {
+      "mean_delta": 0.017781036920065878,
+      "ci_low": -0.02696869688864369,
+      "ci_high": 0.059930213194174665,
+      "probability_positive": 0.7916
+    },
+    "fault_node_macro_f1": {
+      "mean_delta": 0.08648856557326334,
+      "ci_low": 0.031525402371197164,
+      "ci_high": 0.14291907061501158,
+      "probability_positive": 0.999
+    }
+  },
+  "A4": {
+    "node_accuracy": {
+      "mean_delta": 0.0023587006960556845,
+      "ci_low": -0.009280742459396807,
+      "ci_high": 0.01392111368909521,
+      "probability_positive": 0.5763
+    },
+    "node_macro_f1": {
+      "mean_delta": 0.004946960270715688,
+      "ci_low": -0.01384387582441995,
+      "ci_high": 0.025558600341799548,
+      "probability_positive": 0.6885
+    },
+    "node_macro_recall": {
+      "mean_delta": 0.0038598067780896985,
+      "ci_low": -0.014603371783496018,
+      "ci_high": 0.022619312169312303,
+      "probability_positive": 0.6646
+    },
+    "tier3_accuracy": {
+      "mean_delta": 0.0023587006960556845,
+      "ci_low": -0.009280742459396807,
+      "ci_high": 0.01392111368909521,
+      "probability_positive": 0.5763
+    },
+    "tier3_macro_f1": {
+      "mean_delta": 0.006400884936030979,
+      "ci_low": -0.014377392245338086,
+      "ci_high": 0.02907417617328416,
+      "probability_positive": 0.7224
+    },
+    "normal_node_macro_f1": {
+      "mean_delta": 0.0035121063345852797,
+      "ci_low": -0.01824341631165282,
+      "ci_high": 0.027165979578644535,
+      "probability_positive": 0.6264
+    },
+    "fault_node_macro_f1": {
+      "mean_delta": 0.006145470002138306,
+      "ci_low": -0.025549586706526014,
+      "ci_high": 0.03645833333333326,
+      "probability_positive": 0.591
+    }
+  },
+  "A5": {
+    "node_accuracy": {
+      "mean_delta": 0.006865661252900233,
+      "ci_low": -0.004640371229698403,
+      "ci_high": 0.018561484918793503,
+      "probability_positive": 0.8235
+    },
+    "node_macro_f1": {
+      "mean_delta": 0.011013220179321652,
+      "ci_low": -0.007606506728137196,
+      "ci_high": 0.030121145722236172,
+      "probability_positive": 0.872
+    },
+    "node_macro_recall": {
+      "mean_delta": 0.007732743763947724,
+      "ci_low": -0.008703808131439778,
+      "ci_high": 0.02428597196454346,
+      "probability_positive": 0.8234
+    },
+    "tier3_accuracy": {
+      "mean_delta": 0.006865661252900233,
+      "ci_low": -0.004640371229698403,
+      "ci_high": 0.018561484918793503,
+      "probability_positive": 0.8235
+    },
+    "tier3_macro_f1": {
+      "mean_delta": 0.01192806925613935,
+      "ci_low": -0.008521109516327717,
+      "ci_high": 0.032937294437101576,
+      "probability_positive": 0.8687
+    },
+    "normal_node_macro_f1": {
+      "mean_delta": 0.002061228623239507,
+      "ci_low": -0.021038969688873352,
+      "ci_high": 0.0254820165181183,
+      "probability_positive": 0.5736
+    },
+    "fault_node_macro_f1": {
+      "mean_delta": 0.02806447991753489,
+      "ci_low": -0.0006413837058996757,
+      "ci_high": 0.05954864117757519,
+      "probability_positive": 0.9258
+    }
+  },
+  "A6": {
+    "node_accuracy": {
+      "mean_delta": 0.004599071925754061,
+      "ci_low": -0.004640371229698292,
+      "ci_high": 0.0139211136890951,
+      "probability_positive": 0.7711
+    },
+    "node_macro_f1": {
+      "mean_delta": 0.0033927599303818887,
+      "ci_low": -0.012307716963277312,
+      "ci_high": 0.020941120852542447,
+      "probability_positive": 0.6623
+    },
+    "node_macro_recall": {
+      "mean_delta": 0.002708431078030664,
+      "ci_low": -0.010989352262644147,
+      "ci_high": 0.016785938300051314,
+      "probability_positive": 0.6453
+    },
+    "tier3_accuracy": {
+      "mean_delta": 0.004599071925754061,
+      "ci_low": -0.004640371229698292,
+      "ci_high": 0.0139211136890951,
+      "probability_positive": 0.7711
+    },
+    "tier3_macro_f1": {
+      "mean_delta": 0.002523771565018591,
+      "ci_low": -0.014949802332604262,
+      "ci_high": 0.02207562852773008,
+      "probability_positive": 0.6284
+    },
+    "normal_node_macro_f1": {
+      "mean_delta": 0.001984345917021897,
+      "ci_low": -0.02244960226653584,
+      "ci_high": 0.02694635035832521,
+      "probability_positive": 0.5564
+    },
+    "fault_node_macro_f1": {
+      "mean_delta": 0.005759909640427954,
+      "ci_low": 0.0,
+      "ci_high": 0.020002232142857127,
+      "probability_positive": 0.6319
+    }
+  }
+}

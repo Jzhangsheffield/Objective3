@@ -14,6 +14,8 @@
 
 如果要在一台 Windows 训练机上按依赖顺序自动运行全部实验，请先阅读 [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)，然后使用 `scripts/run_all_phase_a.ps1`。脚本支持完成标记检测、自动续跑、逐任务日志和最终汇总。
 
+本轮补充的 A3 与 S1–S12 详见 [SUPPLEMENTARY_EXPERIMENT_PROTOCOL.md](SUPPLEMENTARY_EXPERIMENT_PROTOCOL.md)。S1–S12 只使用右手信号，包含 ResNet10-1D/Dilated-1D、独立 Direct Node、独立 Direct Tier3，以及由冻结 Tier3 signal encoder 驱动的 scratch sensor-only M2。已取消的两个单摄像头 scratch M2 条件未加入实验包。
+
 1. 阅读 [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md)，尤其是 A0-A7 forward、统计单位和停止/通过规则。
 2. 在训练环境执行全张量审计：
 
@@ -44,11 +46,13 @@
 ## 目录
 
 - `config/phase_a.json`：唯一预注册配置入口。
+- `config/supplementary_experiments.json`：S1–S12 的唯一补充配置入口。
 - `phase_a/`：数据 cache、模型、训练、评估和指标代码。
 - `tools/`：可单独重跑的命令。
 - `scripts/`：任务矩阵生成与批量运行入口。
 - `audit/`：数据审计结果。
 - `outputs/`：upstream、A1-A7、压力、延迟、bootstrap 与总表。
+- `outputs/supplementary/`：S1–S12 的 checkpoint、逐样本结果、压力/延迟和汇总。
 
 ## 重要约束
 

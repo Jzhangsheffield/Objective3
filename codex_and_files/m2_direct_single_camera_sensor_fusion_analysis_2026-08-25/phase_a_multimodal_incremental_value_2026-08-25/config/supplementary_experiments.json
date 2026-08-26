@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "base_phase_a_config": "phase_a.json",
+  "output_subdirectory": "supplementary",
+  "low_recall_threshold": 0.8,
+  "signal_feature_dim": 512,
+  "direct_training": {
+    "epochs": 50,
+    "batch_size": 16,
+    "effective_batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "time_shift_augmentation_probability": 0.3,
+    "time_shift_augmentation_max_fraction": 0.1
+  },
+  "resnet10_1d": {
+    "base_channels": 64,
+    "stem_kernel_size": 7,
+    "stem_stride": 2,
+    "use_stem_pool": true,
+    "zero_init_residual": false,
+    "feature_dim": 512
+  },
+  "dilated_conv1d": {
+    "encoder_output_dim": 256,
+    "feature_dim": 512,
+    "dropout": 0.1,
+    "dilations": [1, 2, 4]
+  },
+  "experiments": {
+    "S1": {"modality": "emg", "encoder": "resnet10_1d", "task": "m2_node", "upstream": "S9"},
+    "S2": {"modality": "emg", "encoder": "dilated_conv1d", "task": "m2_node", "upstream": "S10"},
+    "S3": {"modality": "imu", "encoder": "resnet10_1d", "task": "m2_node", "upstream": "S11"},
+    "S4": {"modality": "imu", "encoder": "dilated_conv1d", "task": "m2_node", "upstream": "S12"},
+    "S5": {"modality": "emg", "encoder": "resnet10_1d", "task": "direct_node"},
+    "S6": {"modality": "emg", "encoder": "dilated_conv1d", "task": "direct_node"},
+    "S7": {"modality": "imu", "encoder": "resnet10_1d", "task": "direct_node"},
+    "S8": {"modality": "imu", "encoder": "dilated_conv1d", "task": "direct_node"},
+    "S9": {"modality": "emg", "encoder": "resnet10_1d", "task": "direct_tier3"},
+    "S10": {"modality": "emg", "encoder": "dilated_conv1d", "task": "direct_tier3"},
+    "S11": {"modality": "imu", "encoder": "resnet10_1d", "task": "direct_tier3"},
+    "S12": {"modality": "imu", "encoder": "dilated_conv1d", "task": "direct_tier3"}
+  },
+  "paired_comparisons": [
+    {"candidate": "S1", "baseline": "S5", "purpose": "EMG ResNet10 M2 history gain"},
+    {"candidate": "S2", "baseline": "S6", "purpose": "EMG Dilated M2 history gain"},
+    {"candidate": "S3", "baseline": "S7", "purpose": "IMU ResNet10 M2 history gain"},
+    {"candidate": "S4", "baseline": "S8", "purpose": "IMU Dilated M2 history gain"},
+    {"candidate": "S2", "baseline": "S1", "purpose": "EMG M2 encoder comparison"},
+    {"candidate": "S4", "baseline": "S3", "purpose": "IMU M2 encoder comparison"},
+    {"candidate": "S6", "baseline": "S5", "purpose": "EMG direct-node encoder comparison"},
+    {"candidate": "S8", "baseline": "S7", "purpose": "IMU direct-node encoder comparison"},
+    {"candidate": "S10", "baseline": "S9", "purpose": "EMG direct-Tier3 encoder comparison"},
+    {"candidate": "S12", "baseline": "S11", "purpose": "IMU direct-Tier3 encoder comparison"}
+  ]
+}

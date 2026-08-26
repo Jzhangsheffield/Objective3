@@ -8,6 +8,8 @@ param(
     [int[]]$Seeds = @(1,2,42),
     [ValidateSet('A1','A2','A3','A4','A5','A6','A7')]
     [string[]]$Conditions = @('A1','A2','A3','A4','A5','A6','A7'),
+    [ValidateSet('S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12')]
+    [string[]]$SupplementaryExperiments = @(),
     [bool]$Resume = $true,
     [switch]$SkipTensorAudit,
     [switch]$SkipStress,
@@ -23,12 +25,15 @@ $ErrorActionPreference = 'Stop'
 $PackageRoot = Split-Path -Parent $PSScriptRoot
 $ConfigPath = Join-Path $PackageRoot 'config\phase_a.json'
 $Config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
+$SupplementaryConfigPath = Join-Path $PackageRoot 'config\supplementary_experiments.json'
+$SupplementaryConfig = Get-Content -LiteralPath $SupplementaryConfigPath -Raw | ConvertFrom-Json
 $OutputRoot = if ([System.IO.Path]::IsPathRooted([string]$Config.output_root)) {
     [string]$Config.output_root
 } else {
     Join-Path $PackageRoot ([string]$Config.output_root)
 }
 $M2Root = [string]$Config.m2_project_root
+$SupplementaryOutputRoot = Join-Path $OutputRoot ([string]$SupplementaryConfig.output_subdirectory)
 $PrimaryCamera = [string]$Config.primary_camera_id
 $SecondaryCamera = [string]$Config.secondary_camera_id
 $RunStamp = Get-Date -Format 'yyyyMMdd_HHmmss'
@@ -72,13 +77,14 @@ function Invoke-PhasePython {
         [string]$Task,
         [string]$Stage,
         [string[]]$Arguments,
-        [string[]]$CompletionPaths = @()
+        [string[]]$CompletionPaths = @(),
+        [switch]$AlwaysRun
     )
     $SafeName = $Task -replace '[^A-Za-z0-9_.-]', '_'
     $LogPath = Join-Path $LogRoot "$SafeName.log"
     $StdoutPath = Join-Path $LogRoot "$SafeName.stdout.txt"
     $StderrPath = Join-Path $LogRoot "$SafeName.stderr.txt"
-    if ($Resume -and (Test-AllPaths -Paths $CompletionPaths)) {
+    if (-not $AlwaysRun -and $Resume -and (Test-AllPaths -Paths $CompletionPaths)) {
         Write-Host "[SKIP] $Task" -ForegroundColor DarkGray
         Add-Status -Task $Task -Stage $Stage -Status 'SKIPPED_COMPLETE' -Seconds 0 -Log $LogPath -Message 'Completion files already exist.'
         return
@@ -166,12 +172,18 @@ function Get-ModelRoot {
     return Join-Path $OutputRoot "$Condition\${Participant}_as_test\seed_$Seed"
 }
 
+function Get-SupplementaryModelRoot {
+    param([string]$Condition, [string]$Participant, [int]$Seed)
+    return Join-Path $SupplementaryOutputRoot "$Condition\${Participant}_as_test\seed_$Seed"
+}
+
 Write-Host "Phase A automatic runner" -ForegroundColor Green
 Write-Host "Package:       $PackageRoot"
 Write-Host "Output:        $OutputRoot"
 Write-Host "Participants:  $($Participants -join ',')"
 Write-Host "Seeds:         $($Seeds -join ',')"
 Write-Host "Conditions:    $($Conditions -join ',')"
+Write-Host "Supplementary: $($SupplementaryExperiments -join ',')"
 Write-Host "Resume:        $Resume"
 Write-Host "Plan only:     $PlanOnly"
 Write-Host "Logs:          $LogRoot"
@@ -192,6 +204,11 @@ Invoke-PhasePython -Task '00_runtime_check' -Stage 'runtime' -Arguments @(
 Invoke-PhasePython -Task '00_model_smoke' -Stage 'runtime' -Arguments @(
     'tools/smoke_test.py'
 )
+if ($SupplementaryExperiments.Count -gt 0) {
+    Invoke-PhasePython -Task '00_supplementary_model_smoke' -Stage 'runtime' -Arguments @(
+        'tools/smoke_test_supplementary.py'
+    )
+}
 
 $AuditPath = Join-Path $PackageRoot 'audit\dataset_audit.json'
 $TensorAuditComplete = $false
@@ -280,6 +297,73 @@ foreach ($Condition in $TrainableAdapters) {
     }
 }
 
+# Stage 4S: supplementary right-hand signal experiments.
+# S1-S4 automatically train their independent Tier3 encoder dependency (S9-S12),
+# extract frozen 512-D features, and then train the scratch M2 + node head.
+$SupplementaryM2Dependencies = @{
+    'S1' = 'S9'
+    'S2' = 'S10'
+    'S3' = 'S11'
+    'S4' = 'S12'
+}
+$SelectedSupplementary = @($SupplementaryExperiments | Select-Object -Unique)
+$SelectedSensorM2 = @('S1','S2','S3','S4') | Where-Object { $_ -in $SelectedSupplementary }
+$SelectedDirectNode = @('S5','S6','S7','S8') | Where-Object { $_ -in $SelectedSupplementary }
+$SelectedDirectTier3 = @('S9','S10','S11','S12') | Where-Object { $_ -in $SelectedSupplementary }
+$RequiredTier3 = @($SelectedDirectTier3)
+foreach ($Condition in $SelectedSensorM2) {
+    $RequiredTier3 += [string]$SupplementaryM2Dependencies[$Condition]
+}
+$RequiredTier3 = @($RequiredTier3 | Select-Object -Unique)
+$AvailableSupplementary = @($SelectedSupplementary + $RequiredTier3 | Select-Object -Unique)
+
+foreach ($Condition in $RequiredTier3) {
+    foreach ($Participant in $Participants) {
+        foreach ($Seed in $Seeds) {
+            $ModelRoot = Get-SupplementaryModelRoot -Condition $Condition -Participant $Participant -Seed $Seed
+            Invoke-PhasePython -Task "41_${Condition}_${Participant}_s${Seed}" -Stage "train_$Condition" -Arguments @(
+                'tools/train_signal_direct.py', '--condition', $Condition, '--participant', $Participant,
+                '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
+            ) -CompletionPaths @((Join-Path $ModelRoot 'completed.json'))
+        }
+    }
+}
+
+foreach ($Condition in $SelectedSensorM2) {
+    $Upstream = [string]$SupplementaryM2Dependencies[$Condition]
+    foreach ($Participant in $Participants) {
+        foreach ($Seed in $Seeds) {
+            $FeatureRoot = Join-Path $SupplementaryOutputRoot "signal_features\$Upstream\${Participant}_as_test\seed_$Seed"
+            Invoke-PhasePython -Task "42_features_${Upstream}_${Participant}_s${Seed}" -Stage 'signal_feature_cache' -Arguments @(
+                'tools/extract_signal_features.py', '--condition', $Upstream, '--participant', $Participant,
+                '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
+            ) -CompletionPaths @(
+                (Join-Path $FeatureRoot 'train_features.pt'),
+                (Join-Path $FeatureRoot 'test_features.pt'),
+                (Join-Path $FeatureRoot 'completed.json')
+            )
+
+            $ModelRoot = Get-SupplementaryModelRoot -Condition $Condition -Participant $Participant -Seed $Seed
+            Invoke-PhasePython -Task "43_${Condition}_${Participant}_s${Seed}" -Stage "train_$Condition" -Arguments @(
+                'tools/train_sensor_m2.py', '--condition', $Condition, '--participant', $Participant,
+                '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
+            ) -CompletionPaths @((Join-Path $ModelRoot 'completed.json'))
+        }
+    }
+}
+
+foreach ($Condition in $SelectedDirectNode) {
+    foreach ($Participant in $Participants) {
+        foreach ($Seed in $Seeds) {
+            $ModelRoot = Get-SupplementaryModelRoot -Condition $Condition -Participant $Participant -Seed $Seed
+            Invoke-PhasePython -Task "44_${Condition}_${Participant}_s${Seed}" -Stage "train_$Condition" -Arguments @(
+                'tools/train_signal_direct.py', '--condition', $Condition, '--participant', $Participant,
+                '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
+            ) -CompletionPaths @((Join-Path $ModelRoot 'completed.json'))
+        }
+    }
+}
+
 # Stage 5: missing-modality and independent EMG/IMU offset stress tests.
 if (-not $SkipStress) {
     foreach ($Condition in $TrainableAdapters) {
@@ -288,6 +372,17 @@ if (-not $SkipStress) {
                 $ModelRoot = Get-ModelRoot -Condition $Condition -Participant $Participant -Seed $Seed
                 Invoke-PhasePython -Task "50_stress_${Condition}_${Participant}_s${Seed}" -Stage 'stress' -Arguments @(
                     'tools/run_stress_tests.py', '--condition', $Condition, '--participant', $Participant,
+                    '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
+                ) -CompletionPaths @((Join-Path $ModelRoot 'stress_completed.json'))
+            }
+        }
+    }
+    foreach ($Condition in $SelectedSupplementary) {
+        foreach ($Participant in $Participants) {
+            foreach ($Seed in $Seeds) {
+                $ModelRoot = Get-SupplementaryModelRoot -Condition $Condition -Participant $Participant -Seed $Seed
+                Invoke-PhasePython -Task "51_stress_${Condition}_${Participant}_s${Seed}" -Stage 'supplementary_stress' -Arguments @(
+                    'tools/run_supplementary_stress.py', '--condition', $Condition, '--participant', $Participant,
                     '--seed', [string]$Seed, '--device', $Device, '--num-workers', [string]$NumWorkers
                 ) -CompletionPaths @((Join-Path $ModelRoot 'stress_completed.json'))
             }
@@ -307,6 +402,13 @@ if (-not $SkipLatency -and 'A' -in $Participants -and 1 -in $Seeds) {
             '--participant', 'A', '--seed', '1', '--device', $Device
         ) -CompletionPaths @((Join-Path $ModelRoot 'latency_cached_feature_scope.json'))
     }
+    foreach ($Condition in $SelectedSupplementary) {
+        $ModelRoot = Get-SupplementaryModelRoot -Condition $Condition -Participant 'A' -Seed 1
+        Invoke-PhasePython -Task "61_latency_${Condition}_A_s1" -Stage 'supplementary_latency' -Arguments @(
+            'tools/benchmark_supplementary_latency.py', '--condition', $Condition,
+            '--participant', 'A', '--seed', '1', '--device', $Device
+        ) -CompletionPaths @((Join-Path $ModelRoot 'latency_end_to_end_signal_scope.json'))
+    }
 } elseif ($SkipLatency) {
     Write-Warning 'Latency tests were skipped by request.'
 }
@@ -321,6 +423,16 @@ if (-not $SkipBootstrap -and $HasAllParticipants -and $HasAllSeeds) {
             'tools/paired_bootstrap.py', '--condition', $Condition
         ) -CompletionPaths @($BootstrapPath)
     }
+    foreach ($Comparison in $SupplementaryConfig.paired_comparisons) {
+        $Candidate = [string]$Comparison.candidate
+        $Baseline = [string]$Comparison.baseline
+        if ($Candidate -in $AvailableSupplementary -and $Baseline -in $AvailableSupplementary) {
+            $BootstrapPath = Join-Path $SupplementaryOutputRoot "summary\paired_bootstrap_${Candidate}_vs_${Baseline}.json"
+            Invoke-PhasePython -Task "71_bootstrap_${Candidate}_vs_${Baseline}" -Stage 'supplementary_bootstrap' -Arguments @(
+                'tools/paired_bootstrap_supplementary.py', '--candidate', $Candidate, '--baseline', $Baseline
+            ) -CompletionPaths @($BootstrapPath)
+        }
+    }
 } elseif ($SkipBootstrap) {
     Write-Warning 'Paired bootstrap was skipped by request.'
 } else {
@@ -334,7 +446,15 @@ Invoke-PhasePython -Task '80_summary' -Stage 'summary' -Arguments @(
     (Join-Path $OutputRoot 'summary\PHASE_A_RESULTS.md'),
     (Join-Path $OutputRoot 'summary\condition_summary.csv'),
     (Join-Path $OutputRoot 'summary\incremental_value_gates.json')
-)
+) -AlwaysRun
+if ($SelectedSupplementary.Count -gt 0) {
+    Invoke-PhasePython -Task '81_supplementary_summary' -Stage 'supplementary_summary' -Arguments @(
+        'tools/summarize_supplementary.py', '--conditions', $SelectedSupplementary
+    ) -CompletionPaths @(
+        (Join-Path $SupplementaryOutputRoot 'summary\SUPPLEMENTARY_RESULTS.md'),
+        (Join-Path $SupplementaryOutputRoot 'summary\condition_summary.csv')
+    ) -AlwaysRun
+}
 
 Write-Host "Run status: $StatusPath" -ForegroundColor Green
 if ($PlanOnly) {
