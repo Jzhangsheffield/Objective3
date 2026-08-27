@@ -14,8 +14,8 @@
 
 ## 完整性
 
-- 已找到 fold×seed×split 指标：0
-- 尚缺指标：432
+- 已找到 fold×seed×split 指标：36
+- 尚缺指标：396
 
 ## 文件
 
@@ -30,33 +30,33 @@
 
 ## 首批缺失文件
 
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_1\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_1\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_1\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_fault_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_all_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_normal_metrics.json`
-- `D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_2\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\A_as_test\seed_42\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_1\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_2\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\D_as_test\seed_42\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_1\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_2\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\J_as_test\seed_42\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_1\test_results\test_fault_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_2\test_results\test_all_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_2\test_results\test_normal_metrics.json`
+- `D:\junxi_data\Objective3\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\outputs\supplementary\S1\M_as_test\seed_2\test_results\test_fault_metrics.json`

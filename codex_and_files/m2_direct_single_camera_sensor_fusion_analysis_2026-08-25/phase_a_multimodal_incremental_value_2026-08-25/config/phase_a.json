@@ -1,6 +1,6 @@
 {
-  "dataset_root": "C:/Junxi_data_for_training_speedup/Stage_2_Mapstyle_Dataset",
-  "m2_project_root": "D:/Junxi_data/Objective3_thermal_crimp/codex_and_files/graph_history_rgb_cross_person_ADM_2026-07-22",
+  "dataset_root": "C:/MyFolder/mes19jz/Stage_2_Mapstyle_Dataset",
+  "m2_project_root": "D:/junxi_data/Objective3/codex_and_files/graph_history_rgb_cross_person_ADM_2026-07-22",
   "output_root": "outputs",
   "participants": ["A", "D", "J", "M"],
   "seeds": [1, 2, 42],

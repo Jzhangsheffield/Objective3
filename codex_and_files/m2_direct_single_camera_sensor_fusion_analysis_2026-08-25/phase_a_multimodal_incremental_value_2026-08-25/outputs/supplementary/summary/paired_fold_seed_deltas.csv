@@ -1,0 +1,11 @@
+candidate,baseline,purpose,participant,seed,label_space,macro_f1_delta,weakest_recall_delta,fault_macro_f1_delta,macro_f1_positive,weakest_recall_positive,joint_positive,fault_noninferior
+S1,S5,EMG ResNet10 M2 history gain,A,1,node,0.02990571187578331,0.0,0.09301631919278977,True,False,False,True
+S2,S6,EMG Dilated M2 history gain,A,1,node,0.25623668546416845,0.0,0.2332407169820396,True,False,False,True
+S3,S7,IMU ResNet10 M2 history gain,A,1,node,0.2096488968813277,0.0,0.2815740141878163,True,False,False,True
+S4,S8,IMU Dilated M2 history gain,A,1,node,0.16346574820759296,0.0,0.21072540233003056,True,False,False,True
+S2,S1,EMG M2 encoder comparison,A,1,node,0.2695674707932455,0.0,0.24935358833239724,True,False,False,True
+S4,S3,IMU M2 encoder comparison,A,1,node,-0.08988076476193207,0.0,-0.06359153422134411,False,False,False,False
+S6,S5,EMG direct-node encoder comparison,A,1,node,0.04323649720486031,0.0,0.1091291905431474,True,False,False,True
+S8,S7,IMU direct-node encoder comparison,A,1,node,-0.04369761608819733,0.0,0.007257077636441622,False,False,False,True
+S10,S9,EMG direct-Tier3 encoder comparison,A,1,tier3,0.07837022513095626,0.0,0.060844764336552615,True,False,False,True
+S12,S11,IMU direct-Tier3 encoder comparison,A,1,tier3,-0.09330370902893159,0.0,-0.09641588289720715,False,False,False,False
