@@ -5,70 +5,70 @@
       "baseline": "S5",
       "purpose": "EMG ResNet10 M2 history gain",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S1_vs_S5.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S1_vs_S5.json"
     },
     {
       "candidate": "S2",
       "baseline": "S6",
       "purpose": "EMG Dilated M2 history gain",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S2_vs_S6.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S2_vs_S6.json"
     },
     {
       "candidate": "S3",
       "baseline": "S7",
       "purpose": "IMU ResNet10 M2 history gain",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S3_vs_S7.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S3_vs_S7.json"
     },
     {
       "candidate": "S4",
       "baseline": "S8",
       "purpose": "IMU Dilated M2 history gain",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S4_vs_S8.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S4_vs_S8.json"
     },
     {
       "candidate": "S2",
       "baseline": "S1",
       "purpose": "EMG M2 encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S2_vs_S1.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S2_vs_S1.json"
     },
     {
       "candidate": "S4",
       "baseline": "S3",
       "purpose": "IMU M2 encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S4_vs_S3.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S4_vs_S3.json"
     },
     {
       "candidate": "S6",
       "baseline": "S5",
       "purpose": "EMG direct-node encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S6_vs_S5.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S6_vs_S5.json"
     },
     {
       "candidate": "S8",
       "baseline": "S7",
       "purpose": "IMU direct-node encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S8_vs_S7.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S8_vs_S7.json"
     },
     {
       "candidate": "S10",
       "baseline": "S9",
       "purpose": "EMG direct-Tier3 encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S10_vs_S9.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S10_vs_S9.json"
     },
     {
       "candidate": "S12",
       "baseline": "S11",
       "purpose": "IMU direct-Tier3 encoder comparison",
       "bootstrap": "PENDING",
-      "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S12_vs_S11.json"
+      "path": "D:\\junxi_data\\Objective3\\codex_and_files\\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\\phase_a_multimodal_incremental_value_2026-08-25\\outputs\\supplementary\\summary\\paired_bootstrap_S12_vs_S11.json"
     }
   ]
 }
