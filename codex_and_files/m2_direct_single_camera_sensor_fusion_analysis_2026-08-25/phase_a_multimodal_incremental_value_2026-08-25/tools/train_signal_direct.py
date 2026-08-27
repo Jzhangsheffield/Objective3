@@ -15,12 +15,14 @@ from phase_a.metrics import derive_node_to_tier3
 from phase_a.sensor_data import SignalClipDataset, collate_signal
 from phase_a.supplementary import (
     base_protocol_dir,
-    base_signal_cache,
     direct_num_classes,
+    evaluation_protocols,
+    evaluation_result_dir,
     experiment_spec,
     load_supplementary_config,
     signal_channels,
     supplementary_model_dir,
+    training_signal_cache,
     validate_supplementary_condition,
 )
 from phase_a.supplementary_engine import evaluate_direct, train_direct
@@ -58,29 +60,20 @@ def main() -> None:
     protocols = base_protocol_dir(config, args.participant)
     node_to_tier3 = derive_node_to_tier3(read_jsonl(protocols / "train.jsonl"))
     training = config["direct_training"]
-    datasets = {}
-    for split, manifest in (
-        ("train", "train.jsonl"),
-        ("test_all", "test_all.jsonl"),
-        ("test_normal", "test_normal.jsonl"),
-        ("test_fault", "test_fault.jsonl"),
-    ):
-        datasets[split] = SignalClipDataset(
-            base_signal_cache(config, args.participant, "train" if split == "train" else "test"),
-            protocols / manifest,
-            spec["modality"],
-            training=split == "train",
-            time_shift_probability=float(training["time_shift_augmentation_probability"]),
-            time_shift_max_fraction=float(training["time_shift_augmentation_max_fraction"]),
-        )
+    train_dataset = SignalClipDataset(
+        training_signal_cache(config, args.participant), protocols / "train.jsonl", spec["modality"],
+        training=True,
+        time_shift_probability=float(training["time_shift_augmentation_probability"]),
+        time_shift_max_fraction=float(training["time_shift_augmentation_max_fraction"]),
+    )
     device = select_device(args.device)
     train_loader = DataLoader(
-        datasets["train"], batch_size=int(training["batch_size"]), shuffle=True,
+        train_dataset, batch_size=int(training["batch_size"]), shuffle=True,
         num_workers=args.num_workers, collate_fn=collate_signal,
         pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
     )
     model = SignalDirectClassifier(
-        config, spec["encoder"], signal_channels(spec["modality"]), direct_num_classes(spec["task"])
+        config, spec["encoder"], signal_channels(spec["modality"], config), direct_num_classes(spec["task"])
     ).to(device)
     accumulation = max(1, int(training["effective_batch_size"]) // int(training["batch_size"]))
     target_key = "node_target" if spec["task"] == "direct_node" else "tier3_target"
@@ -103,13 +96,20 @@ def main() -> None:
         "training_target": target_key,
     }, checkpoint_path)
     write_json(output / "train_log.json", log)
-    for split in ("test_all", "test_normal", "test_fault"):
-        loader = DataLoader(
-            datasets[split], batch_size=int(training["batch_size"]), shuffle=False,
-            num_workers=args.num_workers, collate_fn=collate_signal,
-            pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
-        )
-        evaluate_direct(model, loader, device, spec["task"], node_to_tier3, output / "test_results", split)
+    evaluated = {}
+    for protocol in evaluation_protocols(config, args.participant):
+        evaluated[protocol["name"]] = []
+        for split in ("test_all", "test_normal", "test_fault"):
+            dataset = SignalClipDataset(protocol["cache"], protocol["manifest_dir"] / f"{split}.jsonl",
+                                        spec["modality"], training=False)
+            loader = DataLoader(
+                dataset, batch_size=int(training["batch_size"]), shuffle=False,
+                num_workers=args.num_workers, collate_fn=collate_signal,
+                pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
+            )
+            evaluate_direct(model, loader, device, spec["task"], node_to_tier3,
+                            evaluation_result_dir(output, protocol), split)
+            evaluated[protocol["name"]].append(split)
     write_json(output / "completed.json", {
         "condition": condition,
         "participant": args.participant,
@@ -119,7 +119,7 @@ def main() -> None:
         "encoder": spec["encoder"],
         "initialization": "scratch",
         "checkpoint": str(checkpoint_path),
-        "splits": ["test_all", "test_normal", "test_fault"],
+        "evaluation_protocols": evaluated,
     })
 
 

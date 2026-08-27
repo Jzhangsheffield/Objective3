@@ -13,7 +13,9 @@ import numpy as np
 
 from phase_a.io import write_json
 from phase_a.supplementary import (
-    base_protocol_dir,
+    evaluation_protocol,
+    evaluation_protocols,
+    evaluation_result_dir,
     experiment_spec,
     load_supplementary_config,
     supplementary_model_dir,
@@ -26,8 +28,11 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def prediction_path(config: dict, condition: str, participant: str, seed: int) -> Path:
-    return supplementary_model_dir(config, condition, participant, seed) / "test_results" / "test_all_predictions.csv"
+def prediction_path(config: dict, condition: str, participant: str, seed: int, protocol_name: str) -> Path:
+    protocol = evaluation_protocol(config, participant, protocol_name)
+    return evaluation_result_dir(
+        supplementary_model_dir(config, condition, participant, seed), protocol
+    ) / "test_all_predictions.csv"
 
 
 def one_metrics(truth: np.ndarray, prediction: np.ndarray, classes: int) -> tuple[float, float, float]:
@@ -73,6 +78,7 @@ def main() -> None:
     parser.add_argument("--config", default=str(PACKAGE_ROOT / "config" / "supplementary_experiments.json"))
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--baseline", required=True)
+    parser.add_argument("--evaluation-protocol", default=None)
     parser.add_argument("--repetitions", type=int, default=None)
     args = parser.parse_args()
     config = load_supplementary_config(args.config)
@@ -83,17 +89,21 @@ def main() -> None:
     if candidate_node != baseline_node:
         raise ValueError("A paired comparison must use the same label spaces; do not compare direct_tier3 with node-capable models")
     node_available = candidate_node and baseline_node
+    protocol_name = args.evaluation_protocol or evaluation_protocols(config, config["base"]["participants"][0])[0]["name"]
 
     records: dict[tuple[str, str], dict] = {}
     fault_names = set()
     participants = config["base"]["participants"]
     seeds = config["base"]["seeds"]
     for participant in participants:
-        with (base_protocol_dir(config, participant) / "test_fault.jsonl").open("r", encoding="utf-8") as handle:
+        protocol = evaluation_protocol(config, participant, protocol_name)
+        with (protocol["manifest_dir"] / "test_fault.jsonl").open("r", encoding="utf-8") as handle:
             fault_names.update(json.loads(line)["sample_name"] for line in handle if line.strip())
         for seed in seeds:
-            base_rows = {row["sample_name"]: row for row in read_csv(prediction_path(config, baseline, participant, seed))}
-            candidate_rows = {row["sample_name"]: row for row in read_csv(prediction_path(config, candidate, participant, seed))}
+            base_rows = {row["sample_name"]: row for row in read_csv(
+                prediction_path(config, baseline, participant, seed, protocol_name))}
+            candidate_rows = {row["sample_name"]: row for row in read_csv(
+                prediction_path(config, candidate, participant, seed, protocol_name))}
             if set(base_rows) != set(candidate_rows):
                 raise ValueError(f"Unpaired predictions: {participant}, seed={seed}")
             for name, base_row in base_rows.items():
@@ -156,6 +166,7 @@ def main() -> None:
     report = {
         "candidate": candidate,
         "baseline": baseline,
+        "evaluation_protocol": protocol_name,
         "unit": "unique clip within participant; each sampled clip expands over all three seeds",
         "participant_stratified": True,
         "unique_clips": len(items),
@@ -172,6 +183,8 @@ def main() -> None:
         },
     }
     summary = Path(config["output_root"]) / "summary"
+    if protocol_name != "default":
+        summary = summary / protocol_name
     output = summary / f"paired_bootstrap_{candidate}_vs_{baseline}.json"
     write_json(output, report)
     print(f"wrote {output}")

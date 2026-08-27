@@ -14,9 +14,9 @@ from phase_a.engine import evaluate
 from phase_a.io import write_json
 from phase_a.sensor_data import SignalClipDataset, SignalFeatureHistoryDataset, collate_feature_history, collate_signal
 from phase_a.supplementary import (
-    base_protocol_dir,
-    base_signal_cache,
     direct_num_classes,
+    evaluation_protocols,
+    evaluation_result_dir,
     experiment_spec,
     load_supplementary_config,
     signal_channels,
@@ -67,7 +67,7 @@ def main() -> None:
     device = select_device(args.device)
     output = supplementary_model_dir(config, condition, args.participant, args.seed)
     checkpoint = torch.load(output / "last.pth", map_location="cpu", weights_only=False)
-    protocols = base_protocol_dir(config, args.participant)
+    protocols_for_evaluation = evaluation_protocols(config, args.participant)
     batch_size = int(config["direct_training"]["batch_size"])
     scenarios = [("clean", 0.0, False), ("zero_signal", 0.0, True)]
     scenarios.extend((f"offset_{fraction:+.2f}", float(fraction), False)
@@ -75,20 +75,22 @@ def main() -> None:
 
     if spec["task"] in {"direct_node", "direct_tier3"}:
         model = SignalDirectClassifier(
-            config, spec["encoder"], signal_channels(spec["modality"]), direct_num_classes(spec["task"])
+            config, spec["encoder"], signal_channels(spec["modality"], config), direct_num_classes(spec["task"])
         ).to(device)
         model.load_state_dict(checkpoint["model"], strict=True)
-        for scenario, offset, zero in scenarios:
-            for split, manifest in (("test_all", "test_all.jsonl"), ("test_fault", "test_fault.jsonl")):
-                dataset = SignalClipDataset(
-                    base_signal_cache(config, args.participant, "test"), protocols / manifest,
-                    spec["modality"], fixed_offset_fraction=offset, zero_signal=zero,
-                )
-                loader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
-                                    num_workers=args.num_workers, collate_fn=collate_signal)
-                evaluate_direct(model, loader, device, spec["task"], checkpoint["node_to_tier3"],
-                                output / "stress_results" / scenario, split)
-            print(f"completed {condition} stress scenario {scenario}", flush=True)
+        for protocol in protocols_for_evaluation:
+            for scenario, offset, zero in scenarios:
+                result_root = evaluation_result_dir(output, protocol, "stress_results") / scenario
+                for split in ("test_all", "test_fault"):
+                    dataset = SignalClipDataset(
+                        protocol["cache"], protocol["manifest_dir"] / f"{split}.jsonl",
+                        spec["modality"], fixed_offset_fraction=offset, zero_signal=zero,
+                    )
+                    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
+                                        num_workers=args.num_workers, collate_fn=collate_signal)
+                    evaluate_direct(model, loader, device, spec["task"], checkpoint["node_to_tier3"],
+                                    result_root, split)
+                print(f"completed {condition} {protocol['name']} stress scenario {scenario}", flush=True)
     else:
         upstream = str(spec["upstream"])
         upstream_spec = experiment_spec(config, upstream)
@@ -97,7 +99,7 @@ def main() -> None:
         ) / "last.pth"
         upstream_checkpoint = torch.load(upstream_checkpoint_path, map_location="cpu", weights_only=False)
         encoder = SignalDirectClassifier(
-            config, upstream_spec["encoder"], signal_channels(upstream_spec["modality"]), 31
+            config, upstream_spec["encoder"], signal_channels(upstream_spec["modality"], config), 31
         ).to(device)
         encoder.load_state_dict(upstream_checkpoint["model"], strict=True)
         model = SensorM2Direct(
@@ -106,30 +108,32 @@ def main() -> None:
             dropout=float(config["base"]["dropout"]),
         ).to(device)
         model.load_state_dict(checkpoint["model"], strict=True)
-        for scenario, offset, zero in scenarios:
-            feature_path = output / "stress_feature_caches" / f"{scenario}.pt"
-            signal_dataset = SignalClipDataset(
-                base_signal_cache(config, args.participant, "test"), protocols / "test_all.jsonl",
-                upstream_spec["modality"], fixed_offset_fraction=offset, zero_signal=zero,
-            )
-            signal_loader = DataLoader(signal_dataset, batch_size=batch_size, shuffle=False,
-                                       num_workers=args.num_workers, collate_fn=collate_signal)
-            materialize_features(encoder, signal_loader, device, feature_path, {
-                "scenario": scenario, "offset_fraction": offset, "zero_signal": zero,
-                "upstream": upstream,
-            })
-            for split, manifest in (("test_all", "test_all.jsonl"), ("test_fault", "test_fault.jsonl")):
-                dataset = SignalFeatureHistoryDataset(feature_path, protocols / manifest)
-                loader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
-                                    num_workers=args.num_workers, collate_fn=collate_feature_history)
-                evaluate(model, loader, device, checkpoint["node_to_tier3"],
-                         output / "stress_results" / scenario, split)
-            print(f"completed {condition} stress scenario {scenario}", flush=True)
+        for protocol in protocols_for_evaluation:
+            for scenario, offset, zero in scenarios:
+                feature_path = output / "stress_feature_caches" / protocol["name"] / f"{scenario}.pt"
+                signal_dataset = SignalClipDataset(
+                    protocol["cache"], protocol["manifest_dir"] / "test_all.jsonl",
+                    upstream_spec["modality"], fixed_offset_fraction=offset, zero_signal=zero,
+                )
+                signal_loader = DataLoader(signal_dataset, batch_size=batch_size, shuffle=False,
+                                           num_workers=args.num_workers, collate_fn=collate_signal)
+                materialize_features(encoder, signal_loader, device, feature_path, {
+                    "scenario": scenario, "offset_fraction": offset, "zero_signal": zero,
+                    "upstream": upstream, "evaluation_protocol": protocol["name"],
+                })
+                result_root = evaluation_result_dir(output, protocol, "stress_results") / scenario
+                for split in ("test_all", "test_fault"):
+                    dataset = SignalFeatureHistoryDataset(feature_path, protocol["manifest_dir"] / f"{split}.jsonl")
+                    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
+                                        num_workers=args.num_workers, collate_fn=collate_feature_history)
+                    evaluate(model, loader, device, checkpoint["node_to_tier3"], result_root, split)
+                print(f"completed {condition} {protocol['name']} stress scenario {scenario}", flush=True)
     write_json(output / "stress_completed.json", {
         "condition": condition,
         "participant": args.participant,
         "seed": args.seed,
         "scenarios": [name for name, _, _ in scenarios],
+        "evaluation_protocols": [protocol["name"] for protocol in protocols_for_evaluation],
         "interpretation": "zero_signal is degradation-only; sensor-only models have no A0 fallback path",
     })
 

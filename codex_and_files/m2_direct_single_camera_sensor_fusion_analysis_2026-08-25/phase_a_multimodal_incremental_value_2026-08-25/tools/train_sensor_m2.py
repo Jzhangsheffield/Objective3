@@ -16,6 +16,8 @@ from phase_a.metrics import derive_node_to_tier3
 from phase_a.sensor_data import SignalFeatureHistoryDataset, collate_feature_history
 from phase_a.supplementary import (
     base_protocol_dir,
+    evaluation_protocols,
+    evaluation_result_dir,
     experiment_spec,
     load_supplementary_config,
     supplementary_feature_cache,
@@ -54,28 +56,24 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
     upstream = str(spec["upstream"])
     train_features = supplementary_feature_cache(config, upstream, args.participant, args.seed, "train")
-    test_features = supplementary_feature_cache(config, upstream, args.participant, args.seed, "test")
-    for path in (train_features, test_features):
+    protocols_for_evaluation = evaluation_protocols(config, args.participant)
+    protocol_features = {
+        protocol["name"]: supplementary_feature_cache(
+            config, upstream, args.participant, args.seed, protocol["feature_split"]
+        ) for protocol in protocols_for_evaluation
+    }
+    for path in (train_features, *protocol_features.values()):
         if not path.is_file():
             raise FileNotFoundError(f"Required frozen Tier3 feature cache is missing: {path}")
 
     protocols = base_protocol_dir(config, args.participant)
     node_to_tier3 = derive_node_to_tier3(read_jsonl(protocols / "train.jsonl"))
-    datasets = {}
-    for split, manifest in (
-        ("train", "train.jsonl"),
-        ("test_all", "test_all.jsonl"),
-        ("test_normal", "test_normal.jsonl"),
-        ("test_fault", "test_fault.jsonl"),
-    ):
-        datasets[split] = SignalFeatureHistoryDataset(
-            train_features if split == "train" else test_features, protocols / manifest
-        )
+    train_dataset = SignalFeatureHistoryDataset(train_features, protocols / "train.jsonl")
     base = config["base"]
     training = config["direct_training"]
     device = select_device(args.device)
     train_loader = DataLoader(
-        datasets["train"], batch_size=int(training["batch_size"]), shuffle=True,
+        train_dataset, batch_size=int(training["batch_size"]), shuffle=True,
         num_workers=args.num_workers, collate_fn=collate_feature_history,
         pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
     )
@@ -104,18 +102,24 @@ def main() -> None:
         "signal_encoder_training": "upstream_direct_tier3_then_frozen_feature_cache",
         "upstream": upstream,
         "train_feature_cache": str(train_features),
-        "test_feature_cache": str(test_features),
         "train_feature_sha256": file_sha256(train_features),
-        "test_feature_sha256": file_sha256(test_features),
+        "test_feature_caches": {name: str(path) for name, path in protocol_features.items()},
+        "test_feature_sha256": {name: file_sha256(path) for name, path in protocol_features.items()},
     }, checkpoint_path)
     write_json(output / "train_log.json", log)
-    for split in ("test_all", "test_normal", "test_fault"):
-        loader = DataLoader(
-            datasets[split], batch_size=int(training["batch_size"]), shuffle=False,
-            num_workers=args.num_workers, collate_fn=collate_feature_history,
-            pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
-        )
-        evaluate(model, loader, device, node_to_tier3, output / "test_results", split)
+    evaluated = {}
+    for protocol in protocols_for_evaluation:
+        evaluated[protocol["name"]] = []
+        feature_cache = protocol_features[protocol["name"]]
+        for split in ("test_all", "test_normal", "test_fault"):
+            dataset = SignalFeatureHistoryDataset(feature_cache, protocol["manifest_dir"] / f"{split}.jsonl")
+            loader = DataLoader(
+                dataset, batch_size=int(training["batch_size"]), shuffle=False,
+                num_workers=args.num_workers, collate_fn=collate_feature_history,
+                pin_memory=device.type == "cuda", persistent_workers=args.num_workers > 0,
+            )
+            evaluate(model, loader, device, node_to_tier3, evaluation_result_dir(output, protocol), split)
+            evaluated[protocol["name"]].append(split)
     write_json(output / "completed.json", {
         "condition": condition,
         "participant": args.participant,
@@ -127,7 +131,7 @@ def main() -> None:
         "initialization": "scratch_m2_and_node_head",
         "signal_encoder": "frozen_after_direct_tier3_training",
         "checkpoint": str(checkpoint_path),
-        "splits": ["test_all", "test_normal", "test_fault"],
+        "evaluation_protocols": evaluated,
     })
 
 

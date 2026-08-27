@@ -14,9 +14,8 @@ import torch
 
 from phase_a.sensor_data import SignalClipDataset, SignalFeatureHistoryDataset, collate_feature_history, collate_signal
 from phase_a.supplementary import (
-    base_protocol_dir,
-    base_signal_cache,
     direct_num_classes,
+    evaluation_protocols,
     experiment_spec,
     load_supplementary_config,
     signal_channels,
@@ -47,22 +46,23 @@ def main() -> None:
                           "cpu" if args.device == "auto" else args.device)
     output = supplementary_model_dir(config, condition, args.participant, args.seed)
     checkpoint = torch.load(output / "last.pth", map_location="cpu", weights_only=False)
-    protocols = base_protocol_dir(config, args.participant)
+    protocol = evaluation_protocols(config, args.participant)[0]
     signal_dataset = SignalClipDataset(
-        base_signal_cache(config, args.participant, "test"), protocols / "test_all.jsonl", spec["modality"]
+        protocol["cache"], protocol["manifest_dir"] / "test_all.jsonl", spec["modality"]
     )
     raw = collate_signal([signal_dataset[0]])
     signal = raw["signal"].to(device)
+    signal_scope = "bilateral" if config.get("signal_data", {}).get("scope") == "bilateral" else "right-hand"
     if spec["task"] in {"direct_node", "direct_tier3"}:
         encoder = SignalDirectClassifier(
-            config, spec["encoder"], signal_channels(spec["modality"]), direct_num_classes(spec["task"])
+            config, spec["encoder"], signal_channels(spec["modality"], config), direct_num_classes(spec["task"])
         ).to(device).eval()
         encoder.load_state_dict(checkpoint["model"], strict=True)
 
         def forward():
             return encoder(signal)
 
-        scope = "right-hand signal encoder + direct classification head"
+        scope = f"{signal_scope} signal encoder + direct classification head"
     else:
         upstream = str(spec["upstream"])
         upstream_spec = experiment_spec(config, upstream)
@@ -71,7 +71,7 @@ def main() -> None:
             map_location="cpu", weights_only=False,
         )
         encoder = SignalDirectClassifier(
-            config, upstream_spec["encoder"], signal_channels(upstream_spec["modality"]), 31
+            config, upstream_spec["encoder"], signal_channels(upstream_spec["modality"], config), 31
         ).to(device).eval()
         encoder.load_state_dict(upstream_checkpoint["model"], strict=True)
         m2 = SensorM2Direct(
@@ -81,8 +81,8 @@ def main() -> None:
         ).to(device).eval()
         m2.load_state_dict(checkpoint["model"], strict=True)
         feature_dataset = SignalFeatureHistoryDataset(
-            supplementary_feature_cache(config, upstream, args.participant, args.seed, "test"),
-            protocols / "test_all.jsonl",
+            supplementary_feature_cache(config, upstream, args.participant, args.seed, protocol["feature_split"]),
+            protocol["manifest_dir"] / "test_all.jsonl",
         )
         feature_batch = collate_feature_history([feature_dataset[0]])
         feature_batch = {key: value.to(device) if torch.is_tensor(value) else value
@@ -94,7 +94,7 @@ def main() -> None:
             batch["current_feature"] = current_feature
             return m2(batch)
 
-        scope = "current right-hand signal encoder + cached prior-history features + M2 + node head"
+        scope = f"current {signal_scope} signal encoder + cached prior-history features + M2 + node head"
     latency = config["base"]["latency"]
     with torch.inference_mode():
         for _ in range(int(latency["warmup_iterations"])):
@@ -110,6 +110,7 @@ def main() -> None:
             samples.append((time.perf_counter() - started) * 1000.0)
     result = {
         "condition": condition, "participant": args.participant, "seed": args.seed,
+        "evaluation_protocol_for_example": protocol["name"],
         "scope": scope, "device": str(device),
         "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "platform": platform.platform(), "iterations": len(samples),

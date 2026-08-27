@@ -12,6 +12,9 @@ sys.path.insert(0, str(PACKAGE_ROOT))
 from phase_a.io import read_json, write_csv, write_json
 from phase_a.supplementary import (
     SUPPLEMENTARY_IDS,
+    evaluation_protocol,
+    evaluation_protocols,
+    evaluation_result_dir,
     experiment_spec,
     load_supplementary_config,
     supplementary_model_dir,
@@ -27,9 +30,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Aggregate S1-S12 without best-seed selection")
     parser.add_argument("--config", default=str(PACKAGE_ROOT / "config" / "supplementary_experiments.json"))
     parser.add_argument("--conditions", nargs="+", choices=SUPPLEMENTARY_IDS, default=list(SUPPLEMENTARY_IDS))
+    parser.add_argument("--evaluation-protocol", default=None)
     args = parser.parse_args()
     config = load_supplementary_config(args.config)
+    protocol_name = args.evaluation_protocol or evaluation_protocols(
+        config, config["base"]["participants"][0]
+    )[0]["name"]
     summary = Path(config["output_root"]) / "summary"
+    if protocol_name != "default":
+        summary = summary / protocol_name
     summary.mkdir(parents=True, exist_ok=True)
     fold_rows = []
     per_node = []
@@ -45,7 +54,10 @@ def main() -> None:
         spec = experiment_spec(config, condition)
         for participant in config["base"]["participants"]:
             for seed in config["base"]["seeds"]:
-                result_dir = supplementary_model_dir(config, condition, participant, seed) / "test_results"
+                protocol = evaluation_protocol(config, participant, protocol_name)
+                result_dir = evaluation_result_dir(
+                    supplementary_model_dir(config, condition, participant, seed), protocol
+                )
                 for split in ("test_all", "test_normal", "test_fault"):
                     metrics_path = result_dir / f"{split}_metrics.json"
                     if not metrics_path.is_file():
@@ -57,6 +69,7 @@ def main() -> None:
                     tier3 = value["tier3"]
                     fold_rows.append({
                         "condition": condition, "participant": participant, "seed": seed,
+                        "evaluation_protocol": protocol_name,
                         "split": split, "task": spec["task"], "modality": spec["modality"],
                         "encoder": spec["encoder"], "samples": value["samples"],
                         "node_accuracy": node["accuracy"] if node else "",
@@ -214,8 +227,10 @@ def main() -> None:
                                   "path": str(path)})
     write_json(summary / "comparison_status.json", {"comparisons": comparison_status})
     completed = len(missing) == 0
+    scope_label = "双手" if config.get("signal_data", {}).get("scope") == "bilateral" else "右手"
     report = [
-        "# 右手 EMG/IMU 补充实验汇总", "",
+        f"# {scope_label} EMG/IMU 补充实验汇总", "",
+        f"评估协议：`{protocol_name}`。", "",
         f"状态：{'COMPLETE' if completed else 'PENDING'}。", "",
         f"本次汇总条件：{', '.join(conditions)}。", "",
         "本汇总不选择 best seed；统计单位保持四折 × 三 seed。", "",

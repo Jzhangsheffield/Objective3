@@ -14,14 +14,15 @@ from phase_a.io import file_sha256, write_json
 from phase_a.sensor_data import SignalClipDataset, collate_signal
 from phase_a.supplementary import (
     base_protocol_dir,
-    base_signal_cache,
     direct_num_classes,
+    evaluation_protocols,
     experiment_spec,
     load_supplementary_config,
     signal_channels,
     supplementary_feature_cache,
     supplementary_feature_dir,
     supplementary_model_dir,
+    training_signal_cache,
     validate_supplementary_condition,
 )
 from phase_a.supplementary_models import SignalDirectClassifier
@@ -80,15 +81,24 @@ def main() -> None:
     device = select_device(args.device)
     checkpoint = torch.load(source, map_location="cpu", weights_only=False)
     model = SignalDirectClassifier(
-        config, spec["encoder"], signal_channels(spec["modality"]), direct_num_classes(spec["task"])
+        config, spec["encoder"], signal_channels(spec["modality"], config), direct_num_classes(spec["task"])
     ).to(device)
     model.load_state_dict(checkpoint["model"], strict=True)
     protocols = base_protocol_dir(config, args.participant)
     batch_size = int(config["direct_training"]["batch_size"])
     written = {}
-    for split, manifest in (("train", "train.jsonl"), ("test", "test_all.jsonl")):
+    extraction_sets = [{
+        "split": "train", "cache": training_signal_cache(config, args.participant),
+        "manifest": protocols / "train.jsonl",
+    }]
+    extraction_sets.extend({
+        "split": protocol["feature_split"], "cache": protocol["cache"],
+        "manifest": protocol["manifest_dir"] / "test_all.jsonl",
+    } for protocol in evaluation_protocols(config, args.participant))
+    for item in extraction_sets:
+        split = item["split"]
         dataset = SignalClipDataset(
-            base_signal_cache(config, args.participant, split), protocols / manifest,
+            item["cache"], item["manifest"],
             spec["modality"], training=False,
         )
         loader = DataLoader(

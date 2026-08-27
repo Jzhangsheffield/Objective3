@@ -13,13 +13,15 @@ from phase_a.supplementary_models import SensorM2Direct, SignalDirectClassifier
 
 
 def main() -> None:
-    config = load_supplementary_config(PACKAGE_ROOT / "config" / "supplementary_experiments.json")
+    config_path = Path(sys.argv[1]) if len(sys.argv) > 1 else PACKAGE_ROOT / "config" / "supplementary_experiments.json"
+    config = load_supplementary_config(config_path)
     for condition in (f"S{index}" for index in range(5, 13)):
         spec = experiment_spec(config, condition)
         classes = 35 if spec["task"] == "direct_node" else 31
         length = int(config["base"]["emg_target_length" if spec["modality"] == "emg" else "imu_target_length"])
-        model = SignalDirectClassifier(config, spec["encoder"], signal_channels(spec["modality"]), classes)
-        signal = torch.randn(2, signal_channels(spec["modality"]), length)
+        channels = signal_channels(spec["modality"], config)
+        model = SignalDirectClassifier(config, spec["encoder"], channels, classes)
+        signal = torch.randn(2, channels, length)
         feature = model.forward_features(signal)
         logits = model(signal)
         assert feature.shape == (2, 512), (condition, feature.shape)
