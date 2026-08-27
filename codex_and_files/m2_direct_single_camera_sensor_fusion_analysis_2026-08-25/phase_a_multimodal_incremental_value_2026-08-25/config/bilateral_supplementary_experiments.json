@@ -13,7 +13,7 @@
     },
     "channels": {"emg": 16, "imu": 12},
     "train_normalization": "participant_train_only_channel_zscore",
-    "shared_time_grid": "mindrove_meta_annotation_rgb_aligned_clip_interval",
+    "shared_time_grid": "none_mindrove_pt_presegmented_direct_length_interpolation",
     "calibration": {
       "selection": "explicit_runs_or_first_sorted_runs",
       "runs_per_participant": 1,

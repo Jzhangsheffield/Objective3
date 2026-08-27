@@ -6,7 +6,7 @@ from typing import Any
 
 import torch
 
-from .cache import safe_load
+from .cache import resample_lc_to_cl, safe_load
 from .io import read_jsonl, write_json
 
 
@@ -17,49 +17,23 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
-def _interpolate_to_grid(value: Any, source_timestamps: Any, channels: int,
-                         target_grid: torch.Tensor, name: str) -> torch.Tensor:
-    value = torch.as_tensor(value).float()
-    source = torch.as_tensor(source_timestamps).double().flatten()
-    if value.ndim != 2 or int(value.shape[1]) != channels:
-        raise ValueError(f"{name} must be [L,{channels}], got {tuple(value.shape)}")
-    if source.numel() != value.shape[0] or value.shape[0] < 2:
-        raise ValueError(f"{name} value/timestamp length mismatch: {tuple(value.shape)} vs {source.numel()}")
-    if not torch.isfinite(value).all() or not torch.isfinite(source).all() or torch.any(source[1:] < source[:-1]):
-        raise ValueError(f"Invalid {name} values or board timestamps")
-    # The PT was already sliced with the common annotation/RGB clip interval. A device's
-    # first/last sample can sit just inside that interval; nearest-edge fill preserves the
-    # clip boundary without cropping both hands to their timestamp intersection.
-    target = target_grid.to(dtype=torch.float64).clamp(float(source[0]), float(source[-1]))
-    upper = torch.searchsorted(source, target, right=False).clamp(1, source.numel() - 1)
-    lower = upper - 1
-    fraction = ((target - source[lower]) / (source[upper] - source[lower]).clamp_min(1e-12)).float()
-    interpolated = value[lower] + (value[upper] - value[lower]) * fraction[:, None]
-    return interpolated.transpose(0, 1).contiguous()
-
-
 def _load_bilateral(dataset_root: Path, row: dict[str, Any], emg_len: int, imu_len: int) -> tuple[torch.Tensor, torch.Tensor]:
     loaded = safe_load(dataset_root / str(row["mindrove"]))
     if not isinstance(loaded, dict):
         raise TypeError(f"MindRove file for {row['sample_name']} is not a dict")
-    required = {"left_emg", "right_emg", "left_acc", "left_gyro", "right_acc", "right_gyro",
-                "left_board_ts", "right_board_ts", "meta"}
+    required = {"left_emg", "right_emg", "left_acc", "left_gyro", "right_acc", "right_gyro"}
     missing = sorted(required - set(loaded))
     if missing:
         raise KeyError(f"MindRove file for {row['sample_name']} misses {missing}")
-    meta = loaded["meta"]
-    shared_start = float(meta["annotation_start_sec"])
-    shared_end = float(meta["annotation_end_sec"])
-    if not shared_end > shared_start:
-        raise ValueError(f"Invalid RGB-aligned annotation interval for {row['sample_name']}")
-    emg_grid = torch.linspace(shared_start, shared_end, emg_len, dtype=torch.float64)
-    imu_grid = torch.linspace(shared_start, shared_end, imu_len, dtype=torch.float64)
-    left_emg = _interpolate_to_grid(loaded["left_emg"], loaded["left_board_ts"], 8, emg_grid, "left_emg")
-    right_emg = _interpolate_to_grid(loaded["right_emg"], loaded["right_board_ts"], 8, emg_grid, "right_emg")
+    # Each mindrove.pt was already sliced with the same RGB/action clip boundaries.
+    # Match the original right-hand S1-S12 preprocessing: resample each complete stored
+    # side independently by sequence length, then concatenate only along channels.
+    left_emg = resample_lc_to_cl(loaded["left_emg"], 8, emg_len, "left_emg")
+    right_emg = resample_lc_to_cl(loaded["right_emg"], 8, emg_len, "right_emg")
     left_imu = torch.cat([torch.as_tensor(loaded["left_acc"]), torch.as_tensor(loaded["left_gyro"])], dim=1)
     right_imu = torch.cat([torch.as_tensor(loaded["right_acc"]), torch.as_tensor(loaded["right_gyro"])], dim=1)
-    left_imu = _interpolate_to_grid(left_imu, loaded["left_board_ts"], 6, imu_grid, "left_imu")
-    right_imu = _interpolate_to_grid(right_imu, loaded["right_board_ts"], 6, imu_grid, "right_imu")
+    left_imu = resample_lc_to_cl(left_imu, 6, imu_len, "left_imu")
+    right_imu = resample_lc_to_cl(right_imu, 6, imu_len, "right_imu")
     return torch.cat([left_emg, right_emg], dim=0), torch.cat([left_imu, right_imu], dim=0)
 
 

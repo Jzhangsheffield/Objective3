@@ -9,26 +9,26 @@
 
 四折仍为 A/D/J/M LOSO，seed 仍为 1/2/42，使用相同 `all_runs` train/test manifest。S1–S4 的上游 Tier3 encoder、冻结特征、scratch M2 与 node head 都重新训练；S5–S12 的 encoder/head 也全部从头训练。
 
-## 2. `mindrove.pt` 与时间对齐
+## 2. `mindrove.pt` 与长度插值
 
 输入直接读取 map-style dataset 中每个样本的 `mindrove.pt`：
 
 - `left_emg [L_left,8]`、`right_emg [L_right,8]`；
 - `left_acc/gyro [L_left,3]`、`right_acc/gyro [L_right,3]`；
-- `left_board_ts`、`right_board_ts`；
-- `meta.annotation_start_sec`、`meta.annotation_end_sec`。
+- 文件中同时保留 board timestamp 和 annotation metadata，但本轮模型输入预处理不再次使用它们重切片。
 
-`mindrove.pt` 的生成脚本已经使用同一对动作注释起止时间切出左右手数据；这对时间也是 RGB 动作片段的定义边界。左右手 manifest 首末 board timestamp 的轻微差异，只表示两个设备在共同边界内实际落到的首末采样点不同。
+`mindrove.pt` 的生成脚本已经使用同一对动作注释起止时间切出左右手数据；这对时间也是 RGB 动作片段的定义边界。左右手 manifest 首末 board timestamp 的轻微差异，只表示两个设备在共同边界内实际落到的首末采样点和样本数量不同，不需要在本轮再次对齐或裁剪。
 
-因此本实验不再次裁剪，也不取左右手 timestamp 交集。处理顺序为：
+为与原右手 S1–S12 保持严格的单变量对照，本实验直接对 `mindrove.pt` 中已经切好的完整数组做长度插值。处理顺序为：
 
-1. 保留 `mindrove.pt` 中左右手完整片段；
-2. 以 `meta.annotation_start_sec/end_sec` 建立共同目标时间网格；
-3. 左右手分别使用各自 `board_ts` 插值到该网格；
-4. 目标网格边界若比某侧首末采样点多出不足一个采样周期，使用最近边界值补齐；
-5. 最后沿 channel 维拼接。
+1. 完整读取左手和右手 EMG，不删除任何采样点；
+2. 左手 EMG 按自身完整序列长度线性插值到512点；
+3. 右手 EMG 按自身完整序列长度线性插值到512点；
+4. 左右手 Acc XYZ 与 Gyro XYZ 先在各自侧拼为6通道；
+5. 左右手 IMU 分别按自身完整序列长度线性插值到256点；
+6. 最后只沿 channel 维拼接为 EMG `[16,512]` 和 IMU `[12,256]`。
 
-这样既不缩短原 RGB 对齐片段，也不会把左右手各自无视 timestamp 地独立拉伸。
+该流程不读取 `left/right_board_ts` 建立第二个公共时间网格，不取左右手时间交集，不补边界，也不改变 `mindrove.pt` 已有的 RGB/动作片段定义。其插值方式与原右手实验相同，唯一新增变量是左手通道。
 
 ## 3. 输入通道
 

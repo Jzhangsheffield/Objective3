@@ -16,7 +16,7 @@
 
 本轮补充的 A3 与 S1–S12 详见 [SUPPLEMENTARY_EXPERIMENT_PROTOCOL.md](SUPPLEMENTARY_EXPERIMENT_PROTOCOL.md)。S1–S12 只使用右手信号，包含 ResNet10-1D/Dilated-1D、独立 Direct Node、独立 Direct Tier3，以及由冻结 Tier3 signal encoder 驱动的 scratch sensor-only M2。已取消的两个单摄像头 scratch M2 条件未加入实验包。
 
-新增的双手 S1–S12 是一套完全隔离的实验，详见 [BILATERAL_S1_S12_EXPERIMENT_PROTOCOL.md](BILATERAL_S1_S12_EXPERIMENT_PROTOCOL.md)。它读取 `mindrove.pt` 中已经按 RGB/动作片段边界切好的左右手数据，以 PT 内共同 annotation 边界和各自 board timestamp 对齐后拼为 EMG 16通道、IMU 12通道；训练使用每个训练参与者自己的 train-only统计量，测试分别报告 pooled-training fallback 与 held-out participant 无标签校准结果。
+新增的双手 S1–S12 是一套完全隔离的实验，详见 [BILATERAL_S1_S12_EXPERIMENT_PROTOCOL.md](BILATERAL_S1_S12_EXPERIMENT_PROTOCOL.md)。它读取 `mindrove.pt` 中已经按 RGB/动作片段边界切好的完整左右手数组，每只手分别按完整片段长度线性插值后拼为 EMG 16通道、IMU 12通道；训练使用每个训练参与者自己的 train-only统计量，测试分别报告 pooled-training fallback 与 held-out participant 无标签校准结果。
 
 1. 阅读 [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md)，尤其是 A0-A7 forward、统计单位和停止/通过规则。
 2. 在训练环境执行全张量审计：
