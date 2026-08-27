@@ -102,10 +102,15 @@ def load_feature_cache(path: str | Path) -> dict[str, Any]:
 
 def load_signal_cache(path: str | Path) -> dict[str, Any]:
     cache = safe_load(path)
-    required = {"records", "right_emg", "right_imu", "stats"}
-    if not isinstance(cache, dict) or not required.issubset(cache):
+    if not isinstance(cache, dict) or not {"records", "stats"}.issubset(cache):
         raise ValueError(f"Invalid signal cache: {path}")
+    emg_key = "emg" if "emg" in cache else "right_emg"
+    imu_key = "imu" if "imu" in cache else "right_imu"
+    if emg_key not in cache or imu_key not in cache:
+        raise ValueError(f"Signal cache has no compatible EMG/IMU tensors: {path}")
     count = len(cache["records"])
-    if count != cache["right_emg"].shape[0] or count != cache["right_imu"].shape[0]:
+    if count != cache[emg_key].shape[0] or count != cache[imu_key].shape[0]:
         raise ValueError(f"Signal record/tensor mismatch: {path}")
+    cache["_emg_key"] = emg_key
+    cache["_imu_key"] = imu_key
     return cache

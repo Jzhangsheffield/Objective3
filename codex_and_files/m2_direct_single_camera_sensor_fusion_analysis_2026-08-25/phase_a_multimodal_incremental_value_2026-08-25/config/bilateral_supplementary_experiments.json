@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "base_phase_a_config": "phase_a.json",
+  "output_subdirectory": "supplementary_bilateral",
+  "low_recall_threshold": 0.8,
+  "signal_feature_dim": 512,
+  "signal_data": {
+    "scope": "bilateral",
+    "cache_subdirectory": "bilateral_signal_cache",
+    "channel_order": {
+      "emg": ["left_emg_1-8", "right_emg_1-8"],
+      "imu": ["left_acc_xyz", "left_gyro_xyz", "right_acc_xyz", "right_gyro_xyz"]
+    },
+    "channels": {"emg": 16, "imu": 12},
+    "train_normalization": "participant_train_only_channel_zscore",
+    "shared_time_grid": "mindrove_meta_annotation_rgb_aligned_clip_interval",
+    "calibration": {
+      "selection": "explicit_runs_or_first_sorted_runs",
+      "runs_per_participant": 1,
+      "explicit_runs": {"A": [], "D": [], "J": [], "M": []},
+      "exclude_calibration_runs_from_evaluation": true
+    },
+    "test_protocols": {
+      "pooled_train": {
+        "normalization": "pooled_training_participants_channel_zscore",
+        "cache_filename": "test_pooled_train_bilateral_signals.pt"
+      },
+      "participant_calibrated": {
+        "normalization": "heldout_unlabelled_calibration_runs_channel_zscore",
+        "cache_filename": "test_participant_calibrated_bilateral_signals.pt"
+      }
+    }
+  },
+  "direct_training": {
+    "epochs": 50,
+    "batch_size": 16,
+    "effective_batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "time_shift_augmentation_probability": 0.3,
+    "time_shift_augmentation_max_fraction": 0.1
+  },
+  "resnet10_1d": {
+    "base_channels": 64,
+    "stem_kernel_size": 7,
+    "stem_stride": 2,
+    "use_stem_pool": true,
+    "zero_init_residual": false,
+    "feature_dim": 512
+  },
+  "dilated_conv1d": {
+    "encoder_output_dim": 256,
+    "feature_dim": 512,
+    "dropout": 0.1,
+    "dilations": [1, 2, 4]
+  },
+  "experiments": {
+    "S1": {"modality": "emg", "encoder": "resnet10_1d", "task": "m2_node", "upstream": "S9"},
+    "S2": {"modality": "emg", "encoder": "dilated_conv1d", "task": "m2_node", "upstream": "S10"},
+    "S3": {"modality": "imu", "encoder": "resnet10_1d", "task": "m2_node", "upstream": "S11"},
+    "S4": {"modality": "imu", "encoder": "dilated_conv1d", "task": "m2_node", "upstream": "S12"},
+    "S5": {"modality": "emg", "encoder": "resnet10_1d", "task": "direct_node"},
+    "S6": {"modality": "emg", "encoder": "dilated_conv1d", "task": "direct_node"},
+    "S7": {"modality": "imu", "encoder": "resnet10_1d", "task": "direct_node"},
+    "S8": {"modality": "imu", "encoder": "dilated_conv1d", "task": "direct_node"},
+    "S9": {"modality": "emg", "encoder": "resnet10_1d", "task": "direct_tier3"},
+    "S10": {"modality": "emg", "encoder": "dilated_conv1d", "task": "direct_tier3"},
+    "S11": {"modality": "imu", "encoder": "resnet10_1d", "task": "direct_tier3"},
+    "S12": {"modality": "imu", "encoder": "dilated_conv1d", "task": "direct_tier3"}
+  },
+  "paired_comparisons": [
+    {"candidate": "S1", "baseline": "S5", "purpose": "Bilateral EMG ResNet10 M2 history gain"},
+    {"candidate": "S2", "baseline": "S6", "purpose": "Bilateral EMG Dilated M2 history gain"},
+    {"candidate": "S3", "baseline": "S7", "purpose": "Bilateral IMU ResNet10 M2 history gain"},
+    {"candidate": "S4", "baseline": "S8", "purpose": "Bilateral IMU Dilated M2 history gain"},
+    {"candidate": "S2", "baseline": "S1", "purpose": "Bilateral EMG M2 encoder comparison"},
+    {"candidate": "S4", "baseline": "S3", "purpose": "Bilateral IMU M2 encoder comparison"},
+    {"candidate": "S6", "baseline": "S5", "purpose": "Bilateral EMG direct-node encoder comparison"},
+    {"candidate": "S8", "baseline": "S7", "purpose": "Bilateral IMU direct-node encoder comparison"},
+    {"candidate": "S10", "baseline": "S9", "purpose": "Bilateral EMG direct-Tier3 encoder comparison"},
+    {"candidate": "S12", "baseline": "S11", "purpose": "Bilateral IMU direct-Tier3 encoder comparison"}
+  ]
+}

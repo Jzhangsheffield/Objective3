@@ -59,7 +59,12 @@ def supplementary_feature_dir(config: dict[str, Any], upstream: str, participant
 def supplementary_feature_cache(
     config: dict[str, Any], upstream: str, participant: str, seed: int, split: str
 ) -> Path:
-    filename = "train_features.pt" if split == "train" else "test_features.pt"
+    if split == "train":
+        filename = "train_features.pt"
+    elif split == "test":
+        filename = "test_features.pt"
+    else:
+        filename = f"{split}_features.pt"
     return supplementary_feature_dir(config, upstream, participant, seed) / filename
 
 
@@ -71,7 +76,58 @@ def base_signal_cache(config: dict[str, Any], participant: str, split: str) -> P
     return signal_cache(config["base"], participant, split)
 
 
-def signal_channels(modality: str) -> int:
+def bilateral_cache_dir(config: dict[str, Any], participant: str) -> Path:
+    subdirectory = str(config.get("signal_data", {}).get("cache_subdirectory", "bilateral_signal_cache"))
+    return Path(config["base"]["output_root"]) / subdirectory / f"{participant}_as_test"
+
+
+def training_signal_cache(config: dict[str, Any], participant: str) -> Path:
+    if config.get("signal_data", {}).get("scope") == "bilateral":
+        return bilateral_cache_dir(config, participant) / "train_bilateral_signals.pt"
+    return base_signal_cache(config, participant, "train")
+
+
+def evaluation_protocols(config: dict[str, Any], participant: str) -> list[dict[str, Any]]:
+    signal_data = config.get("signal_data", {})
+    if signal_data.get("scope") != "bilateral":
+        return [{
+            "name": "default",
+            "cache": base_signal_cache(config, participant, "test"),
+            "manifest_dir": base_protocol_dir(config, participant),
+            "feature_split": "test",
+            "result_subdirectory": None,
+        }]
+    root = bilateral_cache_dir(config, participant)
+    result = []
+    for name, spec in signal_data["test_protocols"].items():
+        result.append({
+            "name": str(name),
+            "cache": root / str(spec["cache_filename"]),
+            "manifest_dir": root / "evaluation_protocols" / str(name),
+            "feature_split": f"test_{name}",
+            "result_subdirectory": str(name),
+        })
+    return result
+
+
+def evaluation_protocol(config: dict[str, Any], participant: str, name: str) -> dict[str, Any]:
+    matches = [item for item in evaluation_protocols(config, participant) if item["name"] == name]
+    if not matches:
+        available = [item["name"] for item in evaluation_protocols(config, participant)]
+        raise ValueError(f"Unknown evaluation protocol {name}; available={available}")
+    return matches[0]
+
+
+def evaluation_result_dir(model_root: str | Path, protocol: dict[str, Any], base_name: str = "test_results") -> Path:
+    result = Path(model_root) / base_name
+    return result if protocol["result_subdirectory"] is None else result / protocol["result_subdirectory"]
+
+
+def signal_channels(modality: str, config: dict[str, Any] | None = None) -> int:
+    if config is not None:
+        configured = config.get("signal_data", {}).get("channels", {}).get(modality)
+        if configured is not None:
+            return int(configured)
     if modality == "emg":
         return 8
     if modality == "imu":

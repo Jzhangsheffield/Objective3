@@ -220,6 +220,82 @@
 - `sample_000416`
 - `sample_000430`
 
+## A3 — 双相机 gated residual/cross-view
+
+### node_1_unlock_crimper — Recall 66.67% (4/6)
+
+误分类样本：
+
+- `sample_000051` → `node_4_turn_on_crimper`
+- `sample_000130` → `node_35_lock_crimper`
+
+正确分类样本：
+
+- `sample_000005`
+- `sample_000204`
+- `sample_000274`
+- `sample_000379`
+
+### node_8_turn_on_extractor_fan — Recall 66.67% (4/6)
+
+误分类样本：
+
+- `sample_000134` → `node_28_turn_off_extractor_fan`
+- `sample_000278` → `node_6_turn_on_air_compressor`
+
+正确分类样本：
+
+- `sample_000004`
+- `sample_000054`
+- `sample_000208`
+- `sample_000383`
+
+### node_24_put_sample_on_table — Recall 41.67% (10/24)
+
+误分类样本：
+
+- `sample_000038` → `node_12_take_plier_from_table`
+- `sample_000073` → `node_12_take_plier_from_table`
+- `sample_000087` → `node_12_take_plier_from_table`
+- `sample_000150` → `node_12_take_plier_from_table`
+- `sample_000178` → `node_12_take_plier_from_table`
+- `sample_000226` → `node_12_take_plier_from_table`
+- `sample_000232` → `node_12_take_plier_from_table`
+- `sample_000238` → `node_12_take_plier_from_table`
+- `sample_000259` → `node_12_take_plier_from_table`
+- `sample_000265` → `node_12_take_plier_from_table`
+- `sample_000309` → `node_12_take_plier_from_table`
+- `sample_000315` → `node_12_take_plier_from_table`
+- `sample_000329` → `node_12_take_plier_from_table`
+- `sample_000430` → `node_12_take_plier_from_table`
+
+正确分类样本：
+
+- `sample_000024`
+- `sample_000101`
+- `sample_000115`
+- `sample_000164`
+- `sample_000202`
+- `sample_000296`
+- `sample_000353`
+- `sample_000367`
+- `sample_000402`
+- `sample_000416`
+
+### node_30_turn_off_air_compressor — Recall 50.00% (3/6)
+
+误分类样本：
+
+- `sample_000041` → `node_6_turn_on_air_compressor`
+- `sample_000118` → `node_6_turn_on_air_compressor`
+- `sample_000336` → `node_6_turn_on_air_compressor`
+
+正确分类样本：
+
+- `sample_000184`
+- `sample_000269`
+- `sample_000371`
+
 ## A4 — 主相机 + 右手 IMU
 
 ### node_1_unlock_crimper — Recall 66.67% (4/6)

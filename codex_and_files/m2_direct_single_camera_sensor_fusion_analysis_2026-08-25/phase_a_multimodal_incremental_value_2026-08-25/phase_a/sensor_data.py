@@ -31,7 +31,7 @@ def zero_shift(signal: torch.Tensor, fraction: float) -> torch.Tensor:
 
 
 class SignalClipDataset(Dataset):
-    """Current-clip-only right-hand EMG or IMU dataset for direct classification/extraction."""
+    """Current-clip EMG or IMU dataset for right-hand or config-selected bilateral caches."""
 
     def __init__(
         self,
@@ -65,7 +65,7 @@ class SignalClipDataset(Dataset):
     def __getitem__(self, index: int) -> dict[str, Any]:
         row = self.rows[index]
         cache_index = self.lookup[str(row["sample_name"])]
-        key = "right_emg" if self.modality == "emg" else "right_imu"
+        key = self.cache["_emg_key"] if self.modality == "emg" else self.cache["_imu_key"]
         signal = self.cache[key][cache_index].float().clone()
         offset = self.fixed_offset_fraction
         if self.training and torch.rand(()) < self.time_shift_probability:
