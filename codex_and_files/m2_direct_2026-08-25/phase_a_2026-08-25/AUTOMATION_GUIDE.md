@@ -7,7 +7,7 @@
 在 PowerShell 中进入实验包根目录，使用安装了 PyTorch、NumPy、TorchVision 且可以访问 GPU 的 Python：
 
 ```powershell
-Set-Location -LiteralPath 'D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25'
+Set-Location -LiteralPath 'D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_2026-08-25\phase_a_2026-08-25'
 
 .\scripts\run_all_phase_a.ps1 `
   -Python 'C:\path\to\your\python.exe' `

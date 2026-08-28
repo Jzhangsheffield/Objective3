@@ -52,8 +52,8 @@ REPORT_PATH = ROOT / "A_AS_TEST_SMALL_SCOPE_FUSION_ANALYSIS_2026-08-26.md"
 ANALYSIS_DIR = ROOT / "analysis" / "a_as_test_seed_1"
 MANUAL_NOTES_PATH = ANALYSIS_DIR / "manual_low_recall_sample_notes.csv"
 MANUAL_NOTES_BACKUP = Path(
-    "E:/Objective3/codex_and_files/m2_direct_single_camera_sensor_fusion_analysis_2026-08-25/"
-    "phase_a_multimodal_incremental_value_2026-08-25/A_AS_TEST_SMALL_SCOPE_FUSION_ANALYSIS_2026-08-26.md"
+    "D:/Junxi_data/Objective3_thermal_crimp/codex_and_files/m2_direct_2026-08-25/"
+    "phase_a_2026-08-25/A_AS_TEST_SMALL_SCOPE_FUSION_ANALYSIS_2026-08-26.md"
 )
 LOW_RECALL_THRESHOLD = 0.80
 
