@@ -18,6 +18,13 @@ codex_script/
 obj2_codes/results/
 obj2_codes/bash/objective3_rgb_J_as_test_4slurm_experiment_summary.xlsx
 codex_and_files/atomic_tail_A0_A8_windows_2026-08-19/outputs/
-codex_and_files/m2_direct_single_camera_sensor_fusion_analysis_2026-08-25/phase_a_multimodal_incremental_value_2026-08-25/logs/
+codex_and_files/m2_2026-08-25/phase_a_2026-08-25/logs/
 paper_submission_draft/.tmp_dataset_analysis/
-codex_and_files/m2_direct_single_camera_sensor_fusion_analysis_2026-08-25/phase_a_multimodal_incremental_value_2026-08-25/analysis/
+codex_and_files/m2_2026-08-25/phase_a_2026-08-25/analysis/
+codex_and_files/atomic_tail_sequence_disjoint_2026-08-24/diagnostic_investigation_2026-08-25/augmentation_history_audit_detailed.csv
+codex_and_files/m2_direct_single_camera_sensor_fusion_analysis_2026-08-25/phase_a_multimodal_incremental_value_2026-08-25/analysis/a_as_test_seed_1/
+codex_and_files/m2_direct_single_camera_sensor_fusion_analysis_2026-08-25/phase_a_multimodal_incremental_value_2026-08-25/logs/
+codex_and_files/m2_direct_2026-08-25/phase_a_2026-08-25/analysis/a_as_test_seed_1/
+codex_and_files/m2_direct_2026-08-25/phase_a_2026-08-25/logs/run_20260825_180241/
+codex_and_files/m2_direct_2026-08-25/phase_a_2026-08-25/logs/
+codex_and_files/m2_direct_2026-08-25/phase_a_2026-08-25/outputs/
