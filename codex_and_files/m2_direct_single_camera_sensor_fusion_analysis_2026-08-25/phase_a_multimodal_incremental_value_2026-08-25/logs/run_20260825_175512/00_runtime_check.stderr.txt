@@ -1,8 +1,0 @@
-RUNTIME_IMPORT_ERROR: ModuleNotFoundError: No module named 'torch'
-python_executable=C:\Users\digit\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe
-Traceback (most recent call last):
-  File "D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\tools\check_runtime.py", line 46, in <module>
-    main()
-  File "D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\tools\check_runtime.py", line 17, in main
-    import torch
-ModuleNotFoundError: No module named 'torch'

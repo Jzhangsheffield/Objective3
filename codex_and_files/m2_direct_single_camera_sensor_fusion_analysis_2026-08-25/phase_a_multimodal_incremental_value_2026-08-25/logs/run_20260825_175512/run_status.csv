@@ -1,2 +1,0 @@
-"timestamp","task","stage","status","seconds","log","message"
-"2026-08-25T17:55:13","00_runtime_check","runtime","FAILED","0.8","D:\Junxi_data\Objective3_thermal_crimp\codex_and_files\m2_direct_single_camera_sensor_fusion_analysis_2026-08-25\phase_a_multimodal_incremental_value_2026-08-25\logs\run_20260825_175512\00_runtime_check.log","Exit code 1"
