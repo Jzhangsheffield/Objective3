@@ -8,7 +8,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE_ROOT))
 
 from phase_b.config import load_config
-from phase_b.io import read_jsonl, sha256, write_json, write_jsonl
+from phase_b.io import read_json, read_jsonl, sha256, write_json, write_jsonl
 from phase_b.paths import crossfit_protocol, outer_protocol
 
 
@@ -30,8 +30,22 @@ def main() -> None:
             raise ValueError(f"Outer {outer}: expected train participants {expected}, got {inner_participants}")
         for inner in inner_participants:
             destination = crossfit_protocol(config, outer, inner)
+            expected_outputs = [
+                destination / "train.jsonl", destination / "test_all.jsonl",
+                destination / "test_normal.jsonl", destination / "test_fault.jsonl",
+                destination / "metadata.json",
+            ]
+            if not args.overwrite and all(path.is_file() for path in expected_outputs):
+                metadata = read_json(destination / "metadata.json")
+                if metadata.get("source_sha256") != sha256(source):
+                    raise RuntimeError(
+                        f"Existing protocol source changed; rerun with --overwrite: {destination}"
+                    )
+                summaries.append(metadata)
+                print(f"SKIP completed protocol: outer={outer} inner={inner}", flush=True)
+                continue
             if destination.exists() and any(destination.iterdir()) and not args.overwrite:
-                raise FileExistsError(f"Refusing to overwrite {destination}")
+                print(f"REPAIR partial protocol: outer={outer} inner={inner}", flush=True)
             train = [row for row in rows if str(row["participant"]) != inner]
             test_all = [row for row in rows if str(row["participant"]) == inner]
             test_normal = [row for row in test_all if "normal" in str(row.get("run", "")).lower()]
@@ -56,12 +70,12 @@ def main() -> None:
                     "test_normal": len(test_normal), "test_fault": len(test_fault),
                 },
                 "purpose": "out-of-fold predictions for B1/B2 meta-fusion only",
-                "outer_test_samples_used": false,
+                "outer_test_samples_used": False,
             }
             write_json(destination / "metadata.json", metadata)
             summaries.append(metadata)
     write_json(Path(config["output_root"]) / "crossfit_protocols" / "summary.json", summaries)
-    print(f"Created {len(summaries)} strict inner-LOSO protocol sets")
+    print(f"Prepared {len(summaries)} strict inner-LOSO protocol sets")
 
 
 if __name__ == "__main__":
