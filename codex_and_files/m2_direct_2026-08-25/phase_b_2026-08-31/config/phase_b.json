@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "dataset_root": "C:/MyFolder/mes19jz/Stage_2_Mapstyle_Dataset",
+  "m2_project_root": "../../graph_history_rgb_cross_person_ADM_2026-07-22",
+  "phase_a_root": "../phase_a_2026-08-25",
+  "output_root": "outputs",
+  "participants": ["A", "D", "J", "M"],
+  "seeds": [1, 2, 42],
+  "experiments": ["B0", "B1", "B2", "B3", "B4", "B5"],
+  "train_scope": "all_runs",
+  "primary_camera_id": "001484412812",
+  "secondary_camera_id": "001528512812",
+  "num_nodes": 35,
+  "num_tier3": 31,
+  "feature_dim": 512,
+  "d_model": 256,
+  "num_heads": 4,
+  "max_history": 35,
+  "dropout": 0.1,
+  "b0": {
+    "phase_a_compatible_config": "b0_phase_a_compatible.json",
+    "late_fusion_primary_weight": 0.5,
+    "reuse_existing_phase_a_a_as_test_seed_1": false
+  },
+  "crossfit": {
+    "mode": "strict_inner_loso",
+    "camera_backbone_epochs": 100,
+    "camera_context_epochs": 50,
+    "imu_expert_epochs": 50,
+    "forbid_outer_backbone_reuse": true,
+    "meta_training_unit": "inner-held-out participant prediction",
+    "fit_one_fuser_per_outer_fold_and_seed": true
+  },
+  "camera": {
+    "n_frames": 16,
+    "rgb_size": 224,
+    "temporal_layer": "layer2",
+    "temporal_channels": 128,
+    "expected_temporal_tokens": 4,
+    "backbone_batch_size": 16,
+    "backbone_learning_rate": 0.0001,
+    "backbone_weight_decay": 0.0001
+  },
+  "imu": {
+    "hand": "right",
+    "channels": 6,
+    "target_length": 256,
+    "encoder": "resnet10_1d",
+    "base_channels": 64,
+    "expected_temporal_tokens": 8,
+    "normalization": "outer-or-inner-train-only-channel-zscore",
+    "batch_size": 16,
+    "effective_batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "time_shift_probability": 0.3,
+    "time_shift_max_fraction": 0.1
+  },
+  "b1": {
+    "experts": ["cam0_m2", "cam1_m2", "imu_direct_node"],
+    "fit_temperatures": true,
+    "nonnegative_weights_sum_to_one": true,
+    "optimizer": "adam",
+    "steps": 1500,
+    "learning_rate": 0.03,
+    "weight_l2_to_uniform": 0.001,
+    "probability_epsilon": 1e-8
+  },
+  "b2": {
+    "experts": ["cam0_m2", "cam1_m2", "imu_direct_node"],
+    "quality_features": ["normalized_entropy", "top1_probability", "top1_top2_margin", "pairwise_js_divergence", "availability"],
+    "hidden_dim": 16,
+    "dropout": 0.1,
+    "max_optimizer_steps": 1200,
+    "batch_size": 128,
+    "learning_rate": 0.001,
+    "weight_decay": 0.001,
+    "gate_entropy_weight": 0.01,
+    "use_b1_temperatures": true
+  },
+  "joint_fusion": {
+    "bottleneck_tokens": 4,
+    "fusion_layers": 2,
+    "auxiliary_unimodal_loss_weight": 0.2,
+    "modality_dropout_probability": 0.2,
+    "epochs": 50,
+    "batch_size": 32,
+    "effective_batch_size": 32,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "frozen_encoder_cache_training": true,
+    "trainable_backbone_finetuning": false
+  },
+  "b3": {
+    "use_history": false,
+    "use_soft_temporal_alignment": false,
+    "contrastive_loss_weight": 0.0
+  },
+  "b4": {
+    "use_history": true,
+    "use_soft_temporal_alignment": false,
+    "contrastive_loss_weight": 0.0
+  },
+  "b5": {
+    "use_history": true,
+    "use_soft_temporal_alignment": true,
+    "contrastive_loss_weight": 0.05,
+    "contrastive_temperature": 0.1
+  },
+  "evaluation": {
+    "splits": ["test_all", "test_normal", "test_fault"],
+    "bootstrap_repetitions": 10000,
+    "bootstrap_seed": 20260831,
+    "majority_positive_minimum": 7,
+    "fault_noninferiority_margin_pp": 0.5,
+    "missing_modality_sets": [
+      [], ["cam0"], ["cam1"], ["imu"], ["cam1", "imu"], ["cam0", "imu"]
+    ],
+    "imu_time_offsets_fraction": [-0.2, -0.1, -0.05, 0.05, 0.1, 0.2]
+  },
+  "latency": {
+    "warmup_iterations": 50,
+    "measured_iterations": 500,
+    "target_hardware_name": null,
+    "target_p95_ms": null,
+    "target_min_clips_per_second": null
+  }
+}
