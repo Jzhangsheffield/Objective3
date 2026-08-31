@@ -1,6 +1,6 @@
 # A_as_test 小范围 Phase A 融合实验整合分析
 
-> 更新日期：2026-08-27；测试范围：`A_as_test`、`seed_1`、`all_runs`。摄像头/融合比较 A0–A6（不含未运行的 A7），并联合分析 S1–S12 右手 EMG/IMU 实验。
+> 更新日期：2026-08-28；测试范围：`A_as_test`、`seed_1`、`all_runs`。摄像头/融合比较 A0–A6（不含未运行的 A7），并联合分析右手与双手两轮 S1–S12 EMG/IMU 实验。双手实验另含 `pooled_train` 与 `participant_calibrated` 两种测试标准化协议。
 
 ## 1. 结论摘要
 
@@ -18,6 +18,11 @@
 - **A4 的信号较弱且存在指标分歧**：Fault Macro-F1 为 +1.13 pp，满足当前以 Macro-F1 定义的单次非劣方向；但 Fault accuracy 为 -0.73 pp，不能概括为全面改善。
 - **A6 没有表现出 EMG+IMU 的简单叠加收益**：总体 Macro-F1 只比 A0 +0.32 pp，低于 A5，最弱类 Recall 仍为 33.33%；Stage 3 Macro-F1 还下降 -0.91 pp。
 - **S1–S12 中 IMU 明显强于 EMG，最佳 sensor-only Node 为 S3**：Node Macro-F1 79.95%，相对 A0 仍低 -10.10 pp；但它修正了 22 个 A0 错误，A0+S3 oracle accuracy 可到 96.75%，说明 IMU 仍有可利用的非重叠信息。
+- **双手 S1–S12 的最佳独立 Node 仍是 S3**：`pooled_train` 下为 85.47% accuracy / 76.05% Macro-F1；但在同一 406-clip 子集上，它相对右手 S3 是 accuracy +0.74 pp、Macro-F1 -3.88 pp，不能写成双手全面优于右手。
+- **双手对 S7 的提升最一致**：`pooled_train` 下 S7 相对同子集右手结果为 accuracy +11.08 pp、Macro-F1 +6.24 pp；S8 也为 +6.16 / +4.75 pp。相反，S2 的 Macro-F1 下降 -15.64 pp，说明增加左手通道的收益强烈依赖训练路径和类别。
+- **无标签 participant calibration 不是统一增益项**：它提高双手 EMG S1/S2 的 Macro-F1 +5.62/+1.57 pp，却使 IMU S3/S4 下降 -1.64/-14.31 pp；当前最佳 IMU 与最佳融合诊断均来自 `pooled_train`。
+- **双手传感器仍显示可用于摄像头融合的互补信息**：在公平的 406-clip 子集上，A0 有 35 个错误；双手 pooled S3 单独判对其中 21 个。0.5×A0+0.5×S3 修正 13、伤害 4，净增 9 个正确样本，达到 93.60% accuracy / 92.32% Macro-F1。
+- **事后三路概率网格给出一个融合上限线索**：`0.50×A0 + 0.15×双手S1 + 0.35×双手S4` 在本测试集上为 93.84% accuracy / 93.54% Macro-F1，较同子集 A0 分别 +2.46 / +4.18 pp；但权重由测试集事后选择，只能形成待验证假设，不能当作正式结果。
 - **1D encoder 的优劣随模态改变**：Dilated 在 EMG 的 M2/Direct Node/Direct Tier3 三种比较中均优于 ResNet10，但在 IMU 三种比较中均低于 ResNet10；不能为 EMG 与 IMU 固定同一个 backbone。
 - **训练日志显示主要问题是跨参与者泛化而非训练不足**：S1–S3 末轮训练准确率均为 100%，而测试准确率分别为 25.29%、50.81%、84.69%；A3 从首轮起训练准确率就是 100%，可学习的稳健修错信号非常有限。
 - 这些数字只能回答“在 A 被留作测试者且 seed=1 时有没有迹象”，尚不能回答“传感器是否稳定有价值”。原验收规则要求 12 个 fold×seed 多数正增益、最弱类 Recall 与 Node Macro-F1 同升、Fault 不退化、压力测试和硬件预算均通过。
@@ -25,6 +30,8 @@
 ## 2. 数据完整性与可比性
 
 A0–A6 七组预测以及 S1–S12 均逐 `sample_name` 对齐到同一组 **431 clips**：Normal 294、Fault 137；Stage 1 66、Stage 2 308、Stage 3 57。所有条件保存的 node/Tier3 真值完全一致。
+
+双手 S1–S12 采用独立输出目录和重新训练的双手 encoder。按协议，A 的 `run_1` 被用作无标签 calibration run 并从计分中排除，因此两种双手测试协议均包含 **406 clips**：Normal 269、Fault 137；Stage 1/2/3 分别为 55/294/57。两种协议的样本名完全一致。本文所有“右手 vs 双手”与“A0/摄像头 vs 双手”数值比较，都先把旧模型限制到这 406 个同名 clip；不能直接把双手 406-clip 指标与前文 431-clip 指标相减。
 
 | 条件 | 训练前无传感器回退最大误差 | 训练后无传感器回退最大误差 |
 | --- | --- | --- |
@@ -127,6 +134,18 @@ A1 已作为完整候选纳入后续所有子集、类别、混淆和 bootstrap 
 
 该图在所有 S1–S12 都具备的 Tier3 输出口径下比较类别影响，因此补齐了 S9–S12。类别按 **Tier3 编号 T0→T30** 排列；图仍分为绝对 Recall 和相对 A0 的 F1 变化两部分，便于把模态差异与训练目标差异并列检查。
 
+#### 5.1.4 右手与双手 S1–S8：35 Node 同子集对照
+
+![右手与双手 S1-S8 35 Node Recall 对照](analysis/a_as_test_seed_1/right_bilateral_sensor_node_class_impact_heatmap.png)
+
+该图专门回答“增加左手通道后，哪些 Node 改善、哪些 Node 退化”。上半图把 A0、右手 S1–S8、双手 S1–S8 都限制到相同的 406 个 clip，给出绝对 Recall；下半图直接给出双手−右手 Recall 变化。它与 5.1.2 的全量右手图口径不同，不能用样本数不同的两张图直接做百分点相减。
+
+#### 5.1.5 右手与双手 S1–S12：31 Tier3 同子集对照
+
+![右手与双手 S1-S12 31 Tier3 Recall 对照](analysis/a_as_test_seed_1/right_bilateral_sensor_tier3_class_impact_heatmap.png)
+
+S1–S8 的 Node 概率先聚合到 Tier3，S9–S12 使用其 Direct Tier3 输出，因此这张图可在统一的 31 类空间比较全部 12 个条件。下半图仍为双手−右手 Recall 变化；它用于发现双手输入是否只提升少数大类，而不是宣称双手在所有类别上稳定更好。
+
 ### 5.2 逐类别数值表
 
 下表以真实类别为行。每个候选单元格为 `Recall变化 / F1变化 / 正确数净变化`；前两项单位均为百分点。小支持度类别的一两个 clip 就会造成很大的百分点波动，应同时看 support 与正确数。
@@ -169,7 +188,93 @@ A1 已作为完整候选纳入后续所有子集、类别、混淆和 bootstrap 
 | 34 | node_34_take_lock_from_table | 5 | 100.0% | 90.9% | +0.0 / -7.6 / +0 | +0.0 / +0.0 / +0 | +0.0 / +9.1 / +0 | +0.0 / +0.0 / +0 | +0.0 / +9.1 / +0 | +0.0 / +0.0 / +0 |
 | 35 | node_35_lock_crimper | 5 | 100.0% | 83.3% | -20.0 / +5.6 / -1 | +0.0 / +0.0 / +0 | +0.0 / +0.0 / +0 | -20.0 / -10.6 / -1 | +0.0 / +0.0 / +0 | +0.0 / +0.0 / +0 |
 
-### 5.3 各融合方法最明显的 Node 增益与退化
+### 5.3 右手与双手 S1–S8：35 Node 公平对照
+
+下表把右手和双手模型都限制到排除 calibration `run_1` 后的同一批 406 个 clip。`R`/`B` 分别表示右手/双手 pooled Recall，`Δ` 为双手−右手（百分点）；A0 也按同一子集重算。
+
+#### 5.3.1 S1–S4
+
+| Node | n | A0 R | R-S1 | B-S1 | Δ | R-S2 | B-S2 | Δ | R-S3 | B-S3 | Δ | R-S4 | B-S4 | Δ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| N1 `node_1_unlock_crimper` | 5 | 60.0% | 20.0% | 0.0% | -20.0 | 20.0% | 40.0% | +20.0 | 80.0% | 60.0% | -20.0 | 100.0% | 40.0% | -60.0 |
+| N2 `node_2_put_lock_on_table` | 5 | 100.0% | 20.0% | 0.0% | -20.0 | 60.0% | 60.0% | +0.0 | 80.0% | 40.0% | -40.0 | 100.0% | 40.0% | -60.0 |
+| N3 `node_3_turn_on_main_switch` | 5 | 100.0% | 60.0% | 20.0% | -40.0 | 40.0% | 20.0% | -20.0 | 100.0% | 60.0% | -40.0 | 80.0% | 80.0% | +0.0 |
+| N4 `node_4_turn_on_crimper` | 5 | 80.0% | 0.0% | 0.0% | +0.0 | 20.0% | 60.0% | +40.0 | 100.0% | 40.0% | -60.0 | 60.0% | 40.0% | -20.0 |
+| N5 `node_5_adjust_parameters` | 5 | 100.0% | 0.0% | 40.0% | +40.0 | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 |
+| N6 `node_6_turn_on_air_compressor` | 5 | 80.0% | 40.0% | 0.0% | -40.0 | 20.0% | 0.0% | -20.0 | 60.0% | 40.0% | -20.0 | 60.0% | 60.0% | +0.0 |
+| N7 `node_7_turn_on_water_pump` | 5 | 100.0% | 0.0% | 40.0% | +40.0 | 100.0% | 20.0% | -80.0 | 40.0% | 40.0% | +0.0 | 40.0% | 20.0% | -20.0 |
+| N8 `node_8_turn_on_extractor_fan` | 5 | 60.0% | 0.0% | 0.0% | +0.0 | 40.0% | 80.0% | +40.0 | 80.0% | 20.0% | -60.0 | 80.0% | 40.0% | -40.0 |
+| N9 `node_9_move_pedal_to_safe_location` | 5 | 100.0% | 0.0% | 20.0% | +20.0 | 80.0% | 40.0% | -40.0 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N10 `node_10_remove_protection_cover_from_crimper` | 5 | 80.0% | 60.0% | 40.0% | -20.0 | 40.0% | 20.0% | -20.0 | 100.0% | 100.0% | +0.0 | 80.0% | 100.0% | +20.0 |
+| N11 `node_11_put_protection_cover_on_ground` | 5 | 100.0% | 80.0% | 60.0% | -20.0 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 | 60.0% | 80.0% | +20.0 |
+| N12 `node_12_take_plier_from_table` | 23 | 95.7% | 26.1% | 43.5% | +17.4 | 56.5% | 69.6% | +13.0 | 73.9% | 87.0% | +13.0 | 78.3% | 100.0% | +21.7 |
+| N13 `node_13_grip_sample_from_table_1` | 23 | 95.7% | 26.1% | 78.3% | +52.2 | 65.2% | 78.3% | +13.0 | 78.3% | 91.3% | +13.0 | 60.9% | 60.9% | +0.0 |
+| N14 `node_14_put_sample_under_electrodes_1` | 23 | 100.0% | 0.0% | 0.0% | +0.0 | 39.1% | 17.4% | -21.7 | 95.7% | 100.0% | +4.3 | 95.7% | 100.0% | +4.3 |
+| N15 `node_15_press_pedal_1` | 23 | 100.0% | 8.7% | 8.7% | +0.0 | 52.2% | 17.4% | -34.8 | 95.7% | 95.7% | +0.0 | 91.3% | 91.3% | +0.0 |
+| N16 `node_16_put_sample_on_machine_table_1` | 20 | 100.0% | 0.0% | 0.0% | +0.0 | 0.0% | 5.0% | +5.0 | 95.0% | 100.0% | +5.0 | 90.0% | 75.0% | -15.0 |
+| N17 `node_17_grip_sample_from_machine_table_2` | 20 | 85.0% | 55.0% | 55.0% | +0.0 | 55.0% | 60.0% | +5.0 | 100.0% | 95.0% | -5.0 | 95.0% | 100.0% | +5.0 |
+| N18 `node_18_reverse_sample` | 20 | 100.0% | 45.0% | 75.0% | +30.0 | 70.0% | 65.0% | -5.0 | 100.0% | 95.0% | -5.0 | 95.0% | 95.0% | +0.0 |
+| N19 `node_19_put_sample_on_machine_table_2` | 20 | 100.0% | 80.0% | 70.0% | -10.0 | 60.0% | 70.0% | +10.0 | 100.0% | 100.0% | +0.0 | 60.0% | 95.0% | +35.0 |
+| N20 `node_20_grip_sample_from_machine_table_3` | 20 | 95.0% | 15.0% | 10.0% | -5.0 | 75.0% | 20.0% | -55.0 | 95.0% | 100.0% | +5.0 | 95.0% | 100.0% | +5.0 |
+| N21 `node_21_put_sample_under_electrodes_2` | 20 | 100.0% | 0.0% | 10.0% | +10.0 | 25.0% | 45.0% | +20.0 | 100.0% | 100.0% | +0.0 | 85.0% | 95.0% | +10.0 |
+| N22 `node_22_press_pedal_2` | 20 | 95.0% | 0.0% | 15.0% | +15.0 | 65.0% | 20.0% | -45.0 | 100.0% | 100.0% | +0.0 | 80.0% | 100.0% | +20.0 |
+| N23 `node_23_inspect_sample` | 16 | 100.0% | 25.0% | 81.2% | +56.2 | 56.2% | 25.0% | -31.2 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N24 `node_24_put_sample_on_table` | 23 | 39.1% | 0.0% | 17.4% | +17.4 | 8.7% | 13.0% | +4.3 | 39.1% | 56.5% | +17.4 | 34.8% | 26.1% | -8.7 |
+| N25 `node_25_put_plier_on_table` | 23 | 100.0% | 87.0% | 87.0% | +0.0 | 69.6% | 52.2% | -17.4 | 60.9% | 69.6% | +8.7 | 39.1% | 47.8% | +8.7 |
+| N26 `node_26_take_protection_cover_from_ground` | 6 | 83.3% | 16.7% | 100.0% | +83.3 | 66.7% | 66.7% | +0.0 | 100.0% | 100.0% | +0.0 | 66.7% | 100.0% | +33.3 |
+| N27 `node_27_put_protection_cover_on_crimper` | 6 | 100.0% | 16.7% | 83.3% | +66.7 | 100.0% | 83.3% | -16.7 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N28 `node_28_turn_off_extractor_fan` | 6 | 100.0% | 0.0% | 16.7% | +16.7 | 0.0% | 16.7% | +16.7 | 83.3% | 100.0% | +16.7 | 66.7% | 50.0% | -16.7 |
+| N29 `node_29_turn_off_water_pump` | 6 | 83.3% | 0.0% | 0.0% | +0.0 | 83.3% | 0.0% | -83.3 | 50.0% | 0.0% | -50.0 | 0.0% | 16.7% | +16.7 |
+| N30 `node_30_turn_off_air_compressor` | 6 | 33.3% | 0.0% | 0.0% | +0.0 | 83.3% | 0.0% | -83.3 | 100.0% | 83.3% | -16.7 | 100.0% | 100.0% | +0.0 |
+| N31 `node_31_move_pedal_to_original_place` | 6 | 100.0% | 83.3% | 83.3% | +0.0 | 83.3% | 0.0% | -83.3 | 66.7% | 66.7% | +0.0 | 50.0% | 50.0% | +0.0 |
+| N32 `node_32_turn_off_crimper` | 6 | 83.3% | 33.3% | 33.3% | +0.0 | 100.0% | 50.0% | -50.0 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N33 `node_33_turn_off_main_switch` | 5 | 100.0% | 100.0% | 100.0% | +0.0 | 80.0% | 60.0% | -20.0 | 100.0% | 100.0% | +0.0 | 80.0% | 100.0% | +20.0 |
+| N34 `node_34_take_lock_from_table` | 5 | 100.0% | 0.0% | 0.0% | +0.0 | 40.0% | 20.0% | -20.0 | 80.0% | 100.0% | +20.0 | 80.0% | 60.0% | -20.0 |
+| N35 `node_35_lock_crimper` | 5 | 100.0% | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 20.0% | 100.0% | +80.0 | 80.0% | 20.0% | -60.0 |
+
+#### 5.3.2 S5–S8
+
+| Node | n | A0 R | R-S5 | B-S5 | Δ | R-S6 | B-S6 | Δ | R-S7 | B-S7 | Δ | R-S8 | B-S8 | Δ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| N1 `node_1_unlock_crimper` | 5 | 60.0% | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 80.0% | 60.0% | -20.0 | 100.0% | 40.0% | -60.0 |
+| N2 `node_2_put_lock_on_table` | 5 | 100.0% | 40.0% | 0.0% | -40.0 | 0.0% | 20.0% | +20.0 | 40.0% | 20.0% | -20.0 | 40.0% | 20.0% | -20.0 |
+| N3 `node_3_turn_on_main_switch` | 5 | 100.0% | 40.0% | 0.0% | -40.0 | 40.0% | 20.0% | -20.0 | 80.0% | 60.0% | -20.0 | 20.0% | 60.0% | +40.0 |
+| N4 `node_4_turn_on_crimper` | 5 | 80.0% | 20.0% | 20.0% | +0.0 | 20.0% | 0.0% | -20.0 | 100.0% | 100.0% | +0.0 | 80.0% | 40.0% | -40.0 |
+| N5 `node_5_adjust_parameters` | 5 | 100.0% | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 |
+| N6 `node_6_turn_on_air_compressor` | 5 | 80.0% | 0.0% | 0.0% | +0.0 | 20.0% | 0.0% | -20.0 | 40.0% | 80.0% | +40.0 | 40.0% | 0.0% | -40.0 |
+| N7 `node_7_turn_on_water_pump` | 5 | 100.0% | 20.0% | 0.0% | -20.0 | 20.0% | 0.0% | -20.0 | 0.0% | 40.0% | +40.0 | 20.0% | 40.0% | +20.0 |
+| N8 `node_8_turn_on_extractor_fan` | 5 | 60.0% | 0.0% | 0.0% | +0.0 | 60.0% | 0.0% | -60.0 | 40.0% | 0.0% | -40.0 | 40.0% | 60.0% | +20.0 |
+| N9 `node_9_move_pedal_to_safe_location` | 5 | 100.0% | 0.0% | 40.0% | +40.0 | 20.0% | 40.0% | +20.0 | 100.0% | 100.0% | +0.0 | 80.0% | 100.0% | +20.0 |
+| N10 `node_10_remove_protection_cover_from_crimper` | 5 | 80.0% | 20.0% | 0.0% | -20.0 | 20.0% | 0.0% | -20.0 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N11 `node_11_put_protection_cover_on_ground` | 5 | 100.0% | 20.0% | 40.0% | +20.0 | 80.0% | 80.0% | +0.0 | 100.0% | 100.0% | +0.0 | 80.0% | 80.0% | +0.0 |
+| N12 `node_12_take_plier_from_table` | 23 | 95.7% | 26.1% | 56.5% | +30.4 | 39.1% | 30.4% | -8.7 | 69.6% | 91.3% | +21.7 | 69.6% | 100.0% | +30.4 |
+| N13 `node_13_grip_sample_from_table_1` | 23 | 95.7% | 17.4% | 21.7% | +4.3 | 21.7% | 52.2% | +30.4 | 43.5% | 69.6% | +26.1 | 34.8% | 47.8% | +13.0 |
+| N14 `node_14_put_sample_under_electrodes_1` | 23 | 100.0% | 0.0% | 0.0% | +0.0 | 4.3% | 0.0% | -4.3 | 26.1% | 21.7% | -4.3 | 17.4% | 34.8% | +17.4 |
+| N15 `node_15_press_pedal_1` | 23 | 100.0% | 8.7% | 0.0% | -8.7 | 8.7% | 8.7% | +0.0 | 82.6% | 4.3% | -78.3 | 39.1% | 43.5% | +4.3 |
+| N16 `node_16_put_sample_on_machine_table_1` | 20 | 100.0% | 0.0% | 0.0% | +0.0 | 5.0% | 0.0% | -5.0 | 50.0% | 100.0% | +50.0 | 65.0% | 80.0% | +15.0 |
+| N17 `node_17_grip_sample_from_machine_table_2` | 20 | 85.0% | 40.0% | 50.0% | +10.0 | 5.0% | 25.0% | +20.0 | 90.0% | 95.0% | +5.0 | 90.0% | 95.0% | +5.0 |
+| N18 `node_18_reverse_sample` | 20 | 100.0% | 55.0% | 45.0% | -10.0 | 85.0% | 20.0% | -65.0 | 95.0% | 95.0% | +0.0 | 85.0% | 95.0% | +10.0 |
+| N19 `node_19_put_sample_on_machine_table_2` | 20 | 100.0% | 90.0% | 85.0% | -5.0 | 90.0% | 10.0% | -80.0 | 25.0% | 45.0% | +20.0 | 25.0% | 55.0% | +30.0 |
+| N20 `node_20_grip_sample_from_machine_table_3` | 20 | 95.0% | 0.0% | 15.0% | +15.0 | 0.0% | 15.0% | +15.0 | 100.0% | 95.0% | -5.0 | 70.0% | 100.0% | +30.0 |
+| N21 `node_21_put_sample_under_electrodes_2` | 20 | 100.0% | 0.0% | 10.0% | +10.0 | 15.0% | 10.0% | -5.0 | 50.0% | 85.0% | +35.0 | 60.0% | 90.0% | +30.0 |
+| N22 `node_22_press_pedal_2` | 20 | 95.0% | 5.0% | 30.0% | +25.0 | 20.0% | 20.0% | +0.0 | 40.0% | 95.0% | +55.0 | 85.0% | 65.0% | -20.0 |
+| N23 `node_23_inspect_sample` | 16 | 100.0% | 56.2% | 87.5% | +31.2 | 31.2% | 56.2% | +25.0 | 100.0% | 100.0% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N24 `node_24_put_sample_on_table` | 23 | 39.1% | 0.0% | 52.2% | +52.2 | 0.0% | 13.0% | +13.0 | 26.1% | 43.5% | +17.4 | 26.1% | 17.4% | -8.7 |
+| N25 `node_25_put_plier_on_table` | 23 | 100.0% | 43.5% | 73.9% | +30.4 | 47.8% | 60.9% | +13.0 | 17.4% | 91.3% | +73.9 | 73.9% | 30.4% | -43.5 |
+| N26 `node_26_take_protection_cover_from_ground` | 6 | 83.3% | 16.7% | 50.0% | +33.3 | 16.7% | 50.0% | +33.3 | 100.0% | 83.3% | -16.7 | 100.0% | 100.0% | +0.0 |
+| N27 `node_27_put_protection_cover_on_crimper` | 6 | 100.0% | 16.7% | 66.7% | +50.0 | 50.0% | 50.0% | +0.0 | 66.7% | 100.0% | +33.3 | 66.7% | 100.0% | +33.3 |
+| N28 `node_28_turn_off_extractor_fan` | 6 | 100.0% | 16.7% | 83.3% | +66.7 | 0.0% | 16.7% | +16.7 | 66.7% | 83.3% | +16.7 | 0.0% | 50.0% | +50.0 |
+| N29 `node_29_turn_off_water_pump` | 6 | 83.3% | 50.0% | 0.0% | -50.0 | 0.0% | 16.7% | +16.7 | 0.0% | 0.0% | +0.0 | 16.7% | 0.0% | -16.7 |
+| N30 `node_30_turn_off_air_compressor` | 6 | 33.3% | 0.0% | 0.0% | +0.0 | 16.7% | 0.0% | -16.7 | 100.0% | 83.3% | -16.7 | 83.3% | 66.7% | -16.7 |
+| N31 `node_31_move_pedal_to_original_place` | 6 | 100.0% | 100.0% | 66.7% | -33.3 | 33.3% | 33.3% | +0.0 | 50.0% | 50.0% | +0.0 | 0.0% | 33.3% | +33.3 |
+| N32 `node_32_turn_off_crimper` | 6 | 83.3% | 66.7% | 50.0% | -16.7 | 16.7% | 100.0% | +83.3 | 83.3% | 83.3% | +0.0 | 100.0% | 100.0% | +0.0 |
+| N33 `node_33_turn_off_main_switch` | 5 | 100.0% | 20.0% | 100.0% | +80.0 | 100.0% | 80.0% | -20.0 | 100.0% | 100.0% | +0.0 | 100.0% | 80.0% | -20.0 |
+| N34 `node_34_take_lock_from_table` | 5 | 100.0% | 0.0% | 0.0% | +0.0 | 20.0% | 0.0% | -20.0 | 80.0% | 80.0% | +0.0 | 80.0% | 100.0% | +20.0 |
+| N35 `node_35_lock_crimper` | 5 | 100.0% | 0.0% | 0.0% | +0.0 | 0.0% | 0.0% | +0.0 | 20.0% | 20.0% | +0.0 | 60.0% | 60.0% | +0.0 |
+
+读表重点：双手不是对所有 Node 的一致增益。pooled S3 的 35 Node Recall 提高/不变/降低为 **10/15/10**；pooled S7 为 **13/13/9**。因此后续判断双手价值时应同时看总体 Macro-F1、最弱类别和具体类别崩塌，不能只看 accuracy。
+
+### 5.4 各融合方法最明显的 Node 增益与退化
 
 **A1（第二相机单独 M2-Direct）**
 
@@ -207,11 +312,11 @@ A1 已作为完整候选纳入后续所有子集、类别、混淆和 bootstrap 
 - Recall 退化最大：`node_28_turn_off_extractor_fan` (n=6, -16.7 pp, Δ正确=-1)
 - 35 个受支持 Node 中：Recall 改善 3 类、退化 1 类、不变 31 类。
 
-### 5.4 各方法低 Recall Node 与误分类样本名称
+### 5.5 各方法低 Recall Node 与误分类样本名称
 
 这里将低 Recall 预定义为 **Recall < 80%**。A0–A6 表中列出造成低 Recall 的全部误分类样本；S1–S8 因错误较多，每个低 Recall Node 最多用固定随机种子抽取 10 个误分类样本。原备份报告的 A0、A1、A2、A4、A5、A6 备注已按方法、真实 Node 和样本名逐条导入；A3 与 S1–S8 的备注栏保持空白，供后续人工检查。如需同时查看这些类别中预测正确的样本，可打开 `analysis/a_as_test_seed_1/LOW_RECALL_NODE_SAMPLE_INDEX.md`；S1–S8 的完整列表见 `SENSOR_LOW_RECALL_NODE_SAMPLE_INDEX.md`；便于筛选的逐样本表分别为 `low_recall_node_samples.csv` 和 `sensor_low_recall_node_samples.csv`。
 
-#### 5.4.1 A0–A6 摄像头与融合
+#### 5.5.1 A0–A6 摄像头与融合
 
 ##### A0 — 主相机 M2-Direct
 
@@ -273,7 +378,7 @@ A1 已作为完整候选纳入后续所有子集、类别、混淆和 bootstrap 
 | node_24_put_sample_on_table | 24 | 10/24 | 41.7% | `sample_000038` → `node_12_take_plier_from_table`<br>`sample_000073` → `node_12_take_plier_from_table`<br>`sample_000087` → `node_12_take_plier_from_table`<br>`sample_000150` → `node_12_take_plier_from_table`<br>`sample_000178` → `node_12_take_plier_from_table`<br>`sample_000226` → `node_34_take_lock_from_table`<br>`sample_000232` → `node_12_take_plier_from_table`<br>`sample_000238` → `node_12_take_plier_from_table`<br>`sample_000259` → `node_12_take_plier_from_table`<br>`sample_000265` → `node_12_take_plier_from_table`<br>`sample_000309` → `node_12_take_plier_from_table`<br>`sample_000315` → `node_12_take_plier_from_table`<br>`sample_000329` → `node_12_take_plier_from_table`<br>`sample_000430` → `node_12_take_plier_from_table` | 样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好<br>样本质量良好 |
 | node_30_turn_off_air_compressor | 6 | 2/6 | 33.3% | `sample_000041` → `node_6_turn_on_air_compressor`<br>`sample_000118` → `node_6_turn_on_air_compressor`<br>`sample_000269` → `node_6_turn_on_air_compressor`<br>`sample_000336` → `node_6_turn_on_air_compressor` | 有遮挡<br>样本质量良好<br>样本质量良好<br>样本质量良好 |
 
-#### 5.4.2 S1–S8 Sensor-only
+#### 5.5.2 右手 S1–S8 Sensor-only
 
 以下每个低 Recall Node 最多展示 10 个误分类样本；抽样是确定性的，重复生成报告不会无故换样本。括号中的 `显示 x/y` 表示本表展示数/该类别全部误分类数。完整错误清单仍保存在上述 Sensor 索引与 CSV 中。
 
@@ -507,11 +612,243 @@ A1 已作为完整候选纳入后续所有子集、类别、混淆和 bootstrap 
 | node_31_move_pedal_to_original_place | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000049` → `node_26_take_protection_cover_from_ground`<br>`sample_000126` → `node_26_take_protection_cover_from_ground`<br>`sample_000180` → `node_26_take_protection_cover_from_ground`<br>`sample_000273` → `node_26_take_protection_cover_from_ground`<br>`sample_000340` → `node_26_take_protection_cover_from_ground`<br>`sample_000378` → `node_26_take_protection_cover_from_ground` |  |
 | node_35_lock_crimper | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000189` → `node_25_put_plier_on_table`<br>`sample_000375` → `node_30_turn_off_air_compressor` |  |
 
+#### 5.5.3 双手 S1–S8 Sensor-only
+
+口径为 `pooled_train`、同一 406-clip 公平子集、Recall < 80%。与右手表一致，每个低 Recall Node 最多用固定随机种子展示 10 个误分类样本；`显示 x/y` 表示正文展示数/该类别全部误分类数。完整逐样本记录见 `BILATERAL_SENSOR_LOW_RECALL_NODE_SAMPLE_INDEX.md` 和 `bilateral_sensor_low_recall_node_samples.csv`。
+
+##### S1 — 双手 EMG ResNet10 Tier3→M2 Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000051` → `node_25_put_plier_on_table`<br>`sample_000130` → `node_32_turn_off_crimper`<br>`sample_000204` → `node_9_move_pedal_to_safe_location`<br>`sample_000274` → `node_32_turn_off_crimper`<br>`sample_000379` → `node_32_turn_off_crimper` |  |
+| `node_2_put_lock_on_table` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000052` → `node_5_adjust_parameters`<br>`sample_000131` → `node_7_turn_on_water_pump`<br>`sample_000205` → `node_25_put_plier_on_table`<br>`sample_000275` → `node_7_turn_on_water_pump`<br>`sample_000380` → `node_29_turn_off_water_pump` |  |
+| `node_3_turn_on_main_switch` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000127` → `node_2_put_lock_on_table`<br>`sample_000206` → `node_25_put_plier_on_table`<br>`sample_000276` → `node_25_put_plier_on_table`<br>`sample_000381` → `node_4_turn_on_crimper` |  |
+| `node_4_turn_on_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000053` → `node_25_put_plier_on_table`<br>`sample_000132` → `node_7_turn_on_water_pump`<br>`sample_000210` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000280` → `node_7_turn_on_water_pump`<br>`sample_000382` → `node_3_turn_on_main_switch` |  |
+| `node_5_adjust_parameters` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000060` → `node_13_grip_sample_from_table_1`<br>`sample_000214` → `node_13_grip_sample_from_table_1`<br>`sample_000284` → `node_13_grip_sample_from_table_1` |  |
+| `node_6_turn_on_air_compressor` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000056` → `node_27_put_protection_cover_on_crimper`<br>`sample_000133` → `node_26_take_protection_cover_from_ground`<br>`sample_000209` → `node_7_turn_on_water_pump`<br>`sample_000279` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000385` → `node_10_remove_protection_cover_from_crimper` |  |
+| `node_7_turn_on_water_pump` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000055` → `node_28_turn_off_extractor_fan`<br>`sample_000277` → `node_28_turn_off_extractor_fan`<br>`sample_000384` → `node_28_turn_off_extractor_fan` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000054` → `node_7_turn_on_water_pump`<br>`sample_000134` → `node_7_turn_on_water_pump`<br>`sample_000208` → `node_28_turn_off_extractor_fan`<br>`sample_000278` → `node_28_turn_off_extractor_fan`<br>`sample_000383` → `node_33_turn_off_main_switch` |  |
+| `node_9_move_pedal_to_safe_location` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000059` → `node_32_turn_off_crimper`<br>`sample_000136` → `node_30_turn_off_air_compressor`<br>`sample_000281` → `node_32_turn_off_crimper`<br>`sample_000388` → `node_3_turn_on_main_switch` |  |
+| `node_10_remove_protection_cover_from_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000128` → `node_27_put_protection_cover_on_crimper`<br>`sample_000212` → `node_26_take_protection_cover_from_ground`<br>`sample_000282` → `node_26_take_protection_cover_from_ground` |  |
+| `node_11_put_protection_cover_on_ground` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000129` → `node_26_take_protection_cover_from_ground`<br>`sample_000213` → `node_26_take_protection_cover_from_ground` |  |
+| `node_12_take_plier_from_table` | 23 | 10/23 | 43.5% | （显示 10/13）<br>`sample_000061` → `node_25_put_plier_on_table`<br>`sample_000138` → `node_6_turn_on_air_compressor`<br>`sample_000190` → `node_13_grip_sample_from_table_1`<br>`sample_000240` → `node_25_put_plier_on_table`<br>`sample_000261` → `node_25_put_plier_on_table`<br>`sample_000311` → `node_2_put_lock_on_table`<br>`sample_000341` → `node_11_put_protection_cover_on_ground`<br>`sample_000355` → `node_16_put_sample_on_machine_table_1`<br>`sample_000390` → `node_25_put_plier_on_table`<br>`sample_000404` → `node_7_turn_on_water_pump` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 18/23 | 78.3% | （显示 5/5）<br>`sample_000027` → `node_18_reverse_sample`<br>`sample_000241` → `node_25_put_plier_on_table`<br>`sample_000299` → `node_12_take_plier_from_table`<br>`sample_000356` → `node_1_unlock_crimper`<br>`sample_000405` → `node_18_reverse_sample` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 0/23 | 0.0% | （显示 10/23）<br>`sample_000028` → `node_18_reverse_sample`<br>`sample_000077` → `node_13_grip_sample_from_table_1`<br>`sample_000091` → `node_25_put_plier_on_table`<br>`sample_000140` → `node_13_grip_sample_from_table_1`<br>`sample_000192` → `node_18_reverse_sample`<br>`sample_000230` → `node_13_grip_sample_from_table_1`<br>`sample_000242` → `node_13_grip_sample_from_table_1`<br>`sample_000263` → `node_13_grip_sample_from_table_1`<br>`sample_000287` → `node_13_grip_sample_from_table_1`<br>`sample_000392` → `node_5_adjust_parameters` |  |
+| `node_15_press_pedal_1` | 23 | 2/23 | 8.7% | （显示 10/21）<br>`sample_000029` → `node_34_take_lock_from_table`<br>`sample_000078` → `node_25_put_plier_on_table`<br>`sample_000155` → `node_5_adjust_parameters`<br>`sample_000193` → `node_2_put_lock_on_table`<br>`sample_000243` → `node_13_grip_sample_from_table_1`<br>`sample_000288` → `node_23_inspect_sample`<br>`sample_000301` → `node_5_adjust_parameters`<br>`sample_000320` → `node_5_adjust_parameters`<br>`sample_000344` → `node_5_adjust_parameters`<br>`sample_000421` → `node_34_take_lock_from_table` |  |
+| `node_16_put_sample_on_machine_table_1` | 20 | 0/20 | 0.0% | （显示 10/20）<br>`sample_000079` → `node_2_put_lock_on_table`<br>`sample_000093` → `node_5_adjust_parameters`<br>`sample_000194` → `node_2_put_lock_on_table`<br>`sample_000251` → `node_34_take_lock_from_table`<br>`sample_000289` → `node_34_take_lock_from_table`<br>`sample_000321` → `node_5_adjust_parameters`<br>`sample_000345` → `node_25_put_plier_on_table`<br>`sample_000394` → `node_7_turn_on_water_pump`<br>`sample_000408` → `node_2_put_lock_on_table`<br>`sample_000422` → `node_3_turn_on_main_switch` |  |
+| `node_17_grip_sample_from_machine_table_2` | 20 | 11/20 | 55.0% | （显示 9/9）<br>`sample_000031` → `node_18_reverse_sample`<br>`sample_000080` → `node_13_grip_sample_from_table_1`<br>`sample_000220` → `node_13_grip_sample_from_table_1`<br>`sample_000245` → `node_13_grip_sample_from_table_1`<br>`sample_000290` → `node_32_turn_off_crimper`<br>`sample_000303` → `node_13_grip_sample_from_table_1`<br>`sample_000322` → `node_13_grip_sample_from_table_1`<br>`sample_000360` → `node_33_turn_off_main_switch`<br>`sample_000423` → `node_18_reverse_sample` |  |
+| `node_18_reverse_sample` | 20 | 15/20 | 75.0% | （显示 5/5）<br>`sample_000032` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000081` → `node_33_turn_off_main_switch`<br>`sample_000109` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000323` → `node_13_grip_sample_from_table_1`<br>`sample_000347` → `node_10_remove_protection_cover_from_crimper` |  |
+| `node_19_put_sample_on_machine_table_2` | 20 | 14/20 | 70.0% | （显示 6/6）<br>`sample_000033` → `node_33_turn_off_main_switch`<br>`sample_000222` → `node_3_turn_on_main_switch`<br>`sample_000247` → `node_3_turn_on_main_switch`<br>`sample_000254` → `node_2_put_lock_on_table`<br>`sample_000292` → `node_24_put_sample_on_table`<br>`sample_000324` → `node_2_put_lock_on_table` |  |
+| `node_20_grip_sample_from_machine_table_3` | 20 | 2/20 | 10.0% | （显示 10/18）<br>`sample_000034` → `node_18_reverse_sample`<br>`sample_000111` → `node_13_grip_sample_from_table_1`<br>`sample_000146` → `node_25_put_plier_on_table`<br>`sample_000160` → `node_26_take_protection_cover_from_ground`<br>`sample_000198` → `node_23_inspect_sample`<br>`sample_000306` → `node_12_take_plier_from_table`<br>`sample_000325` → `node_13_grip_sample_from_table_1`<br>`sample_000363` → `node_18_reverse_sample`<br>`sample_000398` → `node_18_reverse_sample`<br>`sample_000426` → `node_18_reverse_sample` |  |
+| `node_21_put_sample_under_electrodes_2` | 20 | 2/20 | 10.0% | （显示 10/18）<br>`sample_000035` → `node_18_reverse_sample`<br>`sample_000084` → `node_32_turn_off_crimper`<br>`sample_000112` → `node_12_take_plier_from_table`<br>`sample_000147` → `node_25_put_plier_on_table`<br>`sample_000161` → `node_25_put_plier_on_table`<br>`sample_000224` → `node_12_take_plier_from_table`<br>`sample_000249` → `node_34_take_lock_from_table`<br>`sample_000294` → `node_28_turn_off_extractor_fan`<br>`sample_000413` → `node_18_reverse_sample`<br>`sample_000427` → `node_25_put_plier_on_table` |  |
+| `node_22_press_pedal_2` | 20 | 3/20 | 15.0% | （显示 10/17）<br>`sample_000085` → `node_25_put_plier_on_table`<br>`sample_000148` → `node_23_inspect_sample`<br>`sample_000162` → `node_25_put_plier_on_table`<br>`sample_000176` → `node_23_inspect_sample`<br>`sample_000200` → `node_23_inspect_sample`<br>`sample_000225` → `node_5_adjust_parameters`<br>`sample_000257` → `node_23_inspect_sample`<br>`sample_000308` → `node_5_adjust_parameters`<br>`sample_000327` → `node_23_inspect_sample`<br>`sample_000428` → `node_34_take_lock_from_table` |  |
+| `node_24_put_sample_on_table` | 23 | 4/23 | 17.4% | （显示 10/19）<br>`sample_000038` → `node_2_put_lock_on_table`<br>`sample_000073` → `node_25_put_plier_on_table`<br>`sample_000115` → `node_3_turn_on_main_switch`<br>`sample_000164` → `node_25_put_plier_on_table`<br>`sample_000238` → `node_25_put_plier_on_table`<br>`sample_000265` → `node_34_take_lock_from_table`<br>`sample_000296` → `node_25_put_plier_on_table`<br>`sample_000329` → `node_3_turn_on_main_switch`<br>`sample_000353` → `node_25_put_plier_on_table`<br>`sample_000416` → `node_18_reverse_sample` |  |
+| `node_28_turn_off_extractor_fan` | 6 | 1/6 | 16.7% | （显示 5/5）<br>`sample_000042` → `node_25_put_plier_on_table`<br>`sample_000119` → `node_3_turn_on_main_switch`<br>`sample_000268` → `node_3_turn_on_main_switch`<br>`sample_000337` → `node_7_turn_on_water_pump`<br>`sample_000370` → `node_3_turn_on_main_switch` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_28_turn_off_extractor_fan`<br>`sample_000120` → `node_7_turn_on_water_pump`<br>`sample_000186` → `node_34_take_lock_from_table`<br>`sample_000267` → `node_6_turn_on_air_compressor`<br>`sample_000338` → `node_7_turn_on_water_pump`<br>`sample_000372` → `node_28_turn_off_extractor_fan` |  |
+| `node_30_turn_off_air_compressor` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000041` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000118` → `node_6_turn_on_air_compressor`<br>`sample_000184` → `node_29_turn_off_water_pump`<br>`sample_000269` → `node_7_turn_on_water_pump`<br>`sample_000336` → `node_27_put_protection_cover_on_crimper`<br>`sample_000371` → `node_31_move_pedal_to_original_place` |  |
+| `node_32_turn_off_crimper` | 6 | 2/6 | 33.3% | （显示 4/4）<br>`sample_000040` → `node_25_put_plier_on_table`<br>`sample_000183` → `node_31_move_pedal_to_original_place`<br>`sample_000270` → `node_26_take_protection_cover_from_ground`<br>`sample_000369` → `node_13_grip_sample_from_table_1` |  |
+| `node_34_take_lock_from_table` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000045` → `node_25_put_plier_on_table`<br>`sample_000122` → `node_13_grip_sample_from_table_1`<br>`sample_000188` → `node_25_put_plier_on_table`<br>`sample_000332` → `node_13_grip_sample_from_table_1`<br>`sample_000374` → `node_12_take_plier_from_table` |  |
+| `node_35_lock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000046` → `node_27_put_protection_cover_on_crimper`<br>`sample_000123` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000189` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000333` → `node_26_take_protection_cover_from_ground`<br>`sample_000375` → `node_10_remove_protection_cover_from_crimper` |  |
+
+##### S2 — 双手 EMG Dilated Tier3→M2 Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000051` → `node_25_put_plier_on_table`<br>`sample_000130` → `node_9_move_pedal_to_safe_location`<br>`sample_000274` → `node_25_put_plier_on_table` |  |
+| `node_2_put_lock_on_table` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000205` → `node_13_grip_sample_from_table_1`<br>`sample_000275` → `node_34_take_lock_from_table` |  |
+| `node_3_turn_on_main_switch` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000050` → `node_12_take_plier_from_table`<br>`sample_000127` → `node_7_turn_on_water_pump`<br>`sample_000276` → `node_11_put_protection_cover_on_ground`<br>`sample_000381` → `node_2_put_lock_on_table` |  |
+| `node_4_turn_on_crimper` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000053` → `node_3_turn_on_main_switch`<br>`sample_000132` → `node_11_put_protection_cover_on_ground` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_1_unlock_crimper`<br>`sample_000137` → `node_1_unlock_crimper`<br>`sample_000214` → `node_9_move_pedal_to_safe_location`<br>`sample_000284` → `node_1_unlock_crimper`<br>`sample_000389` → `node_1_unlock_crimper` |  |
+| `node_6_turn_on_air_compressor` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000056` → `node_3_turn_on_main_switch`<br>`sample_000133` → `node_16_put_sample_on_machine_table_1`<br>`sample_000209` → `node_7_turn_on_water_pump`<br>`sample_000279` → `node_7_turn_on_water_pump`<br>`sample_000385` → `node_7_turn_on_water_pump` |  |
+| `node_7_turn_on_water_pump` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000055` → `node_8_turn_on_extractor_fan`<br>`sample_000135` → `node_8_turn_on_extractor_fan`<br>`sample_000277` → `node_8_turn_on_extractor_fan`<br>`sample_000384` → `node_8_turn_on_extractor_fan` |  |
+| `node_9_move_pedal_to_safe_location` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000059` → `node_13_grip_sample_from_table_1`<br>`sample_000136` → `node_30_turn_off_air_compressor`<br>`sample_000388` → `node_1_unlock_crimper` |  |
+| `node_10_remove_protection_cover_from_crimper` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000057` → `node_26_take_protection_cover_from_ground`<br>`sample_000212` → `node_26_take_protection_cover_from_ground`<br>`sample_000282` → `node_26_take_protection_cover_from_ground`<br>`sample_000386` → `node_25_put_plier_on_table` |  |
+| `node_12_take_plier_from_table` | 23 | 16/23 | 69.6% | （显示 7/7）<br>`sample_000026` → `node_34_take_lock_from_table`<br>`sample_000061` → `node_13_grip_sample_from_table_1`<br>`sample_000075` → `node_7_turn_on_water_pump`<br>`sample_000138` → `node_3_turn_on_main_switch`<br>`sample_000190` → `node_34_take_lock_from_table`<br>`sample_000311` → `node_7_turn_on_water_pump`<br>`sample_000317` → `node_34_take_lock_from_table` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 18/23 | 78.3% | （显示 5/5）<br>`sample_000027` → `node_12_take_plier_from_table`<br>`sample_000153` → `node_12_take_plier_from_table`<br>`sample_000216` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000299` → `node_34_take_lock_from_table`<br>`sample_000405` → `node_9_move_pedal_to_safe_location` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 4/23 | 17.4% | （显示 10/19）<br>`sample_000077` → `node_13_grip_sample_from_table_1`<br>`sample_000105` → `node_12_take_plier_from_table`<br>`sample_000217` → `node_13_grip_sample_from_table_1`<br>`sample_000230` → `node_13_grip_sample_from_table_1`<br>`sample_000242` → `node_12_take_plier_from_table`<br>`sample_000263` → `node_13_grip_sample_from_table_1`<br>`sample_000287` → `node_13_grip_sample_from_table_1`<br>`sample_000313` → `node_13_grip_sample_from_table_1`<br>`sample_000343` → `node_1_unlock_crimper`<br>`sample_000406` → `node_25_put_plier_on_table` |  |
+| `node_15_press_pedal_1` | 23 | 4/23 | 17.4% | （显示 10/19）<br>`sample_000029` → `node_23_inspect_sample`<br>`sample_000064` → `node_5_adjust_parameters`<br>`sample_000078` → `node_9_move_pedal_to_safe_location`<br>`sample_000092` → `node_5_adjust_parameters`<br>`sample_000141` → `node_9_move_pedal_to_safe_location`<br>`sample_000231` → `node_13_grip_sample_from_table_1`<br>`sample_000243` → `node_13_grip_sample_from_table_1`<br>`sample_000264` → `node_9_move_pedal_to_safe_location`<br>`sample_000288` → `node_9_move_pedal_to_safe_location`<br>`sample_000358` → `node_5_adjust_parameters` |  |
+| `node_16_put_sample_on_machine_table_1` | 20 | 1/20 | 5.0% | （显示 10/19）<br>`sample_000107` → `node_12_take_plier_from_table`<br>`sample_000142` → `node_2_put_lock_on_table`<br>`sample_000156` → `node_12_take_plier_from_table`<br>`sample_000170` → `node_12_take_plier_from_table`<br>`sample_000194` → `node_2_put_lock_on_table`<br>`sample_000251` → `node_12_take_plier_from_table`<br>`sample_000302` → `node_34_take_lock_from_table`<br>`sample_000321` → `node_12_take_plier_from_table`<br>`sample_000359` → `node_2_put_lock_on_table`<br>`sample_000394` → `node_12_take_plier_from_table` |  |
+| `node_17_grip_sample_from_machine_table_2` | 20 | 12/20 | 60.0% | （显示 8/8）<br>`sample_000080` → `node_31_move_pedal_to_original_place`<br>`sample_000143` → `node_9_move_pedal_to_safe_location`<br>`sample_000220` → `node_13_grip_sample_from_table_1`<br>`sample_000290` → `node_9_move_pedal_to_safe_location`<br>`sample_000303` → `node_14_put_sample_under_electrodes_1`<br>`sample_000322` → `node_14_put_sample_under_electrodes_1`<br>`sample_000346` → `node_18_reverse_sample`<br>`sample_000409` → `node_33_turn_off_main_switch` |  |
+| `node_18_reverse_sample` | 20 | 13/20 | 65.0% | （显示 7/7）<br>`sample_000109` → `node_16_put_sample_on_machine_table_1`<br>`sample_000221` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000253` → `node_14_put_sample_under_electrodes_1`<br>`sample_000291` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000323` → `node_13_grip_sample_from_table_1`<br>`sample_000347` → `node_19_put_sample_on_machine_table_2`<br>`sample_000361` → `node_19_put_sample_on_machine_table_2` |  |
+| `node_19_put_sample_on_machine_table_2` | 20 | 14/20 | 70.0% | （显示 6/6）<br>`sample_000033` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000159` → `node_8_turn_on_extractor_fan`<br>`sample_000254` → `node_34_take_lock_from_table`<br>`sample_000305` → `node_3_turn_on_main_switch`<br>`sample_000324` → `node_29_turn_off_water_pump`<br>`sample_000425` → `node_24_put_sample_on_table` |  |
+| `node_20_grip_sample_from_machine_table_3` | 20 | 4/20 | 20.0% | （显示 10/16）<br>`sample_000069` → `node_25_put_plier_on_table`<br>`sample_000083` → `node_26_take_protection_cover_from_ground`<br>`sample_000097` → `node_32_turn_off_crimper`<br>`sample_000111` → `node_25_put_plier_on_table`<br>`sample_000146` → `node_26_take_protection_cover_from_ground`<br>`sample_000160` → `node_26_take_protection_cover_from_ground`<br>`sample_000223` → `node_25_put_plier_on_table`<br>`sample_000248` → `node_25_put_plier_on_table`<br>`sample_000325` → `node_13_grip_sample_from_table_1`<br>`sample_000363` → `node_26_take_protection_cover_from_ground` |  |
+| `node_21_put_sample_under_electrodes_2` | 20 | 9/20 | 45.0% | （显示 10/11）<br>`sample_000084` → `node_9_move_pedal_to_safe_location`<br>`sample_000098` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000112` → `node_34_take_lock_from_table`<br>`sample_000147` → `node_13_grip_sample_from_table_1`<br>`sample_000175` → `node_13_grip_sample_from_table_1`<br>`sample_000224` → `node_25_put_plier_on_table`<br>`sample_000256` → `node_14_put_sample_under_electrodes_1`<br>`sample_000294` → `node_33_turn_off_main_switch`<br>`sample_000307` → `node_34_take_lock_from_table`<br>`sample_000427` → `node_25_put_plier_on_table` |  |
+| `node_22_press_pedal_2` | 20 | 4/20 | 20.0% | （显示 10/16）<br>`sample_000099` → `node_9_move_pedal_to_safe_location`<br>`sample_000113` → `node_25_put_plier_on_table`<br>`sample_000162` → `node_25_put_plier_on_table`<br>`sample_000200` → `node_23_inspect_sample`<br>`sample_000225` → `node_21_put_sample_under_electrodes_2`<br>`sample_000250` → `node_13_grip_sample_from_table_1`<br>`sample_000295` → `node_9_move_pedal_to_safe_location`<br>`sample_000308` → `node_23_inspect_sample`<br>`sample_000327` → `node_9_move_pedal_to_safe_location`<br>`sample_000414` → `node_20_grip_sample_from_machine_table_3` |  |
+| `node_23_inspect_sample` | 16 | 4/16 | 25.0% | （显示 10/12）<br>`sample_000086` → `node_26_take_protection_cover_from_ground`<br>`sample_000100` → `node_26_take_protection_cover_from_ground`<br>`sample_000149` → `node_1_unlock_crimper`<br>`sample_000163` → `node_26_take_protection_cover_from_ground`<br>`sample_000177` → `node_1_unlock_crimper`<br>`sample_000201` → `node_13_grip_sample_from_table_1`<br>`sample_000352` → `node_13_grip_sample_from_table_1`<br>`sample_000401` → `node_13_grip_sample_from_table_1`<br>`sample_000415` → `node_26_take_protection_cover_from_ground`<br>`sample_000429` → `node_1_unlock_crimper` |  |
+| `node_24_put_sample_on_table` | 23 | 3/23 | 13.0% | （显示 10/20）<br>`sample_000038` → `node_34_take_lock_from_table`<br>`sample_000087` → `node_3_turn_on_main_switch`<br>`sample_000101` → `node_16_put_sample_on_machine_table_1`<br>`sample_000115` → `node_21_put_sample_under_electrodes_2`<br>`sample_000178` → `node_25_put_plier_on_table`<br>`sample_000202` → `node_3_turn_on_main_switch`<br>`sample_000226` → `node_34_take_lock_from_table`<br>`sample_000232` → `node_2_put_lock_on_table`<br>`sample_000402` → `node_2_put_lock_on_table`<br>`sample_000430` → `node_3_turn_on_main_switch` |  |
+| `node_25_put_plier_on_table` | 23 | 12/23 | 52.2% | （显示 10/11）<br>`sample_000039` → `node_34_take_lock_from_table`<br>`sample_000165` → `node_34_take_lock_from_table`<br>`sample_000227` → `node_2_put_lock_on_table`<br>`sample_000239` → `node_34_take_lock_from_table`<br>`sample_000260` → `node_34_take_lock_from_table`<br>`sample_000266` → `node_2_put_lock_on_table`<br>`sample_000297` → `node_34_take_lock_from_table`<br>`sample_000310` → `node_2_put_lock_on_table`<br>`sample_000330` → `node_34_take_lock_from_table`<br>`sample_000368` → `node_34_take_lock_from_table` |  |
+| `node_26_take_protection_cover_from_ground` | 6 | 4/6 | 66.7% | （显示 2/2）<br>`sample_000181` → `node_34_take_lock_from_table`<br>`sample_000271` → `node_34_take_lock_from_table` |  |
+| `node_28_turn_off_extractor_fan` | 6 | 1/6 | 16.7% | （显示 5/5）<br>`sample_000042` → `node_29_turn_off_water_pump`<br>`sample_000119` → `node_30_turn_off_air_compressor`<br>`sample_000268` → `node_33_turn_off_main_switch`<br>`sample_000337` → `node_25_put_plier_on_table`<br>`sample_000370` → `node_29_turn_off_water_pump` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_27_put_protection_cover_on_crimper`<br>`sample_000120` → `node_28_turn_off_extractor_fan`<br>`sample_000186` → `node_19_put_sample_on_machine_table_2`<br>`sample_000267` → `node_28_turn_off_extractor_fan`<br>`sample_000338` → `node_27_put_protection_cover_on_crimper`<br>`sample_000372` → `node_27_put_protection_cover_on_crimper` |  |
+| `node_30_turn_off_air_compressor` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000041` → `node_34_take_lock_from_table`<br>`sample_000118` → `node_19_put_sample_on_machine_table_2`<br>`sample_000184` → `node_7_turn_on_water_pump`<br>`sample_000269` → `node_34_take_lock_from_table`<br>`sample_000336` → `node_27_put_protection_cover_on_crimper`<br>`sample_000371` → `node_27_put_protection_cover_on_crimper` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000049` → `node_25_put_plier_on_table`<br>`sample_000126` → `node_32_turn_off_crimper`<br>`sample_000180` → `node_25_put_plier_on_table`<br>`sample_000273` → `node_11_put_protection_cover_on_ground`<br>`sample_000340` → `node_25_put_plier_on_table`<br>`sample_000378` → `node_32_turn_off_crimper` |  |
+| `node_32_turn_off_crimper` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000183` → `node_1_unlock_crimper`<br>`sample_000270` → `node_26_take_protection_cover_from_ground`<br>`sample_000331` → `node_18_reverse_sample` |  |
+| `node_33_turn_off_main_switch` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000121` → `node_29_turn_off_water_pump`<br>`sample_000339` → `node_3_turn_on_main_switch` |  |
+| `node_34_take_lock_from_table` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000045` → `node_12_take_plier_from_table`<br>`sample_000188` → `node_12_take_plier_from_table`<br>`sample_000332` → `node_25_put_plier_on_table`<br>`sample_000374` → `node_12_take_plier_from_table` |  |
+| `node_35_lock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000046` → `node_31_move_pedal_to_original_place`<br>`sample_000123` → `node_9_move_pedal_to_safe_location`<br>`sample_000189` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000333` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000375` → `node_27_put_protection_cover_on_crimper` |  |
+
+##### S3 — 双手 IMU ResNet10 Tier3→M2 Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000051` → `node_4_turn_on_crimper`<br>`sample_000379` → `node_4_turn_on_crimper` |  |
+| `node_2_put_lock_on_table` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000052` → `node_25_put_plier_on_table`<br>`sample_000205` → `node_12_take_plier_from_table`<br>`sample_000275` → `node_34_take_lock_from_table` |  |
+| `node_3_turn_on_main_switch` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000206` → `node_12_take_plier_from_table`<br>`sample_000276` → `node_12_take_plier_from_table` |  |
+| `node_4_turn_on_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000053` → `node_32_turn_off_crimper`<br>`sample_000132` → `node_32_turn_off_crimper`<br>`sample_000210` → `node_32_turn_off_crimper` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_4_turn_on_crimper`<br>`sample_000137` → `node_4_turn_on_crimper`<br>`sample_000214` → `node_23_inspect_sample`<br>`sample_000284` → `node_32_turn_off_crimper`<br>`sample_000389` → `node_4_turn_on_crimper` |  |
+| `node_6_turn_on_air_compressor` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000056` → `node_12_take_plier_from_table`<br>`sample_000209` → `node_12_take_plier_from_table`<br>`sample_000279` → `node_30_turn_off_air_compressor` |  |
+| `node_7_turn_on_water_pump` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000055` → `node_28_turn_off_extractor_fan`<br>`sample_000135` → `node_8_turn_on_extractor_fan`<br>`sample_000207` → `node_8_turn_on_extractor_fan` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000054` → `node_28_turn_off_extractor_fan`<br>`sample_000134` → `node_1_unlock_crimper`<br>`sample_000208` → `node_28_turn_off_extractor_fan`<br>`sample_000383` → `node_28_turn_off_extractor_fan` |  |
+| `node_24_put_sample_on_table` | 23 | 13/23 | 56.5% | （显示 10/10）<br>`sample_000073` → `node_2_put_lock_on_table`<br>`sample_000150` → `node_2_put_lock_on_table`<br>`sample_000178` → `node_12_take_plier_from_table`<br>`sample_000226` → `node_12_take_plier_from_table`<br>`sample_000232` → `node_12_take_plier_from_table`<br>`sample_000238` → `node_12_take_plier_from_table`<br>`sample_000265` → `node_12_take_plier_from_table`<br>`sample_000309` → `node_12_take_plier_from_table`<br>`sample_000315` → `node_12_take_plier_from_table`<br>`sample_000416` → `node_25_put_plier_on_table` |  |
+| `node_25_put_plier_on_table` | 23 | 16/23 | 69.6% | （显示 7/7）<br>`sample_000039` → `node_18_reverse_sample`<br>`sample_000102` → `node_18_reverse_sample`<br>`sample_000227` → `node_2_put_lock_on_table`<br>`sample_000266` → `node_18_reverse_sample`<br>`sample_000310` → `node_2_put_lock_on_table`<br>`sample_000368` → `node_31_move_pedal_to_original_place`<br>`sample_000403` → `node_2_put_lock_on_table` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_28_turn_off_extractor_fan`<br>`sample_000120` → `node_28_turn_off_extractor_fan`<br>`sample_000186` → `node_28_turn_off_extractor_fan`<br>`sample_000267` → `node_7_turn_on_water_pump`<br>`sample_000338` → `node_28_turn_off_extractor_fan`<br>`sample_000372` → `node_28_turn_off_extractor_fan` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 4/6 | 66.7% | （显示 2/2）<br>`sample_000273` → `node_26_take_protection_cover_from_ground`<br>`sample_000340` → `node_34_take_lock_from_table` |  |
+
+##### S4 — 双手 IMU Dilated Tier3→M2 Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000051` → `node_4_turn_on_crimper`<br>`sample_000130` → `node_4_turn_on_crimper`<br>`sample_000274` → `node_16_put_sample_on_machine_table_1` |  |
+| `node_2_put_lock_on_table` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000131` → `node_34_take_lock_from_table`<br>`sample_000205` → `node_12_take_plier_from_table`<br>`sample_000380` → `node_25_put_plier_on_table` |  |
+| `node_4_turn_on_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000132` → `node_32_turn_off_crimper`<br>`sample_000210` → `node_32_turn_off_crimper`<br>`sample_000280` → `node_32_turn_off_crimper` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_3_turn_on_main_switch`<br>`sample_000137` → `node_4_turn_on_crimper`<br>`sample_000214` → `node_3_turn_on_main_switch`<br>`sample_000284` → `node_3_turn_on_main_switch`<br>`sample_000389` → `node_32_turn_off_crimper` |  |
+| `node_6_turn_on_air_compressor` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000056` → `node_3_turn_on_main_switch`<br>`sample_000385` → `node_28_turn_off_extractor_fan` |  |
+| `node_7_turn_on_water_pump` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000055` → `node_34_take_lock_from_table`<br>`sample_000135` → `node_8_turn_on_extractor_fan`<br>`sample_000207` → `node_12_take_plier_from_table`<br>`sample_000384` → `node_8_turn_on_extractor_fan` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000054` → `node_7_turn_on_water_pump`<br>`sample_000208` → `node_7_turn_on_water_pump`<br>`sample_000383` → `node_29_turn_off_water_pump` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 14/23 | 60.9% | （显示 9/9）<br>`sample_000062` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000076` → `node_2_put_lock_on_table`<br>`sample_000167` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000216` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000241` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000262` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000286` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000299` → `node_2_put_lock_on_table`<br>`sample_000312` → `node_10_remove_protection_cover_from_crimper` |  |
+| `node_16_put_sample_on_machine_table_1` | 20 | 15/20 | 75.0% | （显示 5/5）<br>`sample_000093` → `node_12_take_plier_from_table`<br>`sample_000142` → `node_1_unlock_crimper`<br>`sample_000156` → `node_4_turn_on_crimper`<br>`sample_000219` → `node_23_inspect_sample`<br>`sample_000289` → `node_10_remove_protection_cover_from_crimper` |  |
+| `node_24_put_sample_on_table` | 23 | 6/23 | 26.1% | （显示 10/17）<br>`sample_000087` → `node_21_put_sample_under_electrodes_2`<br>`sample_000150` → `node_34_take_lock_from_table`<br>`sample_000164` → `node_14_put_sample_under_electrodes_1`<br>`sample_000238` → `node_34_take_lock_from_table`<br>`sample_000259` → `node_12_take_plier_from_table`<br>`sample_000296` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000309` → `node_34_take_lock_from_table`<br>`sample_000315` → `node_12_take_plier_from_table`<br>`sample_000329` → `node_34_take_lock_from_table`<br>`sample_000430` → `node_34_take_lock_from_table` |  |
+| `node_25_put_plier_on_table` | 23 | 11/23 | 47.8% | （显示 10/12）<br>`sample_000039` → `node_34_take_lock_from_table`<br>`sample_000088` → `node_34_take_lock_from_table`<br>`sample_000203` → `node_34_take_lock_from_table`<br>`sample_000227` → `node_34_take_lock_from_table`<br>`sample_000233` → `node_34_take_lock_from_table`<br>`sample_000260` → `node_34_take_lock_from_table`<br>`sample_000266` → `node_34_take_lock_from_table`<br>`sample_000310` → `node_34_take_lock_from_table`<br>`sample_000316` → `node_34_take_lock_from_table`<br>`sample_000403` → `node_34_take_lock_from_table` |  |
+| `node_28_turn_off_extractor_fan` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000042` → `node_29_turn_off_water_pump`<br>`sample_000268` → `node_29_turn_off_water_pump`<br>`sample_000337` → `node_4_turn_on_crimper` |  |
+| `node_29_turn_off_water_pump` | 6 | 1/6 | 16.7% | （显示 5/5）<br>`sample_000043` → `node_28_turn_off_extractor_fan`<br>`sample_000120` → `node_8_turn_on_extractor_fan`<br>`sample_000186` → `node_12_take_plier_from_table`<br>`sample_000267` → `node_34_take_lock_from_table`<br>`sample_000372` → `node_30_turn_off_air_compressor` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000180` → `node_26_take_protection_cover_from_ground`<br>`sample_000273` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000340` → `node_26_take_protection_cover_from_ground` |  |
+| `node_34_take_lock_from_table` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000045` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000374` → `node_17_grip_sample_from_machine_table_2` |  |
+| `node_35_lock_crimper` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000046` → `node_7_turn_on_water_pump`<br>`sample_000189` → `node_14_put_sample_under_electrodes_1`<br>`sample_000333` → `node_21_put_sample_under_electrodes_2`<br>`sample_000375` → `node_26_take_protection_cover_from_ground` |  |
+
+##### S5 — 双手 EMG ResNet10 Direct Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000051` → `node_32_turn_off_crimper`<br>`sample_000130` → `node_9_move_pedal_to_safe_location`<br>`sample_000204` → `node_32_turn_off_crimper`<br>`sample_000274` → `node_32_turn_off_crimper`<br>`sample_000379` → `node_32_turn_off_crimper` |  |
+| `node_2_put_lock_on_table` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000052` → `node_23_inspect_sample`<br>`sample_000131` → `node_7_turn_on_water_pump`<br>`sample_000205` → `node_25_put_plier_on_table`<br>`sample_000275` → `node_7_turn_on_water_pump`<br>`sample_000380` → `node_33_turn_off_main_switch` |  |
+| `node_3_turn_on_main_switch` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000050` → `node_19_put_sample_on_machine_table_2`<br>`sample_000127` → `node_2_put_lock_on_table`<br>`sample_000206` → `node_30_turn_off_air_compressor`<br>`sample_000276` → `node_28_turn_off_extractor_fan`<br>`sample_000381` → `node_25_put_plier_on_table` |  |
+| `node_4_turn_on_crimper` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000053` → `node_28_turn_off_extractor_fan`<br>`sample_000132` → `node_28_turn_off_extractor_fan`<br>`sample_000210` → `node_28_turn_off_extractor_fan`<br>`sample_000280` → `node_29_turn_off_water_pump` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_13_grip_sample_from_table_1`<br>`sample_000137` → `node_23_inspect_sample`<br>`sample_000214` → `node_23_inspect_sample`<br>`sample_000284` → `node_23_inspect_sample`<br>`sample_000389` → `node_13_grip_sample_from_table_1` |  |
+| `node_6_turn_on_air_compressor` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000056` → `node_28_turn_off_extractor_fan`<br>`sample_000133` → `node_27_put_protection_cover_on_crimper`<br>`sample_000209` → `node_28_turn_off_extractor_fan`<br>`sample_000279` → `node_27_put_protection_cover_on_crimper`<br>`sample_000385` → `node_28_turn_off_extractor_fan` |  |
+| `node_7_turn_on_water_pump` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000055` → `node_28_turn_off_extractor_fan`<br>`sample_000135` → `node_28_turn_off_extractor_fan`<br>`sample_000207` → `node_28_turn_off_extractor_fan`<br>`sample_000277` → `node_28_turn_off_extractor_fan`<br>`sample_000384` → `node_28_turn_off_extractor_fan` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000054` → `node_28_turn_off_extractor_fan`<br>`sample_000134` → `node_28_turn_off_extractor_fan`<br>`sample_000208` → `node_28_turn_off_extractor_fan`<br>`sample_000278` → `node_28_turn_off_extractor_fan`<br>`sample_000383` → `node_33_turn_off_main_switch` |  |
+| `node_9_move_pedal_to_safe_location` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000059` → `node_32_turn_off_crimper`<br>`sample_000136` → `node_19_put_sample_on_machine_table_2`<br>`sample_000388` → `node_32_turn_off_crimper` |  |
+| `node_10_remove_protection_cover_from_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000057` → `node_26_take_protection_cover_from_ground`<br>`sample_000128` → `node_28_turn_off_extractor_fan`<br>`sample_000212` → `node_26_take_protection_cover_from_ground`<br>`sample_000282` → `node_31_move_pedal_to_original_place`<br>`sample_000386` → `node_26_take_protection_cover_from_ground` |  |
+| `node_11_put_protection_cover_on_ground` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000058` → `node_26_take_protection_cover_from_ground`<br>`sample_000129` → `node_26_take_protection_cover_from_ground`<br>`sample_000213` → `node_26_take_protection_cover_from_ground` |  |
+| `node_12_take_plier_from_table` | 23 | 13/23 | 56.5% | （显示 10/10）<br>`sample_000061` → `node_25_put_plier_on_table`<br>`sample_000075` → `node_7_turn_on_water_pump`<br>`sample_000138` → `node_24_put_sample_on_table`<br>`sample_000190` → `node_13_grip_sample_from_table_1`<br>`sample_000215` → `node_25_put_plier_on_table`<br>`sample_000261` → `node_25_put_plier_on_table`<br>`sample_000285` → `node_25_put_plier_on_table`<br>`sample_000298` → `node_7_turn_on_water_pump`<br>`sample_000311` → `node_2_put_lock_on_table`<br>`sample_000341` → `node_2_put_lock_on_table` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 5/23 | 21.7% | （显示 10/18）<br>`sample_000139` → `node_25_put_plier_on_table`<br>`sample_000153` → `node_25_put_plier_on_table`<br>`sample_000167` → `node_25_put_plier_on_table`<br>`sample_000191` → `node_18_reverse_sample`<br>`sample_000235` → `node_25_put_plier_on_table`<br>`sample_000299` → `node_12_take_plier_from_table`<br>`sample_000318` → `node_25_put_plier_on_table`<br>`sample_000356` → `node_30_turn_off_air_compressor`<br>`sample_000391` → `node_32_turn_off_crimper`<br>`sample_000419` → `node_18_reverse_sample` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 0/23 | 0.0% | （显示 10/23）<br>`sample_000028` → `node_18_reverse_sample`<br>`sample_000063` → `node_25_put_plier_on_table`<br>`sample_000077` → `node_25_put_plier_on_table`<br>`sample_000168` → `node_23_inspect_sample`<br>`sample_000192` → `node_18_reverse_sample`<br>`sample_000230` → `node_25_put_plier_on_table`<br>`sample_000236` → `node_32_turn_off_crimper`<br>`sample_000287` → `node_25_put_plier_on_table`<br>`sample_000300` → `node_25_put_plier_on_table`<br>`sample_000420` → `node_18_reverse_sample` |  |
+| `node_15_press_pedal_1` | 23 | 0/23 | 0.0% | （显示 10/23）<br>`sample_000141` → `node_23_inspect_sample`<br>`sample_000193` → `node_35_lock_crimper`<br>`sample_000243` → `node_23_inspect_sample`<br>`sample_000301` → `node_23_inspect_sample`<br>`sample_000314` → `node_35_lock_crimper`<br>`sample_000320` → `node_23_inspect_sample`<br>`sample_000344` → `node_23_inspect_sample`<br>`sample_000393` → `node_22_press_pedal_2`<br>`sample_000407` → `node_22_press_pedal_2`<br>`sample_000421` → `node_18_reverse_sample` |  |
+| `node_16_put_sample_on_machine_table_1` | 20 | 0/20 | 0.0% | （显示 10/20）<br>`sample_000030` → `node_3_turn_on_main_switch`<br>`sample_000093` → `node_2_put_lock_on_table`<br>`sample_000142` → `node_2_put_lock_on_table`<br>`sample_000156` → `node_2_put_lock_on_table`<br>`sample_000194` → `node_2_put_lock_on_table`<br>`sample_000289` → `node_12_take_plier_from_table`<br>`sample_000345` → `node_25_put_plier_on_table`<br>`sample_000359` → `node_25_put_plier_on_table`<br>`sample_000394` → `node_7_turn_on_water_pump`<br>`sample_000408` → `node_12_take_plier_from_table` |  |
+| `node_17_grip_sample_from_machine_table_2` | 20 | 10/20 | 50.0% | （显示 10/10）<br>`sample_000031` → `node_18_reverse_sample`<br>`sample_000080` → `node_30_turn_off_air_compressor`<br>`sample_000108` → `node_18_reverse_sample`<br>`sample_000143` → `node_13_grip_sample_from_table_1`<br>`sample_000220` → `node_33_turn_off_main_switch`<br>`sample_000245` → `node_13_grip_sample_from_table_1`<br>`sample_000290` → `node_23_inspect_sample`<br>`sample_000322` → `node_25_put_plier_on_table`<br>`sample_000346` → `node_18_reverse_sample`<br>`sample_000360` → `node_33_turn_off_main_switch` |  |
+| `node_18_reverse_sample` | 20 | 9/20 | 45.0% | （显示 10/11）<br>`sample_000032` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000067` → `node_19_put_sample_on_machine_table_2`<br>`sample_000081` → `node_28_turn_off_extractor_fan`<br>`sample_000109` → `node_19_put_sample_on_machine_table_2`<br>`sample_000144` → `node_4_turn_on_crimper`<br>`sample_000347` → `node_19_put_sample_on_machine_table_2`<br>`sample_000361` → `node_19_put_sample_on_machine_table_2`<br>`sample_000396` → `node_19_put_sample_on_machine_table_2`<br>`sample_000410` → `node_19_put_sample_on_machine_table_2`<br>`sample_000424` → `node_19_put_sample_on_machine_table_2` |  |
+| `node_20_grip_sample_from_machine_table_3` | 20 | 3/20 | 15.0% | （显示 10/17）<br>`sample_000069` → `node_32_turn_off_crimper`<br>`sample_000083` → `node_18_reverse_sample`<br>`sample_000097` → `node_32_turn_off_crimper`<br>`sample_000111` → `node_25_put_plier_on_table`<br>`sample_000146` → `node_25_put_plier_on_table`<br>`sample_000160` → `node_32_turn_off_crimper`<br>`sample_000325` → `node_25_put_plier_on_table`<br>`sample_000349` → `node_18_reverse_sample`<br>`sample_000363` → `node_18_reverse_sample`<br>`sample_000398` → `node_24_put_sample_on_table` |  |
+| `node_21_put_sample_under_electrodes_2` | 20 | 2/20 | 10.0% | （显示 10/18）<br>`sample_000035` → `node_18_reverse_sample`<br>`sample_000070` → `node_35_lock_crimper`<br>`sample_000084` → `node_18_reverse_sample`<br>`sample_000112` → `node_12_take_plier_from_table`<br>`sample_000175` → `node_25_put_plier_on_table`<br>`sample_000249` → `node_23_inspect_sample`<br>`sample_000294` → `node_28_turn_off_extractor_fan`<br>`sample_000326` → `node_12_take_plier_from_table`<br>`sample_000399` → `node_18_reverse_sample`<br>`sample_000427` → `node_18_reverse_sample` |  |
+| `node_22_press_pedal_2` | 20 | 6/20 | 30.0% | （显示 10/14）<br>`sample_000071` → `node_23_inspect_sample`<br>`sample_000085` → `node_23_inspect_sample`<br>`sample_000113` → `node_23_inspect_sample`<br>`sample_000148` → `node_23_inspect_sample`<br>`sample_000162` → `node_23_inspect_sample`<br>`sample_000176` → `node_23_inspect_sample`<br>`sample_000257` → `node_23_inspect_sample`<br>`sample_000295` → `node_1_unlock_crimper`<br>`sample_000308` → `node_5_adjust_parameters`<br>`sample_000327` → `node_23_inspect_sample` |  |
+| `node_24_put_sample_on_table` | 23 | 12/23 | 52.2% | （显示 10/11）<br>`sample_000038` → `node_2_put_lock_on_table`<br>`sample_000073` → `node_25_put_plier_on_table`<br>`sample_000087` → `node_25_put_plier_on_table`<br>`sample_000226` → `node_3_turn_on_main_switch`<br>`sample_000238` → `node_25_put_plier_on_table`<br>`sample_000259` → `node_3_turn_on_main_switch`<br>`sample_000265` → `node_25_put_plier_on_table`<br>`sample_000296` → `node_2_put_lock_on_table`<br>`sample_000309` → `node_2_put_lock_on_table`<br>`sample_000315` → `node_25_put_plier_on_table` |  |
+| `node_25_put_plier_on_table` | 23 | 17/23 | 73.9% | （显示 6/6）<br>`sample_000165` → `node_23_inspect_sample`<br>`sample_000227` → `node_2_put_lock_on_table`<br>`sample_000260` → `node_2_put_lock_on_table`<br>`sample_000297` → `node_12_take_plier_from_table`<br>`sample_000330` → `node_27_put_protection_cover_on_crimper`<br>`sample_000368` → `node_21_put_sample_under_electrodes_2` |  |
+| `node_26_take_protection_cover_from_ground` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000124` → `node_25_put_plier_on_table`<br>`sample_000181` → `node_27_put_protection_cover_on_crimper`<br>`sample_000271` → `node_25_put_plier_on_table` |  |
+| `node_27_put_protection_cover_on_crimper` | 6 | 4/6 | 66.7% | （显示 2/2）<br>`sample_000182` → `node_11_put_protection_cover_on_ground`<br>`sample_000335` → `node_11_put_protection_cover_on_ground` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_28_turn_off_extractor_fan`<br>`sample_000120` → `node_28_turn_off_extractor_fan`<br>`sample_000186` → `node_28_turn_off_extractor_fan`<br>`sample_000267` → `node_28_turn_off_extractor_fan`<br>`sample_000338` → `node_28_turn_off_extractor_fan`<br>`sample_000372` → `node_28_turn_off_extractor_fan` |  |
+| `node_30_turn_off_air_compressor` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000041` → `node_28_turn_off_extractor_fan`<br>`sample_000118` → `node_28_turn_off_extractor_fan`<br>`sample_000184` → `node_28_turn_off_extractor_fan`<br>`sample_000269` → `node_28_turn_off_extractor_fan`<br>`sample_000336` → `node_25_put_plier_on_table`<br>`sample_000371` → `node_8_turn_on_extractor_fan` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 4/6 | 66.7% | （显示 2/2）<br>`sample_000049` → `node_18_reverse_sample`<br>`sample_000378` → `node_18_reverse_sample` |  |
+| `node_32_turn_off_crimper` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000040` → `node_18_reverse_sample`<br>`sample_000183` → `node_31_move_pedal_to_original_place`<br>`sample_000331` → `node_28_turn_off_extractor_fan` |  |
+| `node_34_take_lock_from_table` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000045` → `node_25_put_plier_on_table`<br>`sample_000122` → `node_25_put_plier_on_table`<br>`sample_000188` → `node_12_take_plier_from_table`<br>`sample_000332` → `node_25_put_plier_on_table`<br>`sample_000374` → `node_2_put_lock_on_table` |  |
+| `node_35_lock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000046` → `node_9_move_pedal_to_safe_location`<br>`sample_000123` → `node_31_move_pedal_to_original_place`<br>`sample_000189` → `node_9_move_pedal_to_safe_location`<br>`sample_000333` → `node_9_move_pedal_to_safe_location`<br>`sample_000375` → `node_10_remove_protection_cover_from_crimper` |  |
+
+##### S6 — 双手 EMG Dilated Direct Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000051` → `node_32_turn_off_crimper`<br>`sample_000130` → `node_9_move_pedal_to_safe_location`<br>`sample_000204` → `node_31_move_pedal_to_original_place`<br>`sample_000274` → `node_31_move_pedal_to_original_place`<br>`sample_000379` → `node_32_turn_off_crimper` |  |
+| `node_2_put_lock_on_table` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000131` → `node_7_turn_on_water_pump`<br>`sample_000205` → `node_25_put_plier_on_table`<br>`sample_000275` → `node_34_take_lock_from_table`<br>`sample_000380` → `node_33_turn_off_main_switch` |  |
+| `node_3_turn_on_main_switch` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000050` → `node_18_reverse_sample`<br>`sample_000127` → `node_33_turn_off_main_switch`<br>`sample_000206` → `node_32_turn_off_crimper`<br>`sample_000276` → `node_33_turn_off_main_switch` |  |
+| `node_4_turn_on_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000053` → `node_32_turn_off_crimper`<br>`sample_000132` → `node_2_put_lock_on_table`<br>`sample_000210` → `node_32_turn_off_crimper`<br>`sample_000280` → `node_25_put_plier_on_table`<br>`sample_000382` → `node_32_turn_off_crimper` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_23_inspect_sample`<br>`sample_000137` → `node_35_lock_crimper`<br>`sample_000214` → `node_35_lock_crimper`<br>`sample_000284` → `node_23_inspect_sample`<br>`sample_000389` → `node_35_lock_crimper` |  |
+| `node_6_turn_on_air_compressor` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000056` → `node_25_put_plier_on_table`<br>`sample_000133` → `node_25_put_plier_on_table`<br>`sample_000209` → `node_2_put_lock_on_table`<br>`sample_000279` → `node_25_put_plier_on_table`<br>`sample_000385` → `node_2_put_lock_on_table` |  |
+| `node_7_turn_on_water_pump` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000055` → `node_29_turn_off_water_pump`<br>`sample_000135` → `node_29_turn_off_water_pump`<br>`sample_000207` → `node_29_turn_off_water_pump`<br>`sample_000277` → `node_29_turn_off_water_pump`<br>`sample_000384` → `node_27_put_protection_cover_on_crimper` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000054` → `node_29_turn_off_water_pump`<br>`sample_000134` → `node_28_turn_off_extractor_fan`<br>`sample_000208` → `node_28_turn_off_extractor_fan`<br>`sample_000278` → `node_27_put_protection_cover_on_crimper`<br>`sample_000383` → `node_33_turn_off_main_switch` |  |
+| `node_9_move_pedal_to_safe_location` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000059` → `node_11_put_protection_cover_on_ground`<br>`sample_000136` → `node_32_turn_off_crimper`<br>`sample_000388` → `node_25_put_plier_on_table` |  |
+| `node_10_remove_protection_cover_from_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000057` → `node_9_move_pedal_to_safe_location`<br>`sample_000128` → `node_7_turn_on_water_pump`<br>`sample_000212` → `node_26_take_protection_cover_from_ground`<br>`sample_000282` → `node_26_take_protection_cover_from_ground`<br>`sample_000386` → `node_25_put_plier_on_table` |  |
+| `node_12_take_plier_from_table` | 23 | 7/23 | 30.4% | （显示 10/16）<br>`sample_000026` → `node_2_put_lock_on_table`<br>`sample_000075` → `node_7_turn_on_water_pump`<br>`sample_000138` → `node_30_turn_off_air_compressor`<br>`sample_000190` → `node_34_take_lock_from_table`<br>`sample_000215` → `node_32_turn_off_crimper`<br>`sample_000228` → `node_2_put_lock_on_table`<br>`sample_000285` → `node_2_put_lock_on_table`<br>`sample_000317` → `node_25_put_plier_on_table`<br>`sample_000355` → `node_2_put_lock_on_table`<br>`sample_000390` → `node_2_put_lock_on_table` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 12/23 | 52.2% | （显示 10/11）<br>`sample_000139` → `node_25_put_plier_on_table`<br>`sample_000153` → `node_12_take_plier_from_table`<br>`sample_000167` → `node_25_put_plier_on_table`<br>`sample_000235` → `node_25_put_plier_on_table`<br>`sample_000241` → `node_34_take_lock_from_table`<br>`sample_000262` → `node_27_put_protection_cover_on_crimper`<br>`sample_000299` → `node_34_take_lock_from_table`<br>`sample_000312` → `node_31_move_pedal_to_original_place`<br>`sample_000318` → `node_25_put_plier_on_table`<br>`sample_000405` → `node_30_turn_off_air_compressor` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 0/23 | 0.0% | （显示 10/23）<br>`sample_000154` → `node_12_take_plier_from_table`<br>`sample_000168` → `node_12_take_plier_from_table`<br>`sample_000217` → `node_12_take_plier_from_table`<br>`sample_000230` → `node_25_put_plier_on_table`<br>`sample_000236` → `node_26_take_protection_cover_from_ground`<br>`sample_000242` → `node_12_take_plier_from_table`<br>`sample_000263` → `node_25_put_plier_on_table`<br>`sample_000300` → `node_25_put_plier_on_table`<br>`sample_000313` → `node_25_put_plier_on_table`<br>`sample_000357` → `node_21_put_sample_under_electrodes_2` |  |
+| `node_15_press_pedal_1` | 23 | 2/23 | 8.7% | （显示 10/21）<br>`sample_000029` → `node_23_inspect_sample`<br>`sample_000064` → `node_23_inspect_sample`<br>`sample_000078` → `node_35_lock_crimper`<br>`sample_000141` → `node_23_inspect_sample`<br>`sample_000155` → `node_22_press_pedal_2`<br>`sample_000218` → `node_23_inspect_sample`<br>`sample_000243` → `node_23_inspect_sample`<br>`sample_000314` → `node_35_lock_crimper`<br>`sample_000344` → `node_23_inspect_sample`<br>`sample_000421` → `node_22_press_pedal_2` |  |
+| `node_16_put_sample_on_machine_table_1` | 20 | 0/20 | 0.0% | （显示 10/20）<br>`sample_000030` → `node_33_turn_off_main_switch`<br>`sample_000093` → `node_2_put_lock_on_table`<br>`sample_000107` → `node_2_put_lock_on_table`<br>`sample_000142` → `node_25_put_plier_on_table`<br>`sample_000194` → `node_2_put_lock_on_table`<br>`sample_000251` → `node_7_turn_on_water_pump`<br>`sample_000289` → `node_12_take_plier_from_table`<br>`sample_000359` → `node_2_put_lock_on_table`<br>`sample_000408` → `node_34_take_lock_from_table`<br>`sample_000422` → `node_2_put_lock_on_table` |  |
+| `node_17_grip_sample_from_machine_table_2` | 20 | 5/20 | 25.0% | （显示 10/15）<br>`sample_000080` → `node_25_put_plier_on_table`<br>`sample_000157` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000195` → `node_18_reverse_sample`<br>`sample_000220` → `node_13_grip_sample_from_table_1`<br>`sample_000252` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000290` → `node_9_move_pedal_to_safe_location`<br>`sample_000303` → `node_12_take_plier_from_table`<br>`sample_000360` → `node_4_turn_on_crimper`<br>`sample_000395` → `node_30_turn_off_air_compressor`<br>`sample_000409` → `node_18_reverse_sample` |  |
+| `node_18_reverse_sample` | 20 | 4/20 | 20.0% | （显示 10/16）<br>`sample_000081` → `node_9_move_pedal_to_safe_location`<br>`sample_000109` → `node_4_turn_on_crimper`<br>`sample_000158` → `node_33_turn_off_main_switch`<br>`sample_000196` → `node_26_take_protection_cover_from_ground`<br>`sample_000221` → `node_33_turn_off_main_switch`<br>`sample_000246` → `node_4_turn_on_crimper`<br>`sample_000253` → `node_12_take_plier_from_table`<br>`sample_000347` → `node_19_put_sample_on_machine_table_2`<br>`sample_000361` → `node_9_move_pedal_to_safe_location`<br>`sample_000396` → `node_10_remove_protection_cover_from_crimper` |  |
+| `node_19_put_sample_on_machine_table_2` | 20 | 2/20 | 10.0% | （显示 10/18）<br>`sample_000068` → `node_9_move_pedal_to_safe_location`<br>`sample_000082` → `node_4_turn_on_crimper`<br>`sample_000110` → `node_33_turn_off_main_switch`<br>`sample_000173` → `node_33_turn_off_main_switch`<br>`sample_000254` → `node_3_turn_on_main_switch`<br>`sample_000305` → `node_33_turn_off_main_switch`<br>`sample_000348` → `node_4_turn_on_crimper`<br>`sample_000362` → `node_4_turn_on_crimper`<br>`sample_000397` → `node_9_move_pedal_to_safe_location`<br>`sample_000411` → `node_4_turn_on_crimper` |  |
+| `node_20_grip_sample_from_machine_table_3` | 20 | 3/20 | 15.0% | （显示 10/17）<br>`sample_000034` → `node_1_unlock_crimper`<br>`sample_000069` → `node_1_unlock_crimper`<br>`sample_000097` → `node_32_turn_off_crimper`<br>`sample_000146` → `node_2_put_lock_on_table`<br>`sample_000198` → `node_23_inspect_sample`<br>`sample_000248` → `node_25_put_plier_on_table`<br>`sample_000293` → `node_9_move_pedal_to_safe_location`<br>`sample_000349` → `node_30_turn_off_air_compressor`<br>`sample_000398` → `node_30_turn_off_air_compressor`<br>`sample_000426` → `node_17_grip_sample_from_machine_table_2` |  |
+| `node_21_put_sample_under_electrodes_2` | 20 | 2/20 | 10.0% | （显示 10/18）<br>`sample_000070` → `node_30_turn_off_air_compressor`<br>`sample_000112` → `node_12_take_plier_from_table`<br>`sample_000147` → `node_25_put_plier_on_table`<br>`sample_000161` → `node_12_take_plier_from_table`<br>`sample_000224` → `node_12_take_plier_from_table`<br>`sample_000249` → `node_12_take_plier_from_table`<br>`sample_000364` → `node_35_lock_crimper`<br>`sample_000399` → `node_32_turn_off_crimper`<br>`sample_000413` → `node_9_move_pedal_to_safe_location`<br>`sample_000427` → `node_13_grip_sample_from_table_1` |  |
+| `node_22_press_pedal_2` | 20 | 4/20 | 20.0% | （显示 10/16）<br>`sample_000085` → `node_23_inspect_sample`<br>`sample_000113` → `node_35_lock_crimper`<br>`sample_000148` → `node_23_inspect_sample`<br>`sample_000162` → `node_35_lock_crimper`<br>`sample_000176` → `node_23_inspect_sample`<br>`sample_000200` → `node_23_inspect_sample`<br>`sample_000250` → `node_23_inspect_sample`<br>`sample_000295` → `node_10_remove_protection_cover_from_crimper`<br>`sample_000327` → `node_23_inspect_sample`<br>`sample_000351` → `node_15_press_pedal_1` |  |
+| `node_23_inspect_sample` | 16 | 9/16 | 56.2% | （显示 7/7）<br>`sample_000086` → `node_32_turn_off_crimper`<br>`sample_000100` → `node_32_turn_off_crimper`<br>`sample_000163` → `node_1_unlock_crimper`<br>`sample_000177` → `node_1_unlock_crimper`<br>`sample_000328` → `node_25_put_plier_on_table`<br>`sample_000415` → `node_32_turn_off_crimper`<br>`sample_000429` → `node_32_turn_off_crimper` |  |
+| `node_24_put_sample_on_table` | 23 | 3/23 | 13.0% | （显示 10/20）<br>`sample_000164` → `node_25_put_plier_on_table`<br>`sample_000202` → `node_3_turn_on_main_switch`<br>`sample_000226` → `node_3_turn_on_main_switch`<br>`sample_000232` → `node_3_turn_on_main_switch`<br>`sample_000265` → `node_33_turn_off_main_switch`<br>`sample_000309` → `node_33_turn_off_main_switch`<br>`sample_000315` → `node_33_turn_off_main_switch`<br>`sample_000367` → `node_3_turn_on_main_switch`<br>`sample_000416` → `node_3_turn_on_main_switch`<br>`sample_000430` → `node_4_turn_on_crimper` |  |
+| `node_25_put_plier_on_table` | 23 | 14/23 | 60.9% | （显示 9/9）<br>`sample_000039` → `node_2_put_lock_on_table`<br>`sample_000074` → `node_2_put_lock_on_table`<br>`sample_000203` → `node_2_put_lock_on_table`<br>`sample_000227` → `node_2_put_lock_on_table`<br>`sample_000233` → `node_2_put_lock_on_table`<br>`sample_000266` → `node_3_turn_on_main_switch`<br>`sample_000310` → `node_2_put_lock_on_table`<br>`sample_000368` → `node_2_put_lock_on_table`<br>`sample_000403` → `node_2_put_lock_on_table` |  |
+| `node_26_take_protection_cover_from_ground` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000047` → `node_1_unlock_crimper`<br>`sample_000181` → `node_34_take_lock_from_table`<br>`sample_000271` → `node_25_put_plier_on_table` |  |
+| `node_27_put_protection_cover_on_crimper` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000182` → `node_9_move_pedal_to_safe_location`<br>`sample_000272` → `node_1_unlock_crimper`<br>`sample_000335` → `node_9_move_pedal_to_safe_location` |  |
+| `node_28_turn_off_extractor_fan` | 6 | 1/6 | 16.7% | （显示 5/5）<br>`sample_000042` → `node_33_turn_off_main_switch`<br>`sample_000119` → `node_33_turn_off_main_switch`<br>`sample_000268` → `node_33_turn_off_main_switch`<br>`sample_000337` → `node_29_turn_off_water_pump`<br>`sample_000370` → `node_29_turn_off_water_pump` |  |
+| `node_29_turn_off_water_pump` | 6 | 1/6 | 16.7% | （显示 5/5）<br>`sample_000043` → `node_27_put_protection_cover_on_crimper`<br>`sample_000186` → `node_27_put_protection_cover_on_crimper`<br>`sample_000267` → `node_2_put_lock_on_table`<br>`sample_000338` → `node_27_put_protection_cover_on_crimper`<br>`sample_000372` → `node_27_put_protection_cover_on_crimper` |  |
+| `node_30_turn_off_air_compressor` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000041` → `node_34_take_lock_from_table`<br>`sample_000118` → `node_7_turn_on_water_pump`<br>`sample_000184` → `node_6_turn_on_air_compressor`<br>`sample_000269` → `node_12_take_plier_from_table`<br>`sample_000336` → `node_29_turn_off_water_pump`<br>`sample_000371` → `node_31_move_pedal_to_original_place` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 2/6 | 33.3% | （显示 4/4）<br>`sample_000049` → `node_33_turn_off_main_switch`<br>`sample_000126` → `node_32_turn_off_crimper`<br>`sample_000273` → `node_32_turn_off_crimper`<br>`sample_000378` → `node_33_turn_off_main_switch` |  |
+| `node_34_take_lock_from_table` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000045` → `node_12_take_plier_from_table`<br>`sample_000122` → `node_12_take_plier_from_table`<br>`sample_000188` → `node_2_put_lock_on_table`<br>`sample_000332` → `node_25_put_plier_on_table`<br>`sample_000374` → `node_12_take_plier_from_table` |  |
+| `node_35_lock_crimper` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000046` → `node_31_move_pedal_to_original_place`<br>`sample_000123` → `node_9_move_pedal_to_safe_location`<br>`sample_000189` → `node_9_move_pedal_to_safe_location`<br>`sample_000333` → `node_9_move_pedal_to_safe_location`<br>`sample_000375` → `node_32_turn_off_crimper` |  |
+
+##### S7 — 双手 IMU ResNet10 Direct Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000051` → `node_4_turn_on_crimper`<br>`sample_000379` → `node_4_turn_on_crimper` |  |
+| `node_2_put_lock_on_table` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000131` → `node_34_take_lock_from_table`<br>`sample_000205` → `node_12_take_plier_from_table`<br>`sample_000275` → `node_24_put_sample_on_table`<br>`sample_000380` → `node_20_grip_sample_from_machine_table_3` |  |
+| `node_3_turn_on_main_switch` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000206` → `node_12_take_plier_from_table`<br>`sample_000276` → `node_12_take_plier_from_table` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_32_turn_off_crimper`<br>`sample_000137` → `node_32_turn_off_crimper`<br>`sample_000214` → `node_4_turn_on_crimper`<br>`sample_000284` → `node_32_turn_off_crimper`<br>`sample_000389` → `node_6_turn_on_air_compressor` |  |
+| `node_7_turn_on_water_pump` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000135` → `node_24_put_sample_on_table`<br>`sample_000207` → `node_12_take_plier_from_table`<br>`sample_000277` → `node_24_put_sample_on_table` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000054` → `node_28_turn_off_extractor_fan`<br>`sample_000134` → `node_1_unlock_crimper`<br>`sample_000208` → `node_28_turn_off_extractor_fan`<br>`sample_000278` → `node_9_move_pedal_to_safe_location`<br>`sample_000383` → `node_28_turn_off_extractor_fan` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 16/23 | 69.6% | （显示 7/7）<br>`sample_000062` → `node_17_grip_sample_from_machine_table_2`<br>`sample_000139` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000167` → `node_12_take_plier_from_table`<br>`sample_000216` → `node_12_take_plier_from_table`<br>`sample_000241` → `node_12_take_plier_from_table`<br>`sample_000286` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000299` → `node_12_take_plier_from_table` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 5/23 | 21.7% | （显示 10/18）<br>`sample_000091` → `node_12_take_plier_from_table`<br>`sample_000154` → `node_21_put_sample_under_electrodes_2`<br>`sample_000168` → `node_21_put_sample_under_electrodes_2`<br>`sample_000192` → `node_22_press_pedal_2`<br>`sample_000217` → `node_21_put_sample_under_electrodes_2`<br>`sample_000230` → `node_21_put_sample_under_electrodes_2`<br>`sample_000287` → `node_21_put_sample_under_electrodes_2`<br>`sample_000313` → `node_21_put_sample_under_electrodes_2`<br>`sample_000357` → `node_21_put_sample_under_electrodes_2`<br>`sample_000392` → `node_21_put_sample_under_electrodes_2` |  |
+| `node_15_press_pedal_1` | 23 | 1/23 | 4.3% | （显示 10/22）<br>`sample_000029` → `node_22_press_pedal_2`<br>`sample_000092` → `node_21_put_sample_under_electrodes_2`<br>`sample_000141` → `node_22_press_pedal_2`<br>`sample_000155` → `node_22_press_pedal_2`<br>`sample_000169` → `node_22_press_pedal_2`<br>`sample_000218` → `node_22_press_pedal_2`<br>`sample_000231` → `node_22_press_pedal_2`<br>`sample_000344` → `node_22_press_pedal_2`<br>`sample_000358` → `node_22_press_pedal_2`<br>`sample_000421` → `node_22_press_pedal_2` |  |
+| `node_19_put_sample_on_machine_table_2` | 20 | 9/20 | 45.0% | （显示 10/11）<br>`sample_000068` → `node_25_put_plier_on_table`<br>`sample_000110` → `node_16_put_sample_on_machine_table_1`<br>`sample_000159` → `node_16_put_sample_on_machine_table_1`<br>`sample_000197` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000254` → `node_16_put_sample_on_machine_table_1`<br>`sample_000324` → `node_16_put_sample_on_machine_table_1`<br>`sample_000348` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000397` → `node_16_put_sample_on_machine_table_1`<br>`sample_000411` → `node_25_put_plier_on_table`<br>`sample_000425` → `node_24_put_sample_on_table` |  |
+| `node_24_put_sample_on_table` | 23 | 10/23 | 43.5% | （显示 10/13）<br>`sample_000087` → `node_12_take_plier_from_table`<br>`sample_000150` → `node_12_take_plier_from_table`<br>`sample_000178` → `node_12_take_plier_from_table`<br>`sample_000226` → `node_34_take_lock_from_table`<br>`sample_000232` → `node_12_take_plier_from_table`<br>`sample_000238` → `node_12_take_plier_from_table`<br>`sample_000265` → `node_12_take_plier_from_table`<br>`sample_000315` → `node_12_take_plier_from_table`<br>`sample_000329` → `node_12_take_plier_from_table`<br>`sample_000402` → `node_12_take_plier_from_table` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_7_turn_on_water_pump`<br>`sample_000120` → `node_7_turn_on_water_pump`<br>`sample_000186` → `node_12_take_plier_from_table`<br>`sample_000267` → `node_7_turn_on_water_pump`<br>`sample_000338` → `node_24_put_sample_on_table`<br>`sample_000372` → `node_7_turn_on_water_pump` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000126` → `node_24_put_sample_on_table`<br>`sample_000273` → `node_12_take_plier_from_table`<br>`sample_000340` → `node_24_put_sample_on_table` |  |
+| `node_35_lock_crimper` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000123` → `node_1_unlock_crimper`<br>`sample_000189` → `node_1_unlock_crimper`<br>`sample_000333` → `node_1_unlock_crimper`<br>`sample_000375` → `node_1_unlock_crimper` |  |
+
+##### S8 — 双手 IMU Dilated Direct Node
+
+| 低 Recall Node | 支持 | 正确 | Recall | 固定抽取误分类样本 → 预测 Node | 备注 |
+| --- | ---: | ---: | ---: | --- | --- |
+| `node_1_unlock_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000051` → `node_4_turn_on_crimper`<br>`sample_000130` → `node_13_grip_sample_from_table_1`<br>`sample_000274` → `node_13_grip_sample_from_table_1` |  |
+| `node_2_put_lock_on_table` | 5 | 1/5 | 20.0% | （显示 4/4）<br>`sample_000131` → `node_34_take_lock_from_table`<br>`sample_000205` → `node_12_take_plier_from_table`<br>`sample_000275` → `node_12_take_plier_from_table`<br>`sample_000380` → `node_34_take_lock_from_table` |  |
+| `node_3_turn_on_main_switch` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000206` → `node_12_take_plier_from_table`<br>`sample_000276` → `node_12_take_plier_from_table` |  |
+| `node_4_turn_on_crimper` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000053` → `node_32_turn_off_crimper`<br>`sample_000132` → `node_32_turn_off_crimper`<br>`sample_000382` → `node_32_turn_off_crimper` |  |
+| `node_5_adjust_parameters` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000060` → `node_4_turn_on_crimper`<br>`sample_000137` → `node_4_turn_on_crimper`<br>`sample_000214` → `node_4_turn_on_crimper`<br>`sample_000284` → `node_4_turn_on_crimper`<br>`sample_000389` → `node_4_turn_on_crimper` |  |
+| `node_6_turn_on_air_compressor` | 5 | 0/5 | 0.0% | （显示 5/5）<br>`sample_000056` → `node_12_take_plier_from_table`<br>`sample_000133` → `node_24_put_sample_on_table`<br>`sample_000209` → `node_12_take_plier_from_table`<br>`sample_000279` → `node_2_put_lock_on_table`<br>`sample_000385` → `node_8_turn_on_extractor_fan` |  |
+| `node_7_turn_on_water_pump` | 5 | 2/5 | 40.0% | （显示 3/3）<br>`sample_000055` → `node_26_take_protection_cover_from_ground`<br>`sample_000135` → `node_8_turn_on_extractor_fan`<br>`sample_000207` → `node_12_take_plier_from_table` |  |
+| `node_8_turn_on_extractor_fan` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000054` → `node_32_turn_off_crimper`<br>`sample_000208` → `node_32_turn_off_crimper` |  |
+| `node_13_grip_sample_from_table_1` | 23 | 11/23 | 47.8% | （显示 10/12）<br>`sample_000062` → `node_21_put_sample_under_electrodes_2`<br>`sample_000076` → `node_2_put_lock_on_table`<br>`sample_000139` → `node_34_take_lock_from_table`<br>`sample_000167` → `node_12_take_plier_from_table`<br>`sample_000216` → `node_34_take_lock_from_table`<br>`sample_000235` → `node_31_move_pedal_to_original_place`<br>`sample_000286` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000312` → `node_12_take_plier_from_table`<br>`sample_000356` → `node_31_move_pedal_to_original_place`<br>`sample_000391` → `node_26_take_protection_cover_from_ground` |  |
+| `node_14_put_sample_under_electrodes_1` | 23 | 8/23 | 34.8% | （显示 10/15）<br>`sample_000105` → `node_21_put_sample_under_electrodes_2`<br>`sample_000140` → `node_21_put_sample_under_electrodes_2`<br>`sample_000154` → `node_21_put_sample_under_electrodes_2`<br>`sample_000192` → `node_21_put_sample_under_electrodes_2`<br>`sample_000230` → `node_21_put_sample_under_electrodes_2`<br>`sample_000236` → `node_21_put_sample_under_electrodes_2`<br>`sample_000300` → `node_13_grip_sample_from_table_1`<br>`sample_000313` → `node_21_put_sample_under_electrodes_2`<br>`sample_000343` → `node_21_put_sample_under_electrodes_2`<br>`sample_000420` → `node_21_put_sample_under_electrodes_2` |  |
+| `node_15_press_pedal_1` | 23 | 10/23 | 43.5% | （显示 10/13）<br>`sample_000029` → `node_22_press_pedal_2`<br>`sample_000064` → `node_22_press_pedal_2`<br>`sample_000092` → `node_21_put_sample_under_electrodes_2`<br>`sample_000106` → `node_22_press_pedal_2`<br>`sample_000155` → `node_22_press_pedal_2`<br>`sample_000218` → `node_22_press_pedal_2`<br>`sample_000231` → `node_22_press_pedal_2`<br>`sample_000264` → `node_22_press_pedal_2`<br>`sample_000288` → `node_21_put_sample_under_electrodes_2`<br>`sample_000314` → `node_22_press_pedal_2` |  |
+| `node_19_put_sample_on_machine_table_2` | 20 | 11/20 | 55.0% | （显示 9/9）<br>`sample_000159` → `node_16_put_sample_on_machine_table_1`<br>`sample_000197` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000247` → `node_34_take_lock_from_table`<br>`sample_000254` → `node_34_take_lock_from_table`<br>`sample_000305` → `node_25_put_plier_on_table`<br>`sample_000324` → `node_34_take_lock_from_table`<br>`sample_000348` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000362` → `node_20_grip_sample_from_machine_table_3`<br>`sample_000425` → `node_20_grip_sample_from_machine_table_3` |  |
+| `node_22_press_pedal_2` | 20 | 13/20 | 65.0% | （显示 7/7）<br>`sample_000099` → `node_21_put_sample_under_electrodes_2`<br>`sample_000113` → `node_15_press_pedal_1`<br>`sample_000148` → `node_15_press_pedal_1`<br>`sample_000257` → `node_15_press_pedal_1`<br>`sample_000295` → `node_21_put_sample_under_electrodes_2`<br>`sample_000400` → `node_15_press_pedal_1`<br>`sample_000414` → `node_15_press_pedal_1` |  |
+| `node_24_put_sample_on_table` | 23 | 4/23 | 17.4% | （显示 10/19）<br>`sample_000073` → `node_12_take_plier_from_table`<br>`sample_000150` → `node_12_take_plier_from_table`<br>`sample_000164` → `node_12_take_plier_from_table`<br>`sample_000226` → `node_12_take_plier_from_table`<br>`sample_000238` → `node_12_take_plier_from_table`<br>`sample_000265` → `node_12_take_plier_from_table`<br>`sample_000296` → `node_12_take_plier_from_table`<br>`sample_000309` → `node_12_take_plier_from_table`<br>`sample_000402` → `node_12_take_plier_from_table`<br>`sample_000430` → `node_12_take_plier_from_table` |  |
+| `node_25_put_plier_on_table` | 23 | 7/23 | 30.4% | （显示 10/16）<br>`sample_000039` → `node_12_take_plier_from_table`<br>`sample_000074` → `node_34_take_lock_from_table`<br>`sample_000151` → `node_34_take_lock_from_table`<br>`sample_000203` → `node_34_take_lock_from_table`<br>`sample_000233` → `node_34_take_lock_from_table`<br>`sample_000260` → `node_34_take_lock_from_table`<br>`sample_000266` → `node_12_take_plier_from_table`<br>`sample_000297` → `node_34_take_lock_from_table`<br>`sample_000354` → `node_26_take_protection_cover_from_ground`<br>`sample_000368` → `node_26_take_protection_cover_from_ground` |  |
+| `node_28_turn_off_extractor_fan` | 6 | 3/6 | 50.0% | （显示 3/3）<br>`sample_000185` → `node_9_move_pedal_to_safe_location`<br>`sample_000268` → `node_32_turn_off_crimper`<br>`sample_000337` → `node_8_turn_on_extractor_fan` |  |
+| `node_29_turn_off_water_pump` | 6 | 0/6 | 0.0% | （显示 6/6）<br>`sample_000043` → `node_7_turn_on_water_pump`<br>`sample_000120` → `node_7_turn_on_water_pump`<br>`sample_000186` → `node_8_turn_on_extractor_fan`<br>`sample_000267` → `node_7_turn_on_water_pump`<br>`sample_000338` → `node_7_turn_on_water_pump`<br>`sample_000372` → `node_7_turn_on_water_pump` |  |
+| `node_30_turn_off_air_compressor` | 6 | 4/6 | 66.7% | （显示 2/2）<br>`sample_000118` → `node_34_take_lock_from_table`<br>`sample_000371` → `node_7_turn_on_water_pump` |  |
+| `node_31_move_pedal_to_original_place` | 6 | 2/6 | 33.3% | （显示 4/4）<br>`sample_000126` → `node_28_turn_off_extractor_fan`<br>`sample_000180` → `node_26_take_protection_cover_from_ground`<br>`sample_000273` → `node_28_turn_off_extractor_fan`<br>`sample_000340` → `node_28_turn_off_extractor_fan` |  |
+| `node_35_lock_crimper` | 5 | 3/5 | 60.0% | （显示 2/2）<br>`sample_000333` → `node_14_put_sample_under_electrodes_1`<br>`sample_000375` → `node_7_turn_on_water_pump` |  |
+
 S9–S12 为 Direct Tier3，结果文件没有 Node 输出，因此不存在可列出的低 Recall Node 或 Node 误分类样本；其 31 Tier3 类别影响已纳入 5.1.3。
 
 双视角帧与右手 EMG/IMU 的小规模检查版见 [S1–S12 低 Recall 多模态质量检查 Pilot](analysis/a_as_test_seed_1/S1_S12_LOW_RECALL_MULTIMODAL_QUALITY_CHECK_PILOT.md)。
 
-## 6. 类别级影响：31 Tier3
+### 5.6 类别级影响：31 Tier3
+
+下表保留原 A0–A6 的 31 Tier3 逐类别结果；右手与双手 S1–S12 的同子集逐类别对照见 5.1.5，完整数值在 `sensor_tier3_classwise_deltas_vs_A0.csv` 与 `bilateral_classwise_comparison.csv` 中。这样既保留原始分析，又能直接检查增加左手通道后的类别变化。
 
 | ID | Tier3 | 支持 | A0 R | A0 F1 | A1 ΔR/ΔF1/Δ正确 | A2 ΔR/ΔF1/Δ正确 | A3 ΔR/ΔF1/Δ正确 | A4 ΔR/ΔF1/Δ正确 | A5 ΔR/ΔF1/Δ正确 | A6 ΔR/ΔF1/Δ正确 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -547,9 +884,9 @@ S9–S12 为 Direct Tier3，结果文件没有 Node 输出，因此不存在可�
 | 29 | turn on water pump | 6 | 100.0% | 92.3% | -16.7 / -9.0 / -1 | -16.7 / -9.0 / -1 | -16.7 / -9.0 / -1 | +0.0 / +0.0 / +0 | -16.7 / -9.0 / -1 | +0.0 / +0.0 / +0 |
 | 30 | unlock crimper | 6 | 66.7% | 72.7% | +0.0 / +0.0 / +0 | +0.0 / +7.3 / +0 | +0.0 / +0.0 / +0 | +0.0 / +7.3 / +0 | +0.0 / +0.0 / +0 | +0.0 / +0.0 / +0 |
 
-## 7. 混淆对变化
+### 5.7 混淆对变化
 
-### 7.1 A0 当前前 12 个 Node 混淆对在各融合中的变化
+#### 5.7.1 A0 当前前 12 个 Node 混淆对在各融合中的变化
 
 | 真实 → 预测 | A0 | A1 数量(Δ) | A2 数量(Δ) | A3 数量(Δ) | A4 数量(Δ) | A5 数量(Δ) | A6 数量(Δ) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -566,7 +903,7 @@ S9–S12 为 Direct Tier3，结果文件没有 Node 输出，因此不存在可�
 | node_29_turn_off_water_pump → node_7_turn_on_water_pump | 1 | 1 (+0) | 1 (+0) | 1 (+0) | 1 (+0) | 1 (+0) | 1 (+0) |
 | node_10_remove_protection_cover_from_crimper → node_27_put_protection_cover_on_crimper | 1 | 0 (-1) | 0 (-1) | 1 (+0) | 1 (+0) | 1 (+0) | 1 (+0) |
 
-### 7.2 各方法新引入/放大的主要混淆
+#### 5.7.2 各方法新引入/放大的主要混淆
 
 - **A1**：`node_25_put_plier_on_table → node_12_take_plier_from_table` 5 次（比 A0 +5）；`node_24_put_sample_on_table → node_2_put_lock_on_table` 3 次（比 A0 +3）；`node_1_unlock_crimper → node_4_turn_on_crimper` 2 次（比 A0 +1）；`node_35_lock_crimper → node_1_unlock_crimper` 1 次（比 A0 +1）；`node_33_turn_off_main_switch → node_3_turn_on_main_switch` 1 次（比 A0 +1）；`node_32_turn_off_crimper → node_4_turn_on_crimper` 1 次（比 A0 +1）
 - **A2**：`node_24_put_sample_on_table → node_2_put_lock_on_table` 2 次（比 A0 +2）；`node_32_turn_off_crimper → node_4_turn_on_crimper` 1 次（比 A0 +1）；`node_28_turn_off_extractor_fan → node_8_turn_on_extractor_fan` 1 次（比 A0 +1）；`node_25_put_plier_on_table → node_12_take_plier_from_table` 1 次（比 A0 +1）；`node_7_turn_on_water_pump → node_6_turn_on_air_compressor` 1 次（比 A0 +1）
@@ -575,7 +912,32 @@ S9–S12 为 Direct Tier3，结果文件没有 Node 输出，因此不存在可�
 - **A5**：`node_24_put_sample_on_table → node_12_take_plier_from_table` 14 次（比 A0 +1）；`node_19_put_sample_on_machine_table_2 → node_20_grip_sample_from_machine_table_3` 1 次（比 A0 +1）；`node_7_turn_on_water_pump → node_29_turn_off_water_pump` 1 次（比 A0 +1）
 - **A6**：`node_28_turn_off_extractor_fan → node_8_turn_on_extractor_fan` 1 次（比 A0 +1）
 
-## 8. 右手 IMU 与 EMG 的互补性
+## 6. S1–S12 Sensor-only 与摄像头模型联合分析
+
+本节把原右手 S1–S12 分析和新增双手 S1–S12 分析放在同一结构中。涉及右手与双手直接差值时，统一使用排除 calibration `run_1` 后的 406-clip 子集；原右手全量 431-clip 结果仍完整保留，并明确标注，避免把样本集合变化误当成双手收益。
+
+### 6.1 右手与双手 S1–S12 总体公平对照
+
+下表先给出最直接的同子集比较。双手列使用无需新用户校准的 `pooled_train`；`Δ` 均为双手−右手（百分点）。
+
+| 条件 | 输出 | 右手 Acc | 双手 Acc | ΔAcc | 右手 F1 | 双手 F1 | ΔF1 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1 | Node | 25.86% | 36.70% | +10.84 | 21.75% | 28.02% | +6.27 |
+| S2 | Node | 51.48% | 38.67% | -12.81 | 48.00% | 32.36% | -15.64 |
+| S3 | Node | 84.73% | 85.47% | +0.74 | 79.93% | 76.05% | -3.88 |
+| S4 | Node | 75.62% | 77.83% | +2.22 | 70.46% | 68.59% | -1.87 |
+| S5 | Node | 23.15% | 33.74% | +10.59 | 17.76% | 24.33% | +6.58 |
+| S6 | Node | 25.86% | 23.40% | -2.46 | 22.33% | 18.65% | -3.68 |
+| S7 | Node | 58.87% | 69.95% | +11.08 | 58.16% | 64.40% | +6.24 |
+| S8 | Node | 58.13% | 64.29% | +6.16 | 54.64% | 59.39% | +4.75 |
+| S9 | Tier3 | 24.63% | 33.25% | +8.62 | 17.88% | 25.70% | +7.82 |
+| S10 | Tier3 | 34.98% | 29.31% | -5.67 | 24.92% | 23.00% | -1.92 |
+| S11 | Tier3 | 73.89% | 78.33% | +4.43 | 66.85% | 65.74% | -1.10 |
+| S12 | Tier3 | 65.52% | 73.89% | +8.37 | 57.04% | 57.25% | +0.20 |
+
+双手在 S1、S5、S7、S8、S9 的 Macro-F1 上提高，其中 S7 最稳定；但 S3 出现 accuracy 增、Macro-F1 降，S2 明显退化。由此可见，“增加左手”不是可跨训练路径外推的固定增益。
+
+### 6.2 右手 IMU 与 EMG 的互补性
 
 | 样本关系 | clips | 含义 |
 | --- | --- | --- |
@@ -587,11 +949,11 @@ S9–S12 为 Direct Tier3，结果文件没有 Node 输出，因此不存在可�
 
 A6 是否优于 A4/A5，不能只看总分；关键是它能否保留两种单传感器各自修正的类别，同时减少联合后新引入的错误。上表与第 5 节的类别净正确数应结合解读。
 
-## 9. S1–S12 Sensor-only 与摄像头模型联合分析
+### 6.3 右手 S1–S12 基线结果（原 431-clip 口径）
 
 S1–S8 中最好的 sensor-only Node 模型是 **S3（IMU ResNet10 Tier3→M2 Node）**，Node Macro-F1 为 79.95%，仍比 A0 低 -10.10 pp。S1–S12 中 Tier3 Macro-F1 最高的是 **S3（IMU ResNet10 Tier3→M2 Node）**，为 77.69%；若只看 S9–S12 Direct Tier3，则最高的是 **S11**，为 67.20%。因此这些信号目前不适合替代摄像头，但仍需看其错误是否与摄像头错在不同样本上。
 
-### 9.1 总体、Normal/Fault 与 Stage
+#### 6.3.1 总体、Normal/Fault 与 Stage
 
 | 条件 | 输入/训练 | Node Acc | Node Macro-F1 | ΔA0 pp | 最弱 Node Recall | Tier3 Acc | Tier3 Macro-F1 | ΔA0 pp |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -651,7 +1013,7 @@ S1–S8 中最好的 sensor-only Node 模型是 **S3（IMU ResNet10 Tier3→M2 N
 | S8 | Stage 2 | 308 | 59.09% | 62.75% |
 | S8 | Stage 3 | 57 | 59.65% | 62.25% |
 
-### 9.2 M2 历史、编码器与训练目标的影响
+#### 6.3.2 M2 历史、编码器与训练目标的影响
 
 | Tier3 encoder→M2 Node | 独立 Direct Node | ΔNode Macro-F1 pp | ΔNode Acc pp | ΔFault Node F1 pp |
 | --- | --- | --- | --- | --- |
@@ -671,7 +1033,7 @@ S1–S8 中最好的 sensor-only Node 模型是 **S3（IMU ResNet10 Tier3→M2 N
 
 结果呈现明确的模态依赖：Dilated 对 EMG 更有利，而 ResNet10 对 IMU 更有利；S1–S4 的历史 M2 在四个配对中均优于各自独立 Direct Node，但提升幅度差异很大。这说明“是否使用历史”与“1D encoder 选择”不能跨模态共用一个结论。不过这些配对同时改变了上游训练目标（Tier3 预训练后冻结 vs Direct Node 端到端），因此增益属于完整训练流程，不能全部归因于 M2 历史。
 
-### 9.3 Sensor-only 类别级影响
+#### 6.3.3 Sensor-only 类别级影响
 
 S1–S8 的 35 Node 图与 S1–S12 的 31 Tier3 图已统一放在 **5.1.2–5.1.3**，便于与 A0–A6 连续比较。sensor-only 的最弱 Node Recall 均为 0，说明每个模型至少完全漏掉一个测试中存在的 Node；但局部高 Recall 类别仍是后续门控融合可能利用的候选信息。
 
@@ -688,7 +1050,7 @@ S1–S8 的 35 Node 图与 S1–S12 的 31 Tier3 图已统一放在 **5.1.2–5.
 
 S1–S8 所有低 Recall Node 的完整样本名、正确/错误状态和预测类别见 `analysis/a_as_test_seed_1/SENSOR_LOW_RECALL_NODE_SAMPLE_INDEX.md` 与 `sensor_low_recall_node_samples.csv`。
 
-### 9.4 模态与训练方式的互补性
+#### 6.3.4 模态与训练方式的互补性
 
 ![模态与训练方式互补性](analysis/a_as_test_seed_1/modality_training_complementarity.png)
 
@@ -709,7 +1071,7 @@ S1–S8 所有低 Recall Node 的完整样本名、正确/错误状态和预测�
 
 这里最值得区分的是“独立性能”和“互补潜力”：一个 sensor-only 模型即使总体较弱，仍可能修正少量 A0 错误；但如果同时破坏大量 A0 正确样本，就必须采用以 A0 为锚点、初始严格回退 A0 的稀疏 gate/residual，不能直接平均概率。
 
-### 9.5 训练拟合与跨参与者泛化差距
+#### 6.3.5 训练拟合与跨参与者泛化差距
 
 | 条件 | 训练目标 | Epoch | 首轮Train Acc | 末轮Train Acc | 末轮Loss | Test Acc | Train−Test pp |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -729,7 +1091,119 @@ S1–S8 所有低 Recall Node 的完整样本名、正确/错误状态和预测�
 
 S1–S3 的末轮训练准确率达到 100%，S4 也接近 99%，但测试性能差异很大，尤其 EMG 条件存在显著跨参与者泛化缺口；因此低测试性能主要不是简单的训练集欠拟合。A3 从首轮开始训练准确率即为 100%、loss 已接近 0，说明冻结 A0 anchor 在训练样本上几乎没有可供 cross-view adapter 学习的错误，当前 residual 更容易学习置信度微调而不是稳健修错。该表只作诊断，不使用测试集选择 epoch。
 
-## 10. 探索性 paired clip-level bootstrap
+### 6.4 双手 EMG/IMU S1–S12 与右手公平对照
+
+#### 6.4.1 实验口径与公平比较
+
+双手实验将右手输入扩展为 EMG 16 通道（左 8 + 右 8）和 IMU 12 通道（左右手各 Acc XYZ + Gyro XYZ）；每只手先按自身完整 clip 长度插值，再沿通道维拼接。S1–S12 均从头训练，不加载旧右手 checkpoint。训练集仍使用参与者内逐通道 z-score；测试时比较：
+
+- `pooled_train`：使用训练参与者合并统计量，无需新用户校准；
+- `participant_calibrated`：用 held-out A 的无标签 `run_1` 计算统计量，并将该 run 的 25 个 clip 排除出计分。
+
+两种协议的计分集合都是同一批 406 个 clip。下文右手、A0、A1–A6 均按 `sample_name` 限制到同一集合。该子集上的 A0 Node accuracy / Macro-F1 为 **91.38% / 89.36%**，A2 为 **94.83% / 93.08%**。
+
+#### 6.4.2 双手独立模型总体结果及右手公平对照
+
+| 条件 | 输出 | Pooled Acc | Pooled F1 | Calibrated Acc | Calibrated F1 | Cal−Pool F1 pp | 同子集右手 F1 | Pooled双手−右手 F1 pp |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1 | Node | 36.70% | 28.02% | 47.04% | 33.64% | +5.62 | 21.75% | +6.27 |
+| S2 | Node | 38.67% | 32.36% | 42.86% | 33.93% | +1.57 | 48.00% | -15.64 |
+| S3 | Node | 85.47% | 76.05% | 83.00% | 74.42% | -1.64 | 79.93% | -3.88 |
+| S4 | Node | 77.83% | 68.59% | 65.02% | 54.28% | -14.31 | 70.46% | -1.87 |
+| S5 | Node | 33.74% | 24.33% | 33.00% | 25.10% | +0.77 | 17.76% | +6.58 |
+| S6 | Node | 23.40% | 18.65% | 25.62% | 20.61% | +1.96 | 22.33% | -3.68 |
+| S7 | Node | 69.95% | 64.40% | 65.27% | 61.51% | -2.89 | 58.16% | +6.24 |
+| S8 | Node | 64.29% | 59.39% | 59.36% | 55.11% | -4.29 | 54.64% | +4.75 |
+| S9 | Tier3 | 33.25% | 25.70% | 32.76% | 23.05% | -2.66 | 17.88% | +7.82 |
+| S10 | Tier3 | 29.31% | 23.00% | 33.74% | 23.88% | +0.88 | 24.92% | -1.92 |
+| S11 | Tier3 | 78.33% | 65.74% | 75.62% | 60.95% | -4.80 | 66.85% | -1.10 |
+| S12 | Tier3 | 73.89% | 57.25% | 65.76% | 50.51% | -6.74 | 57.04% | +0.20 |
+
+主要结论：
+
+- 双手最佳 sensor-only Node 仍为 pooled S3，但其 Macro-F1 仍比同子集 A0 低 **13.31 pp**；双手信号不适合替代摄像头。
+- 增加左手通道对 S3 的总体 accuracy 略有帮助，却降低 Macro-F1，原因是类别收益不均；因此只报 accuracy 会高估双手收益。
+- S7/S8 的双手收益较清楚，说明 Direct Node IMU 能利用左手信息；但 S2、S6 等条件退化，不能把“双手”作为与架构无关的固定增益。
+- 在两种标准化中，participant calibration 主要帮助 EMG；对 IMU 尤其 S4 明显有害。当前不能假设短校准一定优于 pooled fallback。
+- 若比较所有 S1–S12 的 Tier3 输出，pooled S3 聚合后最高，为 73.11% Macro-F1；若只看 Direct Tier3，最高为 pooled S11 的 65.74%。
+
+#### 6.4.3 Normal/Fault 与 Stage 分解
+
+下表给出 `pooled_train` 下 S1–S8 的 Node Macro-F1；这是当前总体最优的双手测试协议。
+
+| 条件 | Normal F1 | Fault F1 | Stage 1 F1 | Stage 2 F1 | Stage 3 F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| S1 | 30.21% | 22.08% | 22.47% | 38.01% | 41.18% |
+| S2 | 35.82% | 23.98% | 40.08% | 44.24% | 29.50% |
+| S3 | 78.29% | 68.50% | 61.04% | 93.37% | 81.70% |
+| S4 | 70.23% | 62.48% | 58.76% | 87.44% | 72.12% |
+| S5 | 24.94% | 22.86% | 12.77% | 35.04% | 40.91% |
+| S6 | 21.53% | 13.23% | 16.36% | 25.75% | 33.85% |
+| S7 | 67.45% | 55.76% | 61.82% | 70.44% | 74.34% |
+| S8 | 61.49% | 52.79% | 53.99% | 68.80% | 71.21% |
+
+S3 的优势主要集中在 Stage 2；Stage 1 比 Stage 2 低 32.33 pp，Fault 又比 Normal 低 9.79 pp。S7/S8 的 Stage 间差距更小，但 Fault 仍明显弱于 Normal。双手没有消除跨工况和阶段差异。
+
+#### 6.4.4 M2 历史、encoder 与标准化的影响
+
+| Tier3 encoder→M2 | Direct Node | ΔNode F1 pp | ΔNode Acc pp | ΔFault F1 pp |
+| --- | --- | ---: | ---: | ---: |
+| S1 | S5 | +3.68 | +2.96 | -0.78 |
+| S2 | S6 | +13.71 | +15.27 | +10.75 |
+| S3 | S7 | +11.65 | +15.52 | +12.74 |
+| S4 | S8 | +9.20 | +13.55 | +9.69 |
+
+历史 M2 在四个总体配对中均提高 accuracy 与 Macro-F1，但 S1 相对 S5 的 Fault F1 略降，说明“历史有利”也不是所有子集无条件成立。
+
+| 比较范围 | Dilated−ResNet10 | ΔMacro-F1 pp | ΔAccuracy pp |
+| --- | --- | ---: | ---: |
+| 双手 EMG M2 Node | S2−S1 | +4.34 | +1.97 |
+| 双手 IMU M2 Node | S4−S3 | -7.46 | -7.64 |
+| 双手 EMG Direct Node | S6−S5 | -5.68 | -10.34 |
+| 双手 IMU Direct Node | S8−S7 | -5.01 | -5.67 |
+| 双手 EMG Direct Tier3 | S10−S9 | -2.70 | -3.94 |
+| 双手 IMU Direct Tier3 | S12−S11 | -8.50 | -4.43 |
+
+与右手结果不同，Dilated 在双手 EMG 中只对 M2 Node 胜出，在 Direct Node/Tier3 均低于 ResNet10；IMU 则仍是 ResNet10 全面更好。增加左手通道改变了 EMG 的 encoder 排序，后续不能沿用“EMG 固定 Dilated”的结论。
+
+#### 6.4.5 类别影响与跨参与者泛化
+
+- pooled S3 相对同子集右手 S3：35 个 Node 中 Recall 提高/相同/降低为 **10/15/10**。`node_35_lock_crimper` 提高 +80.0 pp、`node_24_put_sample_on_table` 提高 +17.4 pp；但 `node_8_turn_on_extractor_fan` 与 `node_4_turn_on_crimper` 均降低 -60.0 pp，`node_29_turn_off_water_pump` 降低 -50.0 pp并变为 0 Recall。这解释了“accuracy 上升但 Macro-F1 下降”。
+- pooled S7 的提高/相同/降低为 **13/13/9**，但 `node_15_press_pedal_1` Recall 从右手的 82.6% 降到双手的 4.35%（-78.3 pp）。总体提升不能掩盖单类崩塌。
+- 双手 S1–S8 的最弱 Node Recall 仍全部为 0；S9–S12 的最弱 Tier3 Recall 也全部为 0，尚未满足“总体 F1 与最弱类 Recall 同升”的 Phase A 条件。
+- 训练日志显示 S1/S2/S3/S4 末轮训练 accuracy 分别为 100.00%/99.86%/100.00%/99.66%，而 pooled 测试 accuracy 为 36.70%/38.67%/85.47%/77.83%，Train−Test 差距为 63.30/61.19/14.53/21.83 pp。双手 EMG 的主要瓶颈仍是跨参与者泛化，而不是训练集欠拟合。
+
+完整逐类别数值见 `bilateral_classwise_comparison.csv`；它同时给出双手相对同子集右手与 A0 的 Recall/F1 变化。
+
+#### 6.4.6 与 A0 的概率互补及可能融合结果
+
+在同一 406 个 clip 上，A0 正确 371 个、错误 35 个。`pooled_train` 的主要 Node 候选如下：
+
+| 双手候选 | 单模 Acc | 判对A0错误 | 0.5修正 | 0.5伤害 | 净正确 | 0.5融合 Acc | 0.5融合 F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S3 | 85.47% | 21 | 13 | 4 | +9 | 93.60% | 92.32% |
+| S4 | 77.83% | 18 | 14 | 5 | +9 | 93.60% | 91.72% |
+| S7 | 69.95% | 15 | 11 | 3 | +8 | 93.35% | 92.91% |
+| S8 | 64.29% | 15 | 10 | 14 | -4 | 90.39% | 87.61% |
+
+S3 有 8 个“自身 top-1 正确但等权仍未救回”的 A0 错误样本；S4/S7/S8 分别有 4/6/5 个。这些样本证明 A0 的高置信错误会压住正确传感器证据，不能只尝试固定等权。
+
+事后 0.05 网格以 Node Macro-F1 为目标时：
+
+- 最佳两路是 `0.5×A0 + 0.5×S7`：93.35% accuracy / 92.91% Macro-F1；
+- 最佳 A0-anchor 三路是 `0.50×A0 + 0.15×S1 + 0.35×S4`：93.84% accuracy / 93.54% Macro-F1，Normal/Fault F1 为 93.75%/92.42%；
+- 同一 406-clip 子集上的 A2 为 94.83% accuracy / 93.08% Macro-F1。因此该三路诊断的 Macro-F1 比 A2 高 +0.46 pp，但 accuracy 低 -0.99 pp；不能概括为已经超过 A2；
+- A0 与全部 pooled 双手 S1–S8 的逐样本 oracle 能判对 398/406（98.03%），其中 27 个 A0 错误至少被一个双手模型判对。这只是“存在可用信息”的上界，不是可部署融合性能。
+
+上述 alpha 与三路权重都是在 A 测试集上事后挑选；它们只能用于提出下一轮候选结构。正式实验必须在每个训练 fold 内划分 validation，分别做 temperature calibration 与权重选择，锁定后再评估 held-out participant。
+
+#### 6.4.7 当前双手证据边界
+
+- 已完成范围是 `A_as_test × seed_1`，即正式四折×三 seed 网格的 1/12；两种标准化是同一模型的两种测试处理，不是两个独立重复。
+- 汇总目录显示 36 个 fold×seed×split 指标已存在、396 个仍缺；当前不能使用“多数 fold×seed 正增益”的正式门槛。
+- 双手小范围结果尚无 paired bootstrap、失步/缺手压力测试和目标硬件延迟结果；不能从本节宣布 Phase A 通过。
+
+## 7. 探索性 paired clip-level bootstrap
 
 使用 10000 次配对 clip bootstrap；每次在 `Normal/Fault × Stage` 联合层内有放回抽样，保持各层样本量，并在同一次抽样中同时计算候选与 A0。CI 是本次 A_as_test/seed_1 测试集上的采样不确定性，不包含换测试者、换 seed 或重新训练的不确定性。
 
@@ -774,9 +1248,9 @@ S1–S3 的末轮训练准确率达到 100%，S4 也接近 99%，但测试性能
 
 若 CI 跨 0，应视为本次测试集不足以区分候选与 A0；即便 CI 不跨 0，也仍需完成其余 11 个 fold×seed，才能判断训练稳定性与跨参与者泛化。
 
-## 11. 当前证据对 Phase A 门槛的回答
+## 8. 当前证据对 Phase A 门槛的回答
 
-### 11.1 只针对当前一次运行的方向性检查
+### 8.1 只针对当前一次运行的方向性检查
 
 | 条件 | Δ总体 Node Macro-F1 pp | Δ最弱 Node Recall pp | ΔFault Node Macro-F1 pp | Macro-F1+最弱Recall同升 | Fault非劣(−0.5 pp) |
 | --- | --- | --- | --- | --- | --- |
@@ -789,7 +1263,7 @@ S1–S3 的末轮训练准确率达到 100%，S4 也接近 99%，但测试性能
 
 A1, A2, A4, A5 在这一运行中满足 Macro-F1 与最弱 Recall 同升；A3, A6 不满足。这不是正式通过：正式门槛要求上述方向在 12 个 fold×seed 中至少 7 个成立，并同时检查 Fault 非劣。
 
-### 11.2 完整 Phase A 状态
+### 8.2 完整 Phase A 状态
 
 | 门槛 | 当前状态 | 说明 |
 | --- | --- | --- |
@@ -799,7 +1273,9 @@ A1, A2, A4, A5 在这一运行中满足 Macro-F1 与最弱 Recall 同升；A3, A
 | 缺失模态/时间偏差仍回退接近 A0 | 部分满足 | A3-A6 的零新增模态回退数值等价已验证；A2 缺第二相机以及失步压力测试仍需检查；sensor-only S1-S12 本身没有 A0 回退路径 |
 | 延迟与吞吐满足硬件预算 | 未评估 | 配置中的目标硬件、P95 延迟和最低吞吐预算仍为空 |
 
-## 12. 建议的下一步
+## 9. 建议的下一步
+
+### 9.1 原右手阶段建议（保留）
 
 1. 先把 A_as_test 的 seed 2、42 补齐，观察本报告中最显著的类别增益是否换 seed 后仍存在；若类别方向反复翻转，暂不扩大到四折。
 2. 对 A2/A3 增加第二相机缺失与时间失步测试，并对 A4–A6 运行缺失模态与 ±5%、±10%、±20% 时间偏移压力测试；重点检查总体、Fault、边界相关类别及 A0 回退差距。
@@ -807,7 +1283,17 @@ A1, A2, A4, A5 在这一运行中满足 Macro-F1 与最弱 Recall 同升；A3, A
 4. S1–S12 表明 IMU 明显强于 EMG、ResNet10 更适合当前 IMU、Dilated 更适合当前 EMG，且历史 M2 普遍优于 Direct Node。若继续融合，应优先尝试 A0 + S3 的严格 A0-anchor gated residual，并保留缺失模态回退。
 5. 在扩展到 12 个 fold×seed 前填写目标硬件预算，并分别记录 RGB、EMG/IMU encoder、历史 M2、融合与后处理的端到端延迟。
 
-## 13. 可复核产物
+### 9.2 双手实验后的追加建议
+
+1. 先补齐 A_as_test 的 seed 2、42；右手和双手都固定当前配置，检查 S3/S7 的总体方向与 `node_15_press_pedal_1`、`node_29_turn_off_water_pump` 等类别崩塌是否复现。
+2. 双手主结果先保留 `pooled_train` 作为无需校准的默认协议；`participant_calibrated` 继续作为部署敏感性分析，不能因为它帮助 EMG 就统一用于 IMU。
+3. 下一轮概率融合优先预注册两类候选：`A0+S7` 两路，以及 A0+EMG+IMU 的 A0-anchor 三路；只在训练折内部 validation 拟合 temperature 和权重，不得复用本报告的测试集最优权重作为正式参数。
+4. 对 S3/S7 做类别与通道消融：比较左手、右手、双手，并检查归一化统计量和高损失类别；优先解释为什么双手 S3 accuracy 上升而 Macro-F1 下降、S7 的 `press_pedal_1` 几乎完全失效。
+5. A3 本次低于 A0 且明显低于 A2。继续检查 gate 激活、cross-view residual 范数和训练曲线；A2/A3 仍需第二相机缺失与时间失步测试。
+6. 对 A4–A6 及下一轮双手融合运行缺失单手/双手、±5%/±10%/±20% 时间偏移压力测试，并验证无传感器时严格回退 A0。
+7. 扩展到完整 12 个 fold×seed 前填写目标硬件预算，并分别记录 RGB、双手 EMG/IMU encoder、历史 M2、融合与后处理的端到端延迟。
+
+## 10. 可复核产物
 
 - `analysis/a_as_test_seed_1/node_classwise_deltas_vs_A0.csv`：35 Node 完整类别指标与差值。
 - `analysis/a_as_test_seed_1/tier3_classwise_deltas_vs_A0.csv`：31 Tier3 完整类别指标与差值。
@@ -827,4 +1313,15 @@ A1, A2, A4, A5 在这一运行中满足 Macro-F1 与最弱 Recall 同升；A3, A
 - `analysis/a_as_test_seed_1/manual_low_recall_sample_notes.csv`：按方法、真实 Node、样本名保存人工备注，重新生成报告时会保留。
 - [S1–S12 低 Recall 多模态质量检查 Pilot](analysis/a_as_test_seed_1/S1_S12_LOW_RECALL_MULTIMODAL_QUALITY_CHECK_PILOT.md)：每个 S 条件试选 1 个误分类样本，提供原始 RGB 逐帧索引，并在完整 run 的右手 EMG/IMU 图中标出 MindRove 与 A0 RGB 边界。
 - `analysis/a_as_test_seed_1/paired_bootstrap_exploratory.json`：探索性 bootstrap 原始汇总。
-- 复现命令：`python tools/analyze_small_scope_a_as_test.py`。
+- `analysis/a_as_test_seed_1/bilateral_condition_metrics.csv`：双手两种协议、A0–A6 与右手模型在同一 406-clip 子集上的总体/Normal/Fault/Stage 指标。
+- `analysis/a_as_test_seed_1/bilateral_vs_right_hand_fair_subset.csv`：逐条件双手−右手公平差值。
+- `analysis/a_as_test_seed_1/bilateral_classwise_comparison.csv`：双手相对右手与 A0 的 Node/Tier3 类别级 Recall/F1 变化。
+- `analysis/a_as_test_seed_1/right_bilateral_sensor_node_class_impact_heatmap.png` / `right_bilateral_sensor_tier3_class_impact_heatmap.png`：主报告 5.1.4–5.1.5 使用的右手—双手同子集类别对照图。
+- `analysis/a_as_test_seed_1/BILATERAL_SENSOR_LOW_RECALL_NODE_SAMPLE_INDEX.md` / `bilateral_sensor_low_recall_node_samples.csv`：双手 S1–S8 低 Recall Node 的完整逐样本索引和可筛选明细。
+- `analysis/a_as_test_seed_1/BILATERAL_NODE_COMPARISON_REPORT_FRAGMENT.md` / `BILATERAL_LOW_RECALL_REPORT_FRAGMENT.md`：主报告 5.3 与 5.5.3 的可复核生成片段。
+- `analysis/a_as_test_seed_1/bilateral_probability_oracle_summary.csv` / `bilateral_probability_oracle_sample_details.csv`：A0 错误的双手模型修正与逐样本概率明细。
+- `analysis/a_as_test_seed_1/bilateral_probability_best_posthoc_alpha.csv`：两路概率融合的事后 alpha 诊断。
+- `analysis/a_as_test_seed_1/bilateral_three_way_posthoc_grid.csv` / `bilateral_three_way_best_posthoc.csv`：A0+双手 EMG+双手 IMU 的三路权重网格与摘要。
+- `analysis/a_as_test_seed_1/bilateral_probability_calibration.csv` / `bilateral_probability_blocked_samples.csv`：双手概率校准指标与等权融合受阻样本。
+- `analysis/a_as_test_seed_1/bilateral_training_generalization_gap.csv` / `bilateral_analysis_audit.json`：训练泛化差距和样本对齐审计。
+- 复现命令：`python tools/analyze_small_scope_a_as_test.py`；双手更新使用 `python tools/analyze_bilateral_a_as_test.py`。
