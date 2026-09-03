@@ -1,0 +1,11 @@
+{
+  "jobs": 98,
+  "audit": 1,
+  "inner_feature_extraction": 36,
+  "inner_imu_m2": 36,
+  "outer_imu_m2": 12,
+  "fusion": 12,
+  "summary": 1,
+  "device": "cuda",
+  "num_workers": 0
+}

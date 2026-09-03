@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "experiment": "B1_IMU_M2",
+  "phase_b_root": "../phase_b_2026-08-31",
+  "output_root": "outputs",
+  "participants": ["A", "D", "J", "M"],
+  "seeds": [1, 2, 42],
+  "num_nodes": 35,
+  "num_tier3": 31,
+  "imu_m2": {
+    "feature_dim": 512,
+    "d_model": 256,
+    "num_heads": 4,
+    "max_history": 35,
+    "dropout": 0.1,
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "encoder_source": "phase_b_imu_direct_node_checkpoint",
+    "encoder_frozen_via_cache": true,
+    "history_order": "actual_same_run_past_only",
+    "initialization": "scratch_m2_identity_current_fusion"
+  },
+  "fusion": {
+    "experts": ["cam0_m2", "cam1_m2", "imu_m2"],
+    "fit_temperatures": true,
+    "nonnegative_weights_sum_to_one": true,
+    "optimizer": "adam",
+    "steps": 1500,
+    "learning_rate": 0.03,
+    "weight_l2_to_uniform": 0.001,
+    "probability_epsilon": 1e-8,
+    "training": "strict_inner_loso_out_of_fold"
+  },
+  "evaluation": {
+    "splits": ["test_all", "test_normal", "test_fault"],
+    "primary_metric": "node_macro_f1",
+    "paired_reference": "phase_b_B1",
+    "secondary_references": ["phase_b_B0", "phase_b_IMU_direct"],
+    "selection": "final_epoch_no_validation_no_early_stopping"
+  }
+}
