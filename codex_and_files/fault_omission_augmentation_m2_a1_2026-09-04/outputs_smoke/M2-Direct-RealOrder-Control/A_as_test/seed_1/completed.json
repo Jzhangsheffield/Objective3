@@ -1,0 +1,17 @@
+{
+  "fingerprint": "8c963e5010d54a637211af7f34c18c9e61cef510a60cebc2e4658c75a4790acf",
+  "group": {
+    "id": "M2-Direct-RealOrder-Control",
+    "model": "M2",
+    "fault_augmentation": false
+  },
+  "fold": "A",
+  "seed": 1,
+  "epochs": 2,
+  "smoke_only": true,
+  "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+  "test_samples": 431,
+  "total_optimizer_steps": 6,
+  "checkpoint": "last.pth",
+  "status": "complete"
+}

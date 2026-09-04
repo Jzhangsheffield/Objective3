@@ -1,0 +1,19 @@
+{
+  "fingerprint": "a3aa4dd3259df26c1003acdf80a98fa7d30d1161a7ecb5202f00f0183b350ae6",
+  "group": {
+    "id": "A1-Legacy-Every20-FaultAug",
+    "model": "A1",
+    "variant": "A1-Legacy-Every20",
+    "shuffle_refresh": 20,
+    "fault_augmentation": true
+  },
+  "fold": "A",
+  "seed": 1,
+  "epochs": 2,
+  "smoke_only": true,
+  "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+  "test_samples": 431,
+  "total_optimizer_steps": 6,
+  "checkpoint": "last.pth",
+  "status": "complete"
+}

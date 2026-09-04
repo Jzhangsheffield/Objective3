@@ -1,0 +1,19 @@
+{
+  "fingerprint": "b14b5bd8475448545cbed65f3f36c62ac324818290ccb2ace7fc22a11438b806",
+  "group": {
+    "id": "A1-Legacy-Control",
+    "model": "A1",
+    "variant": "A1-Legacy-Once",
+    "shuffle_refresh": "once",
+    "fault_augmentation": false
+  },
+  "fold": "A",
+  "seed": 1,
+  "epochs": 2,
+  "smoke_only": true,
+  "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+  "test_samples": 431,
+  "total_optimizer_steps": 6,
+  "checkpoint": "last.pth",
+  "status": "complete"
+}

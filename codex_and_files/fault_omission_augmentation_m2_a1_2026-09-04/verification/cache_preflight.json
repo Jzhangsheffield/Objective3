@@ -1,0 +1,602 @@
+[
+  {
+    "fold": "A",
+    "seed": 1,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1464,
+    "feature_dim": 512,
+    "sha256": "76708b62e1ff0f3f1fa0b0c53a37e38908b7894d0f289714b7d4dd49af92023b",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "A",
+    "seed": 1,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 431,
+    "feature_dim": 512,
+    "sha256": "9a405db278889ad095fee40506efd1ba6a3dda3ff02501e1ed530a5c7651a08d",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "A",
+    "seed": 2,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1464,
+    "feature_dim": 512,
+    "sha256": "5081c0158831e8c752ec6ba2541e566f36c39695f5ac00fa8a83523c52e4ace7",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "A",
+    "seed": 2,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 431,
+    "feature_dim": 512,
+    "sha256": "b0bf83262157d8dd1438357b159f3bc739c08b8e86ec3a40de42ef9b46d7555f",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "A",
+    "seed": 42,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1464,
+    "feature_dim": 512,
+    "sha256": "5de5c102b4777cf88c3e615b48683734ff2e45bcbca410893a3305a213ae25ba",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "A",
+    "seed": 42,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 431,
+    "feature_dim": 512,
+    "sha256": "2aa8f6097934566b9807dfb60571409cb15170b6c9aaa945fe43db08458551e8",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\A_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 1,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1433,
+    "feature_dim": 512,
+    "sha256": "32063cf9475ae78b1f90bb3948b179775885e0f5389319b81a11e748b8dee0b0",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 1,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 462,
+    "feature_dim": 512,
+    "sha256": "e0403c0c2e826d8bd5baab1551d0c276e098bd9cf4a7ecde84a6fadd6dd63c51",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 2,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1433,
+    "feature_dim": 512,
+    "sha256": "2ea74151a150514d86e05b18b4116b5e6301530a0df121f9a05d498f7646960c",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 2,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 462,
+    "feature_dim": 512,
+    "sha256": "8d08e8705c088075fd473e3bf48a7f1a434f372f40153eb2991a3f7f7b7de9b8",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 42,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1433,
+    "feature_dim": 512,
+    "sha256": "c23ef9f70f14ecebe793a5d3e788a3bfd451d2266cabd7055ab2fdc0d32aca1e",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "D",
+    "seed": 42,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 462,
+    "feature_dim": 512,
+    "sha256": "9c887bc171ecea5ee66ea2936c90f4af96f2354f9a41aa2ab20c8df32dff1d11",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\D_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 1,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1340,
+    "feature_dim": 512,
+    "sha256": "6e4d9678b6473d045a9deb064589ce02d354605fa79705e8237d8efa2bcb4717",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 1,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 555,
+    "feature_dim": 512,
+    "sha256": "5baad9791def2433c54caf58a30ed8ac512ee7e7f64bb321eda8342e4691a36c",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 2,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1340,
+    "feature_dim": 512,
+    "sha256": "71f5ef6658712f916c6d42e591ac5d4687d1137f08c463734e57c06ec62c8c1d",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 2,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 555,
+    "feature_dim": 512,
+    "sha256": "b251e4c2d9b548cd4052ee49796d4c2c7c3413103b44ea0d41180cf940ef6f5a",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 42,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1340,
+    "feature_dim": 512,
+    "sha256": "3464c7fac6a98b734c9880172fbbb91cb5ac93198c889a4e5e031b3829138e76",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "J",
+    "seed": 42,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 555,
+    "feature_dim": 512,
+    "sha256": "6682f01db56b7adc08a999266c6eb2f3295731decdfa0d4baff76aa1be73122a",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\J_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 1,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1448,
+    "feature_dim": 512,
+    "sha256": "c033971b2a0bbccbf6c7c7ab8f71a33bfc470c2aeb79dfb7e75b42a71956ffa1",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 1,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 447,
+    "feature_dim": 512,
+    "sha256": "ea43109b579b46a5d432b0d6a161fea8875809104df81e8c0af1fcee0c505071",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 2,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1448,
+    "feature_dim": 512,
+    "sha256": "f13068808960ebced5321ef4a48fc97eb8629e62dd7c97bf6b4fe9b33bb97108",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 2,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 447,
+    "feature_dim": 512,
+    "sha256": "2a400a672431aa5223c5b6fac2565098633b0b7370637d9a292673a68e278217",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_2\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 42,
+    "split": "train",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\train_all.pt",
+    "samples": 1448,
+    "feature_dim": 512,
+    "sha256": "4cb6d6e21d10dc27e6b5951f92b410d508ae5b3eba981af38743c9fe1632967a",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  },
+  {
+    "fold": "M",
+    "seed": 42,
+    "split": "test",
+    "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\features\\retrained_all_runs\\test_all.pt",
+    "samples": 447,
+    "feature_dim": 512,
+    "sha256": "a5cc1debc50fa5cf279d0438092639d8e43543115546aa8c753e61d95b8e6172",
+    "metadata": {
+      "dataset_root": "C:\\MyFolder\\mes19jz\\Stage_2_Mapstyle_Dataset",
+      "manifest": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl",
+      "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+      "camera_id": "001484412812",
+      "feature_dim": 512,
+      "n_frames": 16,
+      "rgb_size": 224,
+      "load_report": {
+        "checkpoint": "D:\\junxi_data\\Objective3\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\outputs\\M_as_test\\cam_001484412812\\seed_42\\backbone\\all_runs\\last.pth",
+        "loaded_keys": 122,
+        "model_keys": 122,
+        "missing_keys": [],
+        "unexpected_keys": []
+      }
+    }
+  }
+]

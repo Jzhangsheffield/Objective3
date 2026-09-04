@@ -1,0 +1,17 @@
+{
+  "fingerprint": "7751b0f9d2eafe660ce5d96c95da08991fb9a87917f5c93634ebec42e0c82886",
+  "group": {
+    "id": "M2-Direct-RealOrder-FaultAug",
+    "model": "M2",
+    "fault_augmentation": true
+  },
+  "fold": "A",
+  "seed": 1,
+  "epochs": 2,
+  "smoke_only": true,
+  "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+  "test_samples": 431,
+  "total_optimizer_steps": 6,
+  "checkpoint": "last.pth",
+  "status": "complete"
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "start_epoch": 1,
+    "end_epoch": 20,
+    "round": 0,
+    "targets": 1464,
+    "same_order_within_window": true,
+    "changed_from_previous_window": null
+  },
+  {
+    "start_epoch": 21,
+    "end_epoch": 40,
+    "round": 1,
+    "targets": 1464,
+    "same_order_within_window": true,
+    "changed_from_previous_window": 456
+  },
+  {
+    "start_epoch": 41,
+    "end_epoch": 60,
+    "round": 2,
+    "targets": 1464,
+    "same_order_within_window": true,
+    "changed_from_previous_window": 456
+  },
+  {
+    "start_epoch": 61,
+    "end_epoch": 80,
+    "round": 3,
+    "targets": 1464,
+    "same_order_within_window": true,
+    "changed_from_previous_window": 461
+  },
+  {
+    "start_epoch": 81,
+    "end_epoch": 100,
+    "round": 4,
+    "targets": 1464,
+    "same_order_within_window": true,
+    "changed_from_previous_window": 465
+  }
+]

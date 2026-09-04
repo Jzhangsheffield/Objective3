@@ -1,0 +1,308 @@
+{
+  "unit_tests": {
+    "run": 19,
+    "failures": 0,
+    "errors": 0,
+    "log": "test_a1_once_and_missing_stage2 (test_protocol.ProtocolTests.test_a1_once_and_missing_stage2) ... ok\ntest_all_three_variants_share_masks (test_protocol.ProtocolTests.test_all_three_variants_share_masks) ... ok\ntest_confirmed_normal (test_protocol.ProtocolTests.test_confirmed_normal) ... ok\ntest_e1_retains_inspection (test_protocol.ProtocolTests.test_e1_retains_inspection) ... ok\ntest_error_mapping (test_protocol.ProtocolTests.test_error_mapping) ... ok\ntest_evaluation_never_augments (test_protocol.ProtocolTests.test_evaluation_never_augments) ... ok\ntest_every20_orders_and_first_round_match_once (test_protocol.ProtocolTests.test_every20_orders_and_first_round_match_once) ... ok\ntest_every20_round_boundaries (test_protocol.ProtocolTests.test_every20_round_boundaries) ... ok\ntest_fault_never_deleted_including_e2 (test_protocol.ProtocolTests.test_fault_never_deleted_including_e2) ... ok\ntest_features_positions_padding_and_current_unchanged (test_protocol.ProtocolTests.test_features_positions_padding_and_current_unchanged) ... ok\ntest_forced_e1_e3_deletion_is_run_level (test_protocol.ProtocolTests.test_forced_e1_e3_deletion_is_run_level) ... ok\ntest_independent_stage2_distribution (test_protocol.ProtocolTests.test_independent_stage2_distribution) ... ok\ntest_repeated_history_fallback (test_protocol.ProtocolTests.test_repeated_history_fallback) ... ok\ntest_same_masks_between_m2_and_a1 (test_protocol.ProtocolTests.test_same_masks_between_m2_and_a1) ... ok\ntest_same_model_initialization_and_empty_history (test_protocol.ProtocolTests.test_same_model_initialization_and_empty_history) ... ok\ntest_scheduler_100_epochs (test_protocol.ProtocolTests.test_scheduler_100_epochs) ... ok\ntest_scheduler_resume (test_protocol.ProtocolTests.test_scheduler_resume) ... ok\ntest_stage23_distribution_and_no_replacement (test_protocol.ProtocolTests.test_stage23_distribution_and_no_replacement) ... ok\ntest_stage_categories (test_protocol.ProtocolTests.test_stage_categories) ... ok\n\n----------------------------------------------------------------------\nRan 19 tests in 0.934s\n\nOK\n"
+  },
+  "feature_caches_checked": 24,
+  "vendor_integrity": [
+    {
+      "local": "vendor/graph_history/__init__.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\graph_history\\__init__.py",
+      "sha256": "b6632cd57a39d87d33c2841bec45283d5ea14baae4010c00b757382989219c4e",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/graph_history/constants.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\graph_history\\constants.py",
+      "sha256": "3724c414ac88f47b93757f37488b2aefe733a3410c495b95648d1e1fafa27055",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/graph_history/models.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\graph_history\\models.py",
+      "sha256": "7afa0423b8372ac6562dfac2d4cda213e06bd49d7f97aa4fa5ff77f2b5f06be2",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/graph_history/metrics.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\graph_history_rgb_cross_person_ADM_2026-07-22\\graph_history\\metrics.py",
+      "sha256": "0749ca68ac56d41f20ba61396b03edd93f33beb2ee6d782bb9103597121d6b14",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/atomic_tail_exp/__init__.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\atomic_tail_A0_A8_windows_2026-08-19\\atomic_tail_exp\\__init__.py",
+      "sha256": "8c6fce406c7f8499b41575708a340742eca3c3aaee0d578612615186b72fef73",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/atomic_tail_exp/graph.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\atomic_tail_A0_A8_windows_2026-08-19\\atomic_tail_exp\\graph.py",
+      "sha256": "004f46349594ba2f04803f0744ea19751a3ed8f873d452cf8f786e7aabf78ddf",
+      "matches_original": true
+    },
+    {
+      "local": "vendor/atomic_tail_exp/augmentation.py",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\atomic_tail_A0_A8_windows_2026-08-19\\atomic_tail_exp\\augmentation.py",
+      "sha256": "898d0964c08da63fcdab2266e562beafc76cc5bd2ad5c9f6f0cdb0f18ea3a711",
+      "matches_original": true
+    },
+    {
+      "local": "assets/integrated_task_graph_latest.json",
+      "original": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\atomic_tail_A0_A8_windows_2026-08-19\\assets\\integrated_task_graph_latest.json",
+      "sha256": "0928fac14876cb3198ee82fa438a6ecd2608776675f3fb81d73e5b04aac89b20",
+      "matches_original": true
+    }
+  ],
+  "mask_audit_100_epochs": {
+    "stage2_without_stage3": {
+      "run_epoch_draws": 53100,
+      "count_histogram": {
+        "1": 22285,
+        "0": 25942,
+        "2": 4873
+      },
+      "frequencies": {
+        "1": 0.4196798493408663,
+        "0": 0.4885499058380414,
+        "2": 0.09177024482109228
+      }
+    },
+    "stage2_with_stage3": {
+      "run_epoch_draws": 18900,
+      "count_histogram": {
+        "1": 3829,
+        "0": 9364,
+        "2": 3732,
+        "3": 1975
+      },
+      "frequencies": {
+        "1": 0.2025925925925926,
+        "0": 0.4954497354497355,
+        "2": 0.19746031746031745,
+        "3": 0.10449735449735449
+      }
+    },
+    "real_fault_unchanged": {
+      "run_epoch_draws": 20700,
+      "count_histogram": {
+        "0": 20700
+      },
+      "frequencies": {
+        "0": 1.0
+      }
+    }
+  },
+  "smoke_runs": [
+    {
+      "group": "M2-Direct-RealOrder-Control",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "1ebfecb669f799469be5a47970a76c901438b3b71f8cf141db1bc88db6f673b2",
+        "e6f3dbfadedaa65411a375c8895ccf6319bf3fb7b4bf0b857972222826ed2c42"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    },
+    {
+      "group": "M2-Direct-RealOrder-FaultAug",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "4a3e7cc6aecb50e3816f65d7f4e1a00ef976e4e6ddc965eeeabc4568c9ac4cff",
+        "5684034111048840c1dce2b6984b3cb937b05eb5d47e43d88fa005b9445c05cb"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    },
+    {
+      "group": "A1-Legacy-Control",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "1ebfecb669f799469be5a47970a76c901438b3b71f8cf141db1bc88db6f673b2",
+        "e6f3dbfadedaa65411a375c8895ccf6319bf3fb7b4bf0b857972222826ed2c42"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    },
+    {
+      "group": "A1-Legacy-FaultAug",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "4a3e7cc6aecb50e3816f65d7f4e1a00ef976e4e6ddc965eeeabc4568c9ac4cff",
+        "5684034111048840c1dce2b6984b3cb937b05eb5d47e43d88fa005b9445c05cb"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    },
+    {
+      "group": "A1-Legacy-Every20-Control",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "1ebfecb669f799469be5a47970a76c901438b3b71f8cf141db1bc88db6f673b2",
+        "e6f3dbfadedaa65411a375c8895ccf6319bf3fb7b4bf0b857972222826ed2c42"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    },
+    {
+      "group": "A1-Legacy-Every20-FaultAug",
+      "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+      "epoch_mask_sha256": [
+        "4a3e7cc6aecb50e3816f65d7f4e1a00ef976e4e6ddc965eeeabc4568c9ac4cff",
+        "5684034111048840c1dce2b6984b3cb937b05eb5d47e43d88fa005b9445c05cb"
+      ],
+      "trained_batches": [
+        3,
+        3
+      ],
+      "test_samples": 431
+    }
+  ],
+  "every20_shuffle_audit": [
+    {
+      "start_epoch": 1,
+      "end_epoch": 20,
+      "round": 0,
+      "targets": 1464,
+      "same_order_within_window": true,
+      "changed_from_previous_window": null
+    },
+    {
+      "start_epoch": 21,
+      "end_epoch": 40,
+      "round": 1,
+      "targets": 1464,
+      "same_order_within_window": true,
+      "changed_from_previous_window": 456
+    },
+    {
+      "start_epoch": 41,
+      "end_epoch": 60,
+      "round": 2,
+      "targets": 1464,
+      "same_order_within_window": true,
+      "changed_from_previous_window": 456
+    },
+    {
+      "start_epoch": 61,
+      "end_epoch": 80,
+      "round": 3,
+      "targets": 1464,
+      "same_order_within_window": true,
+      "changed_from_previous_window": 461
+    },
+    {
+      "start_epoch": 81,
+      "end_epoch": 100,
+      "round": 4,
+      "targets": 1464,
+      "same_order_within_window": true,
+      "changed_from_previous_window": 465
+    }
+  ],
+  "old_m2_checkpoint_regression": [
+    {
+      "fold": "A",
+      "seed": 1,
+      "samples": 431,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "A",
+      "seed": 2,
+      "samples": 431,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "A",
+      "seed": 42,
+      "samples": 431,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "D",
+      "seed": 1,
+      "samples": 462,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "D",
+      "seed": 2,
+      "samples": 462,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "D",
+      "seed": 42,
+      "samples": 462,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "J",
+      "seed": 1,
+      "samples": 555,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "J",
+      "seed": 2,
+      "samples": 555,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "J",
+      "seed": 42,
+      "samples": 555,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "M",
+      "seed": 1,
+      "samples": 447,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "M",
+      "seed": 2,
+      "samples": 447,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    },
+    {
+      "fold": "M",
+      "seed": 42,
+      "samples": 447,
+      "node_prediction_mismatches": 0,
+      "tier3_prediction_mismatches": 0
+    }
+  ],
+  "status": "passed",
+  "formal_training_started": false
+}

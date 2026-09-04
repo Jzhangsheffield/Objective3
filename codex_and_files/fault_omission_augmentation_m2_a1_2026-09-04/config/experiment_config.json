@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "paths": {
+    "adm_root": "D:/Junxi_data/Objective3_thermal_crimp/codex_and_files/graph_history_rgb_cross_person_ADM_2026-07-22",
+    "input_root": "inputs",
+    "output_root": "outputs",
+    "smoke_output_root": "outputs_smoke_v2_every20",
+    "task_graph": "assets/integrated_task_graph_latest.json"
+  },
+  "grid": {"participants": ["A", "D", "J", "M"], "seeds": [1, 2, 42], "camera_id": "001484412812", "train_scope": "all_runs"},
+  "groups": [
+    {"id": "M2-Direct-RealOrder-Control", "model": "M2", "variant": "M2-RealOrder", "fault_augmentation": false},
+    {"id": "M2-Direct-RealOrder-FaultAug", "model": "M2", "variant": "M2-RealOrder", "fault_augmentation": true},
+    {"id": "A1-Legacy-Control", "model": "A1", "variant": "A1-Legacy-Once", "shuffle_refresh": "once", "fault_augmentation": false},
+    {"id": "A1-Legacy-FaultAug", "model": "A1", "variant": "A1-Legacy-Once", "shuffle_refresh": "once", "fault_augmentation": true},
+    {"id": "A1-Legacy-Every20-Control", "model": "A1", "variant": "A1-Legacy-Every20", "shuffle_refresh": 20, "fault_augmentation": false},
+    {"id": "A1-Legacy-Every20-FaultAug", "model": "A1", "variant": "A1-Legacy-Every20", "shuffle_refresh": 20, "fault_augmentation": true}
+  ],
+  "fault_runs": {"A": [20,21,22,23,24,25,26,27], "D": [28,29,31,32], "J": [26,27,28,29,33,35], "M": [24,25,26,27,29]},
+  "confirmed_normal_corrections": {"A": [28], "J": [31,32,34]},
+  "fault_augmentation": {
+    "refresh": "each_epoch_per_run",
+    "stage2_without_stage3": {"E1_probability": 0.3, "E3_probability": 0.3, "independent": true, "include_stage1_stage2": true},
+    "stage2_with_stage3": {"error_count_probabilities": {"0": 0.5, "1": 0.2, "2": 0.2, "3": 0.1}, "select_uniform_without_replacement": true},
+    "error_nodes": {"E1": [16,17,18,19,20,21,22], "E3": [23], "E4": [28], "E5": [29], "E6": [30], "E7": [33], "E8": [26,27], "E9": [31], "E10": [34,35]},
+    "exclude_synthetic_E2": true,
+    "keep_real_fault_runs": true,
+    "replace_run_not_append": true,
+    "delete_targets_and_history": true,
+    "partial_normal_stage3_policy": "error",
+    "same_plan_across_model_families": true
+  },
+  "a1": {"shuffle_refresh": "once", "position_mode": "presented", "active_tail_only": false, "sampling": "uniform", "fault_then_shuffle": true},
+  "model": {"feature_dim": 512, "d_model": 256, "num_heads": 4, "max_history": 35, "dropout": 0.1},
+  "training": {
+    "epochs": 100, "batch_size": 64, "num_workers": 0,
+    "learning_rate": 0.001, "min_learning_rate": 0.00001, "weight_decay": 0.0001,
+    "warmup_epochs": 5, "warmup_start_factor": 0.1, "scheduler": "linear_warmup_cosine_epoch",
+    "gradient_clip_norm": 1.0, "device": "auto", "amp": false,
+    "deterministic": true, "checkpoint_policy": "last_epoch", "save_every_epochs": 10,
+    "backbone_frozen": true, "retrain_backbone": false, "warm_start_checkpoint": null
+  },
+  "evaluation": {"history_order": "actual", "fault_augmentation": false, "splits": ["Normal", "Fault", "All"], "corrected_fault_labels": true, "include_real_E2_nodes": true},
+  "audit": {"save_run_masks_every_epoch": true, "save_example_histories_epoch1": true}
+}

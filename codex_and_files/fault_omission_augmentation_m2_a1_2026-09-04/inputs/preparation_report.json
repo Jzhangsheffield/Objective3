@@ -1,0 +1,163 @@
+{
+  "fault_registry": {
+    "A": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "D": [
+      28,
+      29,
+      31,
+      32
+    ],
+    "J": [
+      26,
+      27,
+      28,
+      29,
+      33,
+      35
+    ],
+    "M": [
+      24,
+      25,
+      26,
+      27,
+      29
+    ]
+  },
+  "folds": {
+    "A": {
+      "train": {
+        "nodes": 1464,
+        "normal_nodes": 1200,
+        "fault_nodes": 264,
+        "runs": {
+          "stage2_without_stage3": 48,
+          "stage2_with_stage3": 16,
+          "real_fault": 15
+        },
+        "manifest_sha256": "86b8f773f7d8178bc9d8055996cef6e9a9647bf520abd18b07156a62b4a76b99"
+      },
+      "test": {
+        "nodes": 431,
+        "normal_nodes": 318,
+        "fault_nodes": 113,
+        "runs": {
+          "stage2_without_stage3": 11,
+          "stage2_with_stage3": 5,
+          "real_fault": 8
+        },
+        "manifest_sha256": "e4a89296314dd542f4cdaa0ea74875355f39430fb9c46c79ffcfaa730aaa3cd9"
+      }
+    },
+    "D": {
+      "train": {
+        "nodes": 1433,
+        "normal_nodes": 1118,
+        "fault_nodes": 315,
+        "runs": {
+          "stage2_without_stage3": 43,
+          "stage2_with_stage3": 16,
+          "real_fault": 19
+        },
+        "manifest_sha256": "67b68a66dbe54323f25da21fa65249607fa1ec7ae923f75548ebcb24db1db945"
+      },
+      "test": {
+        "nodes": 462,
+        "normal_nodes": 400,
+        "fault_nodes": 62,
+        "runs": {
+          "stage2_without_stage3": 16,
+          "stage2_with_stage3": 5,
+          "real_fault": 4
+        },
+        "manifest_sha256": "7e96d36ea75ad5a1942ccebab4e6e13a71b4108fd90ff8a4b46fe8b11698961a"
+      }
+    },
+    "J": {
+      "train": {
+        "nodes": 1340,
+        "normal_nodes": 1078,
+        "fault_nodes": 262,
+        "runs": {
+          "stage2_without_stage3": 41,
+          "stage2_with_stage3": 15,
+          "real_fault": 17
+        },
+        "manifest_sha256": "7972b284874dbced09f69e97e3e4e3d5771d32f4a8ca61f3ff56643fb9ce1d3c"
+      },
+      "test": {
+        "nodes": 555,
+        "normal_nodes": 440,
+        "fault_nodes": 115,
+        "runs": {
+          "stage2_without_stage3": 18,
+          "stage2_with_stage3": 6,
+          "real_fault": 6
+        },
+        "manifest_sha256": "3bd50f0559ffc0a53ba372fae09dbeea83b4227fdf708009087094377e61c4f6"
+      }
+    },
+    "M": {
+      "train": {
+        "nodes": 1448,
+        "normal_nodes": 1158,
+        "fault_nodes": 290,
+        "runs": {
+          "stage2_without_stage3": 45,
+          "stage2_with_stage3": 16,
+          "real_fault": 18
+        },
+        "manifest_sha256": "f972aa5bfae395c04a4ca181151fb29d57e57b106fed63ebfe07815528dd31e6"
+      },
+      "test": {
+        "nodes": 447,
+        "normal_nodes": 360,
+        "fault_nodes": 87,
+        "runs": {
+          "stage2_without_stage3": 14,
+          "stage2_with_stage3": 5,
+          "real_fault": 5
+        },
+        "manifest_sha256": "022057cb3930eb723dcfd167cbc7a470add8e825d8d03dfe3db853c5d9b6b21c"
+      }
+    }
+  },
+  "warnings": [
+    "A/train/D/run_14: repeated node; A1 keeps real order once repeats enter history",
+    "A/train/D/run_28: repeated node; A1 keeps real order once repeats enter history",
+    "A/train/J/run_26: repeated node; A1 keeps real order once repeats enter history",
+    "A/train/J/run_27: repeated node; A1 keeps real order once repeats enter history",
+    "A/train/J/run_33: repeated node; A1 keeps real order once repeats enter history",
+    "A/train/M/run_25: repeated node; A1 keeps real order once repeats enter history",
+    "A/test/A/run_23: repeated node; A1 keeps real order once repeats enter history",
+    "D/train/A/run_23: repeated node; A1 keeps real order once repeats enter history",
+    "D/train/J/run_26: repeated node; A1 keeps real order once repeats enter history",
+    "D/train/J/run_27: repeated node; A1 keeps real order once repeats enter history",
+    "D/train/J/run_33: repeated node; A1 keeps real order once repeats enter history",
+    "D/train/M/run_25: repeated node; A1 keeps real order once repeats enter history",
+    "D/test/D/run_14: repeated node; A1 keeps real order once repeats enter history",
+    "D/test/D/run_28: repeated node; A1 keeps real order once repeats enter history",
+    "J/train/A/run_23: repeated node; A1 keeps real order once repeats enter history",
+    "J/train/D/run_14: repeated node; A1 keeps real order once repeats enter history",
+    "J/train/D/run_28: repeated node; A1 keeps real order once repeats enter history",
+    "J/train/M/run_25: repeated node; A1 keeps real order once repeats enter history",
+    "J/test/J/run_26: repeated node; A1 keeps real order once repeats enter history",
+    "J/test/J/run_27: repeated node; A1 keeps real order once repeats enter history",
+    "J/test/J/run_33: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/A/run_23: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/D/run_14: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/D/run_28: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/J/run_26: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/J/run_27: repeated node; A1 keeps real order once repeats enter history",
+    "M/train/J/run_33: repeated node; A1 keeps real order once repeats enter history",
+    "M/test/M/run_25: repeated node; A1 keeps real order once repeats enter history"
+  ]
+}

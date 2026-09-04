@@ -1,0 +1,17 @@
+{
+  "fingerprint": "770b34882498982c2234ed1383f605e9e6533d6e3a23090136876b1fc6b55b38",
+  "group": {
+    "id": "A1-Legacy-FaultAug",
+    "model": "A1",
+    "fault_augmentation": true
+  },
+  "fold": "A",
+  "seed": 1,
+  "epochs": 2,
+  "smoke_only": true,
+  "initialization_sha256": "0a0ae7c50e474024288f087980531853a66e0e0711b0e1b0c81c2ce6af764f9a",
+  "test_samples": 431,
+  "total_optimizer_steps": 6,
+  "checkpoint": "last.pth",
+  "status": "complete"
+}

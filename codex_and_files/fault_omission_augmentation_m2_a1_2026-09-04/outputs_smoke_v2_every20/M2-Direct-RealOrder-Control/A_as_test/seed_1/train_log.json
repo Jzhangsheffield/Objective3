@@ -1,0 +1,136 @@
+[
+  {
+    "targets": 1464,
+    "shuffle_refresh_round": 0,
+    "shuffle_changed_targets": 0,
+    "shuffle_changed_fraction": 0.0,
+    "tail_reason_counts": {
+      "real_order": 1464
+    },
+    "retained_node_support": {
+      "1": 16,
+      "2": 16,
+      "3": 16,
+      "4": 16,
+      "5": 16,
+      "6": 16,
+      "7": 16,
+      "8": 16,
+      "9": 16,
+      "10": 16,
+      "11": 16,
+      "12": 79,
+      "13": 79,
+      "14": 79,
+      "15": 79,
+      "16": 78,
+      "17": 78,
+      "18": 78,
+      "19": 78,
+      "20": 78,
+      "21": 78,
+      "22": 78,
+      "23": 69,
+      "24": 79,
+      "25": 79,
+      "26": 19,
+      "27": 19,
+      "28": 21,
+      "29": 20,
+      "30": 20,
+      "31": 18,
+      "32": 21,
+      "33": 21,
+      "34": 20,
+      "35": 20
+    },
+    "epoch": 1,
+    "learning_rate": 0.001,
+    "train_loss": 2.7399030923843384,
+    "train_node_accuracy": 0.3229166666666667,
+    "optimizer_steps": 3,
+    "trained_targets": 192,
+    "deleted_targets": 0,
+    "normal_error_count_histogram": {
+      "0": 64
+    },
+    "normal_error_count_by_category": {
+      "stage2_without_stage3": {
+        "0": 48
+      },
+      "stage2_with_stage3": {
+        "0": 16
+      }
+    },
+    "error_occurrence_counts": {},
+    "run_mask_sha256": "1ebfecb669f799469be5a47970a76c901438b3b71f8cf141db1bc88db6f673b2",
+    "seconds": 0.23160743713378906
+  },
+  {
+    "targets": 1464,
+    "shuffle_refresh_round": 0,
+    "shuffle_changed_targets": 0,
+    "shuffle_changed_fraction": 0.0,
+    "tail_reason_counts": {
+      "real_order": 1464
+    },
+    "retained_node_support": {
+      "1": 16,
+      "2": 16,
+      "3": 16,
+      "4": 16,
+      "5": 16,
+      "6": 16,
+      "7": 16,
+      "8": 16,
+      "9": 16,
+      "10": 16,
+      "11": 16,
+      "12": 79,
+      "13": 79,
+      "14": 79,
+      "15": 79,
+      "16": 78,
+      "17": 78,
+      "18": 78,
+      "19": 78,
+      "20": 78,
+      "21": 78,
+      "22": 78,
+      "23": 69,
+      "24": 79,
+      "25": 79,
+      "26": 19,
+      "27": 19,
+      "28": 21,
+      "29": 20,
+      "30": 20,
+      "31": 18,
+      "32": 21,
+      "33": 21,
+      "34": 20,
+      "35": 20
+    },
+    "epoch": 2,
+    "learning_rate": 1e-05,
+    "train_loss": 1.169992446899414,
+    "train_node_accuracy": 0.703125,
+    "optimizer_steps": 3,
+    "trained_targets": 192,
+    "deleted_targets": 0,
+    "normal_error_count_histogram": {
+      "0": 64
+    },
+    "normal_error_count_by_category": {
+      "stage2_without_stage3": {
+        "0": 48
+      },
+      "stage2_with_stage3": {
+        "0": 16
+      }
+    },
+    "error_occurrence_counts": {},
+    "run_mask_sha256": "e6f3dbfadedaa65411a375c8895ccf6319bf3fb7b4bf0b857972222826ed2c42",
+    "seconds": 0.03806781768798828
+  }
+]
