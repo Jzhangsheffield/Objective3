@@ -1,0 +1,18 @@
+{
+  "extends": "../common.json",
+  "experiment_name": "imu_causal_boundary_v1",
+  "paths": {
+    "cache_root": "%SBE_CACHE_ROOT%\\imu",
+    "output_template": "%SBE_OUTPUTS_ROOT%\\imu\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_sensor_boundary_v1"
+  },
+  "sensor": {
+    "modality": "imu",
+    "sample_rate_hz": 100,
+    "decision_rate_hz": 20,
+    "local_window_seconds": 0.5,
+    "lowpass_hz": 40.0
+  },
+  "model": {
+    "input_channels": 14
+  }
+}

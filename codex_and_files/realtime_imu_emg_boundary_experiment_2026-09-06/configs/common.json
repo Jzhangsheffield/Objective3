@@ -1,0 +1,91 @@
+{
+  "experiment_name": "causal_sensor_boundary_v1",
+  "paths": {
+    "experiment_root": "%SBE_EXPERIMENT_ROOT%",
+    "dataset_root": "%SBE_DATASET_ROOT%",
+    "annotation_root": "%SBE_ANNOTATION_ROOT%",
+    "protocol_source_root": "%SBE_PROTOCOL_SOURCE_ROOT%",
+    "protocol_root": "%SBE_PROTOCOL_ROOT%",
+    "cache_root": "%SBE_CACHE_ROOT%",
+    "output_template": "%SBE_OUTPUTS_ROOT%\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_sensor_boundary_v1",
+    "validation_root": "%SBE_VALIDATION_ROOT%"
+  },
+  "data": {
+    "participants": ["A", "D", "J", "M"],
+    "seeds": [1, 2, 42],
+    "train_scopes": ["normal_only", "all_runs"],
+    "test_splits": ["test_normal", "test_fault", "test_all"],
+    "background_label": "background",
+    "annotation_policy": "action_recognition_boundaries_with_background_v1",
+    "limit_train_runs": 0,
+    "limit_test_runs": 0
+  },
+  "sensor": {
+    "modality": "unset",
+    "sample_rate_hz": 100,
+    "decision_rate_hz": 20,
+    "local_window_seconds": 0.5,
+    "max_gap_seconds": 0.1,
+    "append_validity_channels": true,
+    "filter_order": 4,
+    "storage_dtype": "float16",
+    "boundary_label_radius_ms": 100
+  },
+  "model": {
+    "name": "local_cnn_causal_boundary_tcn",
+    "input_channels": 14,
+    "local_encoder_channels": [64, 128],
+    "local_feature_dim": 128,
+    "tcn_hidden_dim": 256,
+    "tcn_num_layers": 5,
+    "tcn_kernel_size": 3,
+    "dropout": 0.2,
+    "outputs": ["background_action_state", "start", "end"]
+  },
+  "training": {
+    "device": "auto",
+    "epochs": 40,
+    "batch_size": 8,
+    "num_workers": "%SBE_NUM_WORKERS%",
+    "prefetch_factor": 2,
+    "max_cached_runs_per_worker": 2,
+    "chunk_length_steps": 256,
+    "chunk_overlap_steps": 124,
+    "validation_run_fraction": 0.15,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "loss": {
+      "weights": {"state": 1.0, "start": 0.5, "end": 0.5},
+      "state_positive_weight": 1.0,
+      "start_positive_weight": 20.0,
+      "end_positive_weight": 20.0,
+      "gradient_clip_norm": 5.0
+    }
+  },
+  "online": {
+    "start_threshold": 0.55,
+    "end_threshold": 0.55,
+    "action_threshold": 0.55,
+    "start_debounce_steps": 2,
+    "end_debounce_steps": 2,
+    "min_action_steps": 6,
+    "merge_gap_steps": 2
+  },
+  "calibration": {
+    "probability_thresholds": [0.45, 0.55, 0.65],
+    "start_debounce_steps": [1, 2],
+    "end_debounce_steps": [1, 2],
+    "min_action_steps": [4, 6, 8],
+    "merge_gap_steps": [0, 2, 4],
+    "objective_boundary_tolerance_ms": 200,
+    "objective_segment_iou": 0.5
+  },
+  "evaluation": {
+    "boundary_tolerance_ms": [50, 100, 200, 500],
+    "segment_iou_thresholds": [0.1, 0.25, 0.5],
+    "inference_chunk_steps": 1024,
+    "report_frame_accuracy": true,
+    "report_edit_score": true,
+    "report_detection_latency": true
+  }
+}

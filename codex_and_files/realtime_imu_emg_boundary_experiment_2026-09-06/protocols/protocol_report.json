@@ -1,0 +1,61 @@
+{
+  "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_imu_emg_boundary_experiment_2026-09-06\\protocols",
+  "folds": {
+    "A": {
+      "normal_only": {
+        "train": 61,
+        "test_normal": 15,
+        "test_fault": 9,
+        "test_all": 24
+      },
+      "all_runs": {
+        "train": 79,
+        "test_normal": 15,
+        "test_fault": 9,
+        "test_all": 24
+      }
+    },
+    "D": {
+      "normal_only": {
+        "train": 55,
+        "test_normal": 21,
+        "test_fault": 4,
+        "test_all": 25
+      },
+      "all_runs": {
+        "train": 78,
+        "test_normal": 21,
+        "test_fault": 4,
+        "test_all": 25
+      }
+    },
+    "J": {
+      "normal_only": {
+        "train": 55,
+        "test_normal": 21,
+        "test_fault": 9,
+        "test_all": 30
+      },
+      "all_runs": {
+        "train": 73,
+        "test_normal": 21,
+        "test_fault": 9,
+        "test_all": 30
+      }
+    },
+    "M": {
+      "normal_only": {
+        "train": 57,
+        "test_normal": 19,
+        "test_fault": 5,
+        "test_all": 24
+      },
+      "all_runs": {
+        "train": 79,
+        "test_normal": 19,
+        "test_fault": 5,
+        "test_all": 24
+      }
+    }
+  }
+}

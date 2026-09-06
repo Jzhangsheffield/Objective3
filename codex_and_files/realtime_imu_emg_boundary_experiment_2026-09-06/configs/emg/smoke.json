@@ -1,0 +1,25 @@
+{
+  "extends": "base.json",
+  "experiment_name": "emg_causal_boundary_smoke",
+  "paths": {
+    "output_template": "%SBE_SMOKE_OUTPUTS_ROOT%\\emg\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_sensor_boundary_smoke"
+  },
+  "data": {
+    "limit_train_runs": 4,
+    "limit_test_runs": 2
+  },
+  "model": {
+    "local_encoder_channels": [32, 64],
+    "local_feature_dim": 64,
+    "tcn_hidden_dim": 64,
+    "tcn_num_layers": 3
+  },
+  "training": {
+    "epochs": 2,
+    "batch_size": 4,
+    "num_workers": 0,
+    "chunk_length_steps": 128,
+    "chunk_overlap_steps": 60,
+    "validation_run_fraction": 0.25
+  }
+}
