@@ -1,0 +1,14 @@
+{
+  "status": "ok",
+  "modality": "imu",
+  "runs": 103,
+  "checked_runs": 103,
+  "participants": {
+    "A": 24,
+    "D": 25,
+    "J": 30,
+    "M": 24
+  },
+  "deep": true,
+  "problems": []
+}

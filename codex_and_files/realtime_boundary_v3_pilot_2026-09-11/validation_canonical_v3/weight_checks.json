@@ -1,0 +1,70 @@
+{
+  "A": {
+    "backbone": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "loaded_keys": 122,
+      "model_keys": 122,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "m3": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\at_ad\\A_s1\\all_runs\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+      "loaded_keys": 20,
+      "model_keys": 20,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "synthetic_history_test": "passed"
+  },
+  "D": {
+    "backbone": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "loaded_keys": 122,
+      "model_keys": 122,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "m3": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\at_ad\\D_s1\\all_runs\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+      "loaded_keys": 20,
+      "model_keys": 20,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "synthetic_history_test": "passed"
+  },
+  "J": {
+    "backbone": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "loaded_keys": 122,
+      "model_keys": 122,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "m3": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\at_ad\\J_s1\\all_runs\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+      "loaded_keys": 20,
+      "model_keys": 20,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "synthetic_history_test": "passed"
+  },
+  "M": {
+    "backbone": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\seed_1\\backbone\\all_runs\\last.pth",
+      "loaded_keys": 122,
+      "model_keys": 122,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "m3": {
+      "checkpoint": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\at_ad\\M_s1\\all_runs\\refresh_once\\m3_atomic_tail_direct_fusion\\last.pth",
+      "loaded_keys": 20,
+      "model_keys": 20,
+      "missing_keys": [],
+      "unexpected_keys": []
+    },
+    "synthetic_history_test": "passed"
+  }
+}

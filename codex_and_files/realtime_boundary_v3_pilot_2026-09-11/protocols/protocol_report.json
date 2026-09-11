@@ -1,0 +1,188 @@
+{
+  "folds": {
+    "A": {
+      "normal_only": {
+        "train": {
+          "runs": 61,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\normal_only\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\normal_only\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 15,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\normal_only\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\normal_only\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 9,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\normal_only\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\normal_only\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 24,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\normal_only\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\normal_only\\test_all.jsonl"
+        }
+      },
+      "all_runs": {
+        "train": {
+          "runs": 79,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\all_runs\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 15,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\all_runs\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 9,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\all_runs\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 24,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\A_as_test\\all_runs\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\A_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl"
+        }
+      }
+    },
+    "D": {
+      "normal_only": {
+        "train": {
+          "runs": 55,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\normal_only\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\normal_only\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 21,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\normal_only\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\normal_only\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 4,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\normal_only\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\normal_only\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 25,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\normal_only\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\normal_only\\test_all.jsonl"
+        }
+      },
+      "all_runs": {
+        "train": {
+          "runs": 78,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\all_runs\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 21,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\all_runs\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 4,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\all_runs\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 25,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\D_as_test\\all_runs\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\D_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl"
+        }
+      }
+    },
+    "J": {
+      "normal_only": {
+        "train": {
+          "runs": 55,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\normal_only\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\normal_only\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 21,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\normal_only\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\normal_only\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 9,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\normal_only\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\normal_only\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 30,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\normal_only\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\normal_only\\test_all.jsonl"
+        }
+      },
+      "all_runs": {
+        "train": {
+          "runs": 73,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\all_runs\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 21,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\all_runs\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 9,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\all_runs\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 30,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\J_as_test\\all_runs\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\J_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl"
+        }
+      }
+    },
+    "M": {
+      "normal_only": {
+        "train": {
+          "runs": 57,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\normal_only\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\normal_only\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 19,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\normal_only\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\normal_only\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 5,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\normal_only\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\normal_only\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 24,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\normal_only\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\normal_only\\test_all.jsonl"
+        }
+      },
+      "all_runs": {
+        "train": {
+          "runs": 79,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\all_runs\\train.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\train.jsonl"
+        },
+        "test_normal": {
+          "runs": 19,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\all_runs\\test_normal.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_normal.jsonl"
+        },
+        "test_fault": {
+          "runs": 5,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\all_runs\\test_fault.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_fault.jsonl"
+        },
+        "test_all": {
+          "runs": 24,
+          "path": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\protocols\\M_as_test\\all_runs\\test_all.jsonl",
+          "source": "D:\\Junxi_data\\Objective3_thermal_crimp\\codex_and_files\\realtime_boundary_v3_pilot_2026-09-11\\atomic_dependency\\outputs\\M_as_test\\cam_001484412812\\protocols\\all_runs\\test_all.jsonl"
+        }
+      }
+    }
+  }
+}

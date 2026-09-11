@@ -1,0 +1,15 @@
+{"sample_name":"run_sample_000001","participant":"A","source_run":"run_1","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000008","participant":"A","source_run":"run_11","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000009","participant":"A","source_run":"run_12","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000010","participant":"A","source_run":"run_13","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000011","participant":"A","source_run":"run_14","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000012","participant":"A","source_run":"run_15","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000013","participant":"A","source_run":"run_16","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000014","participant":"A","source_run":"run_17","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000015","participant":"A","source_run":"run_19","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000002","participant":"A","source_run":"run_2","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000003","participant":"A","source_run":"run_5","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000004","participant":"A","source_run":"run_6","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000005","participant":"A","source_run":"run_7","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000006","participant":"A","source_run":"run_8","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}
+{"sample_name":"run_sample_000007","participant":"A","source_run":"run_9","split":"test_normal","train_scope":"normal_only","heldout_participant":"A"}

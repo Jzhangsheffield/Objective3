@@ -1,0 +1,21 @@
+{
+  "runs": 103,
+  "frames": 251132,
+  "gt_actions": 1894,
+  "folds": {
+    "A": {
+      "gt_actions": 431
+    },
+    "D": {
+      "gt_actions": 462
+    },
+    "J": {
+      "gt_actions": 555
+    },
+    "M": {
+      "gt_actions": 446
+    }
+  },
+  "problems": [],
+  "status": "ok"
+}

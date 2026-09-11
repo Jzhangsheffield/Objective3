@@ -1,0 +1,20 @@
+{
+  "extends": "../common.json",
+  "experiment_name": "emg_causal_boundary_v1",
+  "paths": {
+    "cache_root": "%SBE_CACHE_ROOT%\\emg",
+    "output_template": "%SBE_OUTPUTS_ROOT%\\emg\\{heldout}_as_test\\{scope}\\seed_{seed}\\causal_sensor_boundary_v1"
+  },
+  "sensor": {
+    "modality": "emg",
+    "sample_rate_hz": 500,
+    "decision_rate_hz": 20,
+    "local_window_seconds": 0.2,
+    "bandpass_hz": [20.0, 200.0],
+    "notch_hz": null,
+    "notch_q": 30.0
+  },
+  "model": {
+    "input_channels": 18
+  }
+}

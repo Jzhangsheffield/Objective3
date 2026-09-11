@@ -1,0 +1,98 @@
+@echo off
+REM Central Windows path configuration for the realtime boundary experiment.
+REM Override any variable before calling a script, or edit the defaults below.
+
+for %%I in ("%~dp0.") do if not defined PACKAGE_ROOT set "PACKAGE_ROOT=%%~fI"
+
+REM Machine-specific inputs. These are the main values to edit after migration.
+if not defined DATASET_ROOT set "DATASET_ROOT=%PACKAGE_ROOT%\data"
+if not defined PYTHON_BIN set "PYTHON_BIN=C:\Users\digit\anaconda3\envs\Pytorch\python.exe"
+if not defined ATOMIC_PROJECT_ROOT set "ATOMIC_PROJECT_ROOT=%PACKAGE_ROOT%\atomic_dependency"
+
+REM Canonical v3 includes corrected indexing and manual action endpoint corrections.
+if not defined ANNOTATION_ROOT set "ANNOTATION_ROOT=%DATASET_ROOT%\annotations"
+if not defined CAMERA_ID set "CAMERA_ID=001484412812"
+
+REM New experiment outputs. Change these if cache/results should be on another disk.
+if not defined PROTOCOL_ROOT set "PROTOCOL_ROOT=%PACKAGE_ROOT%\protocols"
+if not defined FEATURE_CACHE_ROOT set "FEATURE_CACHE_ROOT=%PACKAGE_ROOT%\cache\features_canonical_v3"
+if not defined OUTPUTS_ROOT set "OUTPUTS_ROOT=%PACKAGE_ROOT%\outputs_canonical_v3"
+if not defined SMOKE_OUTPUTS_ROOT set "SMOKE_OUTPUTS_ROOT=%PACKAGE_ROOT%\outputs_smoke_canonical_v3_stride4"
+if not defined VALIDATION_ROOT set "VALIDATION_ROOT=%PACKAGE_ROOT%\validation_canonical_v3"
+
+REM Config entry points.
+if not defined BASE_CONFIG set "BASE_CONFIG=%PACKAGE_ROOT%\configs\base.json"
+if not defined SMOKE_CONFIG set "SMOKE_CONFIG=%PACKAGE_ROOT%\configs\smoke_stride4.json"
+
+REM Common experiment settings and launcher defaults.
+if not defined NUM_WORKERS set "NUM_WORKERS=0"
+if not defined EXTRACT_NUM_WORKERS set "EXTRACT_NUM_WORKERS=4"
+if not defined EXTRACT_FRAME_LOADER_BATCH_SIZE set "EXTRACT_FRAME_LOADER_BATCH_SIZE=64"
+if not defined EXTRACT_PREFETCH_FACTOR set "EXTRACT_PREFETCH_FACTOR=2"
+if not defined FORMAL_EXTRACT_BATCH_SIZE set "FORMAL_EXTRACT_BATCH_SIZE=16"
+if not defined SMOKE_EXTRACT_BATCH_SIZE set "SMOKE_EXTRACT_BATCH_SIZE=16"
+if not defined RECOMMENDED_SEEDS set "RECOMMENDED_SEEDS=1"
+if not defined RECOMMENDED_PARTICIPANTS set "RECOMMENDED_PARTICIPANTS=A D J M"
+if not defined RECOMMENDED_SCOPES set "RECOMMENDED_SCOPES=all_runs"
+if not defined SMOKE_HELDOUT set "SMOKE_HELDOUT=A"
+if not defined SMOKE_SEED set "SMOKE_SEED=1"
+if not defined SMOKE_SCOPE set "SMOKE_SCOPE=all_runs"
+if not defined SMOKE_ONLINE_RUN set "SMOKE_ONLINE_RUN=run_sample_000001"
+
+if not defined RGB_DATASET_ROOT set "RGB_DATASET_ROOT=D:\Junxi_data\MULTISENSOR_DATA_COLLECTION_Stage2_structured_data\Action_Segmentation_Dataset"
+set "RAB_RGB_DATASET_ROOT=%RGB_DATASET_ROOT%"
+
+REM Environment aliases consumed by JSON config expansion. Do not edit separately.
+set "RAB_EXPERIMENT_ROOT=%PACKAGE_ROOT%"
+set "RAB_DATASET_ROOT=%DATASET_ROOT%"
+set "RAB_ANNOTATION_ROOT=%ANNOTATION_ROOT%"
+set "RAB_ATOMIC_PROJECT_ROOT=%ATOMIC_PROJECT_ROOT%"
+set "RAB_PROTOCOL_ROOT=%PROTOCOL_ROOT%"
+set "RAB_FEATURE_CACHE_ROOT=%FEATURE_CACHE_ROOT%"
+set "RAB_OUTPUTS_ROOT=%OUTPUTS_ROOT%"
+set "RAB_SMOKE_OUTPUTS_ROOT=%SMOKE_OUTPUTS_ROOT%"
+set "RAB_VALIDATION_ROOT=%VALIDATION_ROOT%"
+set "RAB_CAMERA_ID=%CAMERA_ID%"
+set "RAB_NUM_WORKERS=%NUM_WORKERS%"
+set "RAB_EXTRACT_NUM_WORKERS=%EXTRACT_NUM_WORKERS%"
+set "RAB_EXTRACT_FRAME_LOADER_BATCH_SIZE=%EXTRACT_FRAME_LOADER_BATCH_SIZE%"
+set "RAB_EXTRACT_PREFETCH_FACTOR=%EXTRACT_PREFETCH_FACTOR%"
+set "RAB_FORMAL_EXTRACT_BATCH_SIZE=%FORMAL_EXTRACT_BATCH_SIZE%"
+set "RAB_SMOKE_EXTRACT_BATCH_SIZE=%SMOKE_EXTRACT_BATCH_SIZE%"
+set "RAB_SMOKE_HELDOUT=%SMOKE_HELDOUT%"
+set "RAB_SMOKE_SEED=%SMOKE_SEED%"
+set "RAB_SMOKE_SCOPE=%SMOKE_SCOPE%"
+
+set "PYTHONPATH=%PACKAGE_ROOT%;%PYTHONPATH%"
+
+if /I "%~1"=="show" (
+    echo PACKAGE_ROOT=%PACKAGE_ROOT%
+    echo DATASET_ROOT=%DATASET_ROOT%
+    echo RGB_DATASET_ROOT=%RGB_DATASET_ROOT%
+    echo ANNOTATION_ROOT=%ANNOTATION_ROOT%
+    echo PYTHON_BIN=%PYTHON_BIN%
+    echo ATOMIC_PROJECT_ROOT=%ATOMIC_PROJECT_ROOT%
+    echo CAMERA_ID=%CAMERA_ID%
+    echo PROTOCOL_ROOT=%PROTOCOL_ROOT%
+    echo FEATURE_CACHE_ROOT=%FEATURE_CACHE_ROOT%
+    echo OUTPUTS_ROOT=%OUTPUTS_ROOT%
+    echo SMOKE_OUTPUTS_ROOT=%SMOKE_OUTPUTS_ROOT%
+    echo VALIDATION_ROOT=%VALIDATION_ROOT%
+    echo BASE_CONFIG=%BASE_CONFIG%
+    echo SMOKE_CONFIG=%SMOKE_CONFIG%
+    echo NUM_WORKERS=%NUM_WORKERS%
+    echo EXTRACT_NUM_WORKERS=%EXTRACT_NUM_WORKERS%
+    echo EXTRACT_FRAME_LOADER_BATCH_SIZE=%EXTRACT_FRAME_LOADER_BATCH_SIZE%
+    echo EXTRACT_PREFETCH_FACTOR=%EXTRACT_PREFETCH_FACTOR%
+    echo FORMAL_EXTRACT_BATCH_SIZE=%FORMAL_EXTRACT_BATCH_SIZE%
+    echo SMOKE_EXTRACT_BATCH_SIZE=%SMOKE_EXTRACT_BATCH_SIZE%
+    echo RECOMMENDED_SEEDS=%RECOMMENDED_SEEDS%
+    echo RECOMMENDED_PARTICIPANTS=%RECOMMENDED_PARTICIPANTS%
+    echo RECOMMENDED_SCOPES=%RECOMMENDED_SCOPES%
+    echo SMOKE_HELDOUT=%SMOKE_HELDOUT%
+    echo SMOKE_SEED=%SMOKE_SEED%
+    echo SMOKE_SCOPE=%SMOKE_SCOPE%
+    echo SMOKE_ONLINE_RUN=%SMOKE_ONLINE_RUN%
+)
+
+exit /b 0
